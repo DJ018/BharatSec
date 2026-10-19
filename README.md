@@ -60,6 +60,8 @@ For example, create a session secret in PowerShell with:
 
 ### Render demo deployment
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/DJ018/BharatSec)
+
 The repository includes [`render.yaml`](./render.yaml) for a free Render demo service named `bharatsec-web`. Create the service from the Render Blueprint and provide `BHARATSEC_BOOTSTRAP_USERNAME` plus a strong `BHARATSEC_BOOTSTRAP_PASSWORD` when prompted. The blueprint generates the session secret, enables secure cookies, disables public registration, and allows only `https://bharatsec-web.onrender.com`. If Render assigns a different service URL, update `BHARATSEC_CORS_ORIGINS` to that exact HTTPS origin.
 
 Render's free service has ephemeral storage and may spin down; accounts and SQLite data can reset when the service restarts or redeploys. Use a paid service with a persistent disk before storing real customer, SOC, threat-intelligence, or cloud-scan data.
