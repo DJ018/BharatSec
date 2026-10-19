@@ -1,0 +1,63 @@
+/* Account page: profile, password and team management. Tokens only (design-system.css). */
+.ac-content { max-width: 920px; }
+
+.ac-force {
+  display: flex; gap: 12px; align-items: flex-start; margin-bottom: var(--ds-space-6); padding: 14px 16px;
+  border: 1px solid var(--ds-high); border-radius: var(--ds-radius-lg); background: var(--ds-high-soft); color: var(--ds-text);
+}
+.ac-force svg { width: 20px; height: 20px; flex: 0 0 auto; margin-top: 1px; color: var(--ds-high); }
+.ac-force div { display: grid; gap: 2px; }
+.ac-force span { color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+
+.ac-profile { display: flex; align-items: center; gap: var(--ds-space-4); padding: var(--ds-space-5); }
+.ac-avatar {
+  display: grid; width: 48px; height: 48px; flex: 0 0 auto; place-items: center; border-radius: 14px;
+  background: var(--ds-brand-gradient); color: #08150d; font-size: var(--ds-text-lg); font-weight: 700;
+}
+.ac-profile-text { display: grid; gap: 2px; min-width: 0; }
+.ac-profile-text strong { overflow: hidden; color: var(--ds-text); font-size: var(--ds-text-lg); text-overflow: ellipsis; white-space: nowrap; }
+.ac-profile-text span { color: var(--ds-text-3); font-size: var(--ds-text-sm); }
+.ac-profile .ds-badge { margin-left: auto; text-transform: capitalize; }
+
+.ac-section { margin-top: var(--ds-space-6); }
+.ac-form { display: grid; gap: var(--ds-space-4); max-width: 460px; }
+.ac-field { display: grid; gap: 0; }
+.ac-hint { margin-top: 6px; color: var(--ds-text-3); font-size: var(--ds-text-xs); }
+.ac-strength { display: block; height: 4px; margin-top: 8px; overflow: hidden; border-radius: 99px; background: var(--ds-surface-3); }
+.ac-strength span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--ds-critical); transition: width var(--ds-base) var(--ds-ease), background var(--ds-base); }
+.ac-strength span[data-level="2"] { background: var(--ds-medium); }
+.ac-strength span[data-level="3"] { background: var(--ds-low); }
+.ac-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.ac-form .ac-actions { justify-content: flex-start; }
+.ac-message { min-height: 1.2em; margin: 0; font-size: var(--ds-text-sm); }
+.ac-message.is-error { color: var(--ds-critical); }
+.ac-message.is-success { color: var(--ds-low); }
+.ac-team-message { padding: 0 var(--ds-space-5); }
+.ac-team-message:empty { display: none; }
+
+.ac-table td { vertical-align: middle; }
+.ac-member { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ac-member .ds-avatar { width: 32px; height: 32px; }
+.ac-member-text { display: grid; min-width: 0; }
+.ac-member-text strong { overflow: hidden; color: var(--ds-text); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.ac-member-text span { color: var(--ds-text-3); font-family: var(--ds-font-mono); font-size: var(--ds-text-xs); }
+.ac-role-select { width: auto; min-width: 120px; min-height: 32px; font-size: var(--ds-text-sm); }
+.ac-row-actions { display: flex; justify-content: flex-end; gap: 4px; white-space: nowrap; }
+.ac-you { margin-left: 6px; }
+
+.ac-dialog-body { display: grid; gap: var(--ds-space-4); padding: var(--ds-space-6); }
+.ac-dialog-body h2 { font-size: var(--ds-text-xl); }
+.ac-secret {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px;
+  border: 1px dashed var(--ds-border-strong); border-radius: var(--ds-radius); background: var(--ds-bg-raised);
+}
+.ac-secret code { overflow-wrap: anywhere; color: var(--ds-text); font-size: var(--ds-text-md); letter-spacing: .02em; }
+
+@media (max-width: 640px) {
+  .ac-profile { flex-wrap: wrap; }
+  .ac-profile .ds-badge { margin-left: 0; }
+  .ac-table thead { display: none; }
+  .ac-table tr { display: grid; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--ds-divider); }
+  .ac-table td { padding: 0; border: 0; }
+  .ac-row-actions { justify-content: flex-start; }
+}

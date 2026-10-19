@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Manage your BharatSec password and team members." />
+  <title>Account | BharatSec</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/brand/bharatsec-mark.svg" />
+  <script src="assets/js/theme.js"></script>
+  <link rel="stylesheet" href="assets/css/design-system.css" />
+  <link rel="stylesheet" href="assets/css/account.css" />
+  <script src="assets/js/auth.js"></script>
+</head>
+<body class="ds-app account-page">
+  <aside class="ds-sidebar" aria-label="Account navigation">
+    <div class="ds-sidebar-brand">
+      <a class="ds-brand" href="index.html" aria-label="BharatSec home">
+        <img src="assets/images/brand/bharatsec-mark.svg" alt="" width="34" height="34" />
+        <span class="ds-brand-name">Bharat<span>Sec</span></span>
+      </a>
+    </div>
+    <div class="ds-product">
+      <img src="assets/images/brand/bharatsec-mark.svg" alt="" />
+      <div><div class="ds-product-name">Account</div><div class="ds-product-tagline">Password &amp; team access</div></div>
+    </div>
+    <nav class="ds-nav" aria-label="Account sections">
+      <div class="ds-nav-label">Settings</div>
+      <a class="ds-nav-item active" href="#profile"><span class="ds-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>Profile</a>
+      <a class="ds-nav-item" href="#security"><span class="ds-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>Password</a>
+      <a class="ds-nav-item" href="#team" id="nav-team" hidden><span class="ds-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></svg></span>Team</a>
+    </nav>
+    <div class="ds-nav-label">BharatSec Suite</div>
+    <nav class="ds-suite" aria-label="BharatSec products">
+      <a class="ds-suite-item" href="dashboard.html"><img src="assets/images/brand/bharatsec-mark.svg" alt="" />Domain scanner</a>
+      <a class="ds-suite-item" href="soc.html"><img src="assets/images/products/soc.svg" alt="" />SOC</a>
+      <a class="ds-suite-item" href="threat-intel.html"><img src="assets/images/products/threat-intel.svg" alt="" />Threat Intel</a>
+      <a class="ds-suite-item" href="cloud.html"><img src="assets/images/products/cloud.svg" alt="" />Cloud</a>
+      <a class="ds-suite-item" href="risk.html"><img src="assets/images/products/risk.svg" alt="" />Risk</a>
+    </nav>
+    <div class="ds-sidebar-footer">
+      <div class="ds-user"><span class="ds-avatar" id="sidebar-avatar">BS</span><div><div class="ds-user-name user-display-name">Analyst</div><div class="ds-user-role" id="sidebar-role">Signed in</div></div>
+        <button class="ds-btn ds-btn--ghost ds-btn--icon ds-btn--sm" id="sign-out" type="button" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></button></div>
+    </div>
+  </aside>
+  <div class="ds-scrim"></div>
+  <div class="ds-main">
+    <header class="ds-topbar">
+      <button class="ds-btn ds-btn--ghost ds-btn--icon ds-menu-btn" type="button" data-drawer-toggle aria-label="Open navigation" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <div class="ds-breadcrumb"><span>BharatSec</span><span class="ds-breadcrumb-sep">/</span><strong>Account</strong></div>
+      <div class="ds-topbar-actions">
+        <button class="ds-theme-toggle" type="button" data-theme-toggle aria-label="Switch theme">
+          <svg class="ds-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a7 7 0 0 0 10.7 10.7Z"/></svg>
+          <svg class="ds-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="ds-content ac-content">
+      <div class="ac-force" id="force-banner" role="alert" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+        <div><strong>Set your own password to continue.</strong><span>You signed in with a temporary password. Choose a new one below — it takes a few seconds.</span></div>
+      </div>
+
+      <section class="ds-page-header" id="profile">
+        <div>
+          <span class="ds-eyebrow">Account settings</span>
+          <h1 class="ds-page-title">Your account</h1>
+          <p class="ds-page-subtitle">Manage your password and, as an administrator, who can access this BharatSec workspace.</p>
+        </div>
+      </section>
+
+      <section class="ds-card ac-profile" aria-label="Profile">
+        <span class="ac-avatar" id="profile-avatar" aria-hidden="true">BS</span>
+        <div class="ac-profile-text">
+          <strong id="profile-name">—</strong>
+          <span class="ds-mono" id="profile-username">—</span>
+        </div>
+        <span class="ds-badge" id="profile-role">—</span>
+      </section>
+
+      <section class="ds-card ac-section" id="security" aria-labelledby="security-title">
+        <div class="ds-card-header">
+          <div><h2 class="ds-card-title" id="security-title">Change password</h2><p class="ds-card-subtitle">Use at least 12 characters. Changing it signs you out on your other devices.</p></div>
+        </div>
+        <form class="ds-card-body ac-form" id="password-form" novalidate>
+          <label class="ac-field"><span class="ds-label">Current password</span><input class="ds-input" type="password" id="current-password" autocomplete="current-password" required /></label>
+          <label class="ac-field"><span class="ds-label">New password</span><input class="ds-input" type="password" id="new-password" autocomplete="new-password" minlength="12" required aria-describedby="strength-text" />
+            <span class="ac-strength" aria-hidden="true"><span id="strength-bar"></span></span>
+            <span class="ac-hint" id="strength-text">At least 12 characters. A passphrase of a few words works well.</span>
+          </label>
+          <label class="ac-field"><span class="ds-label">Confirm new password</span><input class="ds-input" type="password" id="confirm-password" autocomplete="new-password" required /></label>
+          <p class="ac-message" id="password-message" role="status" aria-live="polite"></p>
+          <div class="ac-actions"><button class="ds-btn ds-btn--primary" type="submit" id="password-submit">Update password</button></div>
+        </form>
+      </section>
+
+      <section class="ds-card ac-section" id="team" aria-labelledby="team-title" hidden>
+        <div class="ds-card-header">
+          <div><h2 class="ds-card-title" id="team-title">Team</h2><p class="ds-card-subtitle">Everyone here shares this workspace's scans, SOC and threat-intel data. Admins can manage the team.</p></div>
+          <button class="ds-btn ds-btn--primary ds-btn--sm" type="button" id="add-member-button"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add member</button>
+        </div>
+        <p class="ac-message ac-team-message" id="team-message" role="status" aria-live="polite"></p>
+        <div class="ds-table-wrap">
+          <table class="ds-table ac-table">
+            <thead><tr><th scope="col">Member</th><th scope="col">Role</th><th scope="col">Last sign-in</th><th scope="col"><span class="ds-sr-only">Actions</span></th></tr></thead>
+            <tbody id="team-body"><tr><td colspan="4"><div class="ds-empty">Loading team…</div></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="ds-dialog ac-dialog" id="member-dialog" aria-labelledby="member-dialog-title">
+    <form method="dialog" id="member-form" class="ac-dialog-body">
+      <h2 id="member-dialog-title">Add a team member</h2>
+      <p class="ds-muted">They'll get a temporary password and must choose their own at first sign-in.</p>
+      <label class="ac-field"><span class="ds-label">Username</span><input class="ds-input" id="member-username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_.\-]{3,32}" autocomplete="off" placeholder="e.g. priya.sharma" /></label>
+      <label class="ac-field"><span class="ds-label">Display name</span><input class="ds-input" id="member-name" maxlength="80" autocomplete="off" placeholder="e.g. Priya Sharma" /></label>
+      <label class="ac-field"><span class="ds-label">Role</span>
+        <select class="ds-select" id="member-role"><option value="analyst">Analyst — uses all BharatSec tools</option><option value="admin">Admin — also manages the team</option></select>
+      </label>
+      <p class="ac-message" id="member-message" role="status" aria-live="polite"></p>
+      <div class="ac-actions"><button class="ds-btn ds-btn--ghost" type="button" data-close>Cancel</button><button class="ds-btn ds-btn--primary" type="submit" id="member-submit">Create member</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="ds-dialog ac-dialog" id="secret-dialog" aria-labelledby="secret-dialog-title">
+    <div class="ac-dialog-body">
+      <h2 id="secret-dialog-title">Temporary password</h2>
+      <p class="ds-muted" id="secret-intro">Share this with the member through a private channel. It is shown only once.</p>
+      <div class="ac-secret"><code id="secret-value"></code><button class="ds-btn ds-btn--secondary ds-btn--sm" type="button" id="secret-copy">Copy</button></div>
+      <p class="ac-hint">BharatSec stores only a secure hash, so this exact password can't be shown again — reset it if it's lost.</p>
+      <div class="ac-actions"><button class="ds-btn ds-btn--primary" type="button" data-close>Done</button></div>
+    </div>
+  </dialog>
+
+  <script src="assets/js/account.js"></script>
+</body>
+</html>

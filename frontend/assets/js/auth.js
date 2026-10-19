@@ -13,6 +13,11 @@ const bsAuthReady = fetch('/api/auth/me', {
     if (!response.ok) return null;
     const result = await response.json();
     bsSession = result.user || null;
+    // Someone signed in with a temporary password must set their own before using the app.
+    const exempt = ['/login', '/login.html', '/account', '/account.html'];
+    if (bsSession?.must_change_password && !exempt.includes(window.location.pathname)) {
+      window.location.replace('/account.html?force=1#security');
+    }
     return bsSession;
   })
   .catch(() => null);

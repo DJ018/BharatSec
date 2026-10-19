@@ -29,6 +29,7 @@ PROTECTED_PAGES = {
     "/threat-intel", "/threat-intel.html",
     "/risk", "/risk.html",
     "/cloud", "/cloud.html",
+    "/account", "/account.html",
 }
 
 
@@ -175,6 +176,11 @@ if FRONTEND_DIR.exists():
     @app.get("/cloud.html", include_in_schema=False)
     async def serve_cloud():
         return FileResponse(str(FRONTEND_DIR / "cloud.html"))
+
+    @app.get("/account", include_in_schema=False)
+    @app.get("/account.html", include_in_schema=False)
+    async def serve_account():
+        return FileResponse(str(FRONTEND_DIR / "account.html"))
 
 
 # ── Health check ──────────────────────────────────────────────────────────────

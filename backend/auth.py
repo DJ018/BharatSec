@@ -79,13 +79,25 @@ def init_db() -> None:
             );
             """
         )
+        # Account-management columns, added in place so existing databases keep their users.
+        columns = {row["name"] for row in connection.execute("PRAGMA table_info(users)")}
+        if "role" not in columns:
+            connection.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'analyst'")
+        if "must_change_password" not in columns:
+            connection.execute("ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0")
+        if "last_login_at" not in columns:
+            connection.execute("ALTER TABLE users ADD COLUMN last_login_at TEXT")
+
         user_count = connection.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        if user_count and not connection.execute("SELECT 1 FROM users WHERE role = 'admin'").fetchone():
+            # Databases created before roles existed: the first account becomes the administrator.
+            connection.execute("UPDATE users SET role = 'admin' WHERE id = (SELECT MIN(id) FROM users)")
         if user_count == 0:
             if BOOTSTRAP_USERNAME and BOOTSTRAP_PASSWORD:
                 if not USERNAME_PATTERN.fullmatch(BOOTSTRAP_USERNAME):
                     raise RuntimeError("BHARATSEC_BOOTSTRAP_USERNAME must be 3–32 letters, numbers, dots, underscores, or hyphens.")
                 connection.execute(
-                    "INSERT INTO users (username, display_name, password_hash, created_at) VALUES (?, ?, ?, ?)",
+                    "INSERT INTO users (username, display_name, password_hash, created_at, role) VALUES (?, ?, ?, ?, 'admin')",
                     (
                         BOOTSTRAP_USERNAME.lower(),
                         BOOTSTRAP_DISPLAY_NAME or BOOTSTRAP_USERNAME,
@@ -143,12 +155,17 @@ def _valid_session_token(token: str) -> bool:
     return hmac.compare_digest(signature, expected)
 
 
+ROLES = ("admin", "analyst")
+
+
 def _user_payload(row: sqlite3.Row) -> dict[str, Any]:
     return {
         "id": row["id"],
         "username": row["username"],
         "name": row["display_name"],
         "avatar": "👤",
+        "role": row["role"],
+        "must_change_password": bool(row["must_change_password"]),
     }
 
 
@@ -235,13 +252,16 @@ def create_account(username: str, password: str, display_name: str) -> dict[str,
 
     try:
         with _database() as connection:
+            # The very first account on a fresh install administers the workspace.
+            role = "analyst" if connection.execute("SELECT 1 FROM users LIMIT 1").fetchone() else "admin"
             cursor = connection.execute(
-                "INSERT INTO users (username, display_name, password_hash, created_at) VALUES (?, ?, ?, ?)",
+                "INSERT INTO users (username, display_name, password_hash, created_at, role) VALUES (?, ?, ?, ?, ?)",
                 (
                     normalized,
                     display_name.strip() or normalized,
                     _hash_password(password),
                     datetime.now(timezone.utc).isoformat(),
+                    role,
                 ),
             )
             row = connection.execute("SELECT * FROM users WHERE id = ?", (cursor.lastrowid,)).fetchone()
@@ -274,6 +294,7 @@ def create_session(username: str, password: str, remember: bool, response: Respo
             "INSERT INTO sessions (token_hash, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)",
             (token_hash, row["id"], expires.isoformat(), now.isoformat()),
         )
+        connection.execute("UPDATE users SET last_login_at = ? WHERE id = ?", (now.isoformat(), row["id"]))
 
     response.set_cookie(
         SESSION_COOKIE,
@@ -320,6 +341,148 @@ def clear_session_cookie(response: Response) -> None:
         samesite="strict",
         path="/",
     )
+
+
+# ── Account management ───────────────────────────────────────────────────────
+
+def _token_hash(token: str | None) -> str:
+    return hashlib.sha256((token or "").encode("ascii", errors="ignore")).hexdigest()
+
+
+def _temporary_password() -> str:
+    """A one-time password an administrator hands over; the member must replace it at first sign-in."""
+    return secrets.token_urlsafe(12)  # 16 URL-safe characters, ~96 bits
+
+
+def _validate_new_password(password: str) -> None:
+    if not 12 <= len(password) <= 256:
+        raise HTTPException(422, "Password must be between 12 and 256 characters.")
+
+
+def change_password(user_id: int, current_password: str, new_password: str, keep_token: str | None) -> dict[str, Any]:
+    """Change the signed-in user's password and sign out their other sessions."""
+    _validate_new_password(new_password)
+    with _database() as connection:
+        row = connection.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if row is None or not _verify_password(current_password, row["password_hash"]):
+            raise HTTPException(401, "Your current password is incorrect.")
+        if _verify_password(new_password, row["password_hash"]):
+            raise HTTPException(422, "Choose a password different from your current one.")
+        connection.execute(
+            "UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?",
+            (_hash_password(new_password), user_id),
+        )
+        connection.execute(
+            "DELETE FROM sessions WHERE user_id = ? AND token_hash != ?",
+            (user_id, _token_hash(keep_token)),
+        )
+        row = connection.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    return _user_payload(row)
+
+
+def list_users() -> list[dict[str, Any]]:
+    with _database() as connection:
+        rows = connection.execute(
+            "SELECT id, username, display_name, role, must_change_password, created_at, last_login_at FROM users ORDER BY id"
+        ).fetchall()
+    return [
+        {
+            "id": row["id"], "username": row["username"], "name": row["display_name"], "role": row["role"],
+            "must_change_password": bool(row["must_change_password"]),
+            "created_at": row["created_at"], "last_login_at": row["last_login_at"],
+        }
+        for row in rows
+    ]
+
+
+def admin_create_user(username: str, display_name: str, role: str) -> tuple[dict[str, Any], str]:
+    """Create a member with a temporary password (returned once) they must change at first sign-in."""
+    normalized = username.strip().lower()
+    if not USERNAME_PATTERN.fullmatch(normalized):
+        raise HTTPException(422, "Username must be 3–32 characters using letters, numbers, dots, underscores, or hyphens.")
+    if role not in ROLES:
+        raise HTTPException(422, "Role must be admin or analyst.")
+    temporary = _temporary_password()
+    try:
+        with _database() as connection:
+            cursor = connection.execute(
+                """INSERT INTO users (username, display_name, password_hash, created_at, role, must_change_password)
+                   VALUES (?, ?, ?, ?, ?, 1)""",
+                (normalized, display_name.strip() or normalized, _hash_password(temporary),
+                 datetime.now(timezone.utc).isoformat(), role),
+            )
+            row = connection.execute("SELECT * FROM users WHERE id = ?", (cursor.lastrowid,)).fetchone()
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "An account with that username already exists.") from exc
+    return _user_payload(row), temporary
+
+
+def _target_user(connection: sqlite3.Connection, user_id: int) -> sqlite3.Row:
+    row = connection.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    if row is None:
+        raise HTTPException(404, "Team member not found.")
+    return row
+
+
+def _ensure_another_admin(connection: sqlite3.Connection, user_id: int) -> None:
+    others = connection.execute("SELECT COUNT(*) FROM users WHERE role = 'admin' AND id != ?", (user_id,)).fetchone()[0]
+    if others == 0:
+        raise HTTPException(409, "BharatSec needs at least one administrator. Make someone else an admin first.")
+
+
+def set_user_role(actor_id: int, user_id: int, role: str) -> dict[str, Any]:
+    if role not in ROLES:
+        raise HTTPException(422, "Role must be admin or analyst.")
+    with _database() as connection:
+        row = _target_user(connection, user_id)
+        if row["role"] == "admin" and role != "admin":
+            if user_id == actor_id:
+                raise HTTPException(409, "You can't remove your own administrator access.")
+            _ensure_another_admin(connection, user_id)
+        connection.execute("UPDATE users SET role = ? WHERE id = ?", (role, user_id))
+        row = _target_user(connection, user_id)
+    return _user_payload(row)
+
+
+def reset_user_password(actor_id: int, user_id: int) -> tuple[dict[str, Any], str]:
+    """Issue a new temporary password and sign the member out everywhere."""
+    if user_id == actor_id:
+        raise HTTPException(409, "Use Change password to update your own password.")
+    temporary = _temporary_password()
+    with _database() as connection:
+        _target_user(connection, user_id)
+        connection.execute(
+            "UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?",
+            (_hash_password(temporary), user_id),
+        )
+        connection.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
+        row = _target_user(connection, user_id)
+    return _user_payload(row), temporary
+
+
+def delete_user(actor_id: int, user_id: int) -> None:
+    if user_id == actor_id:
+        raise HTTPException(409, "You can't remove your own account.")
+    with _database() as connection:
+        row = _target_user(connection, user_id)
+        if row["role"] == "admin":
+            _ensure_another_admin(connection, user_id)
+        connection.execute("DELETE FROM users WHERE id = ?", (user_id,))  # sessions cascade
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str = Field(..., min_length=1, max_length=256)
+    new_password: str = Field(..., min_length=12, max_length=256)
+
+
+class MemberCreateRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=32)
+    display_name: str = Field("", max_length=80)
+    role: str = Field("analyst", pattern="^(admin|analyst)$")
+
+
+class MemberUpdateRequest(BaseModel):
+    role: str = Field(..., pattern="^(admin|analyst)$")
 
 
 class RegisterRequest(BaseModel):
