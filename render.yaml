@@ -24,10 +24,12 @@ services:
         value: "1"
       - key: BHARATSEC_CORS_ORIGINS
         value: https://bharatsec-web.onrender.com
+      # First admin account, created on first start. Render generates the password;
+      # reveal it under the service's Environment tab to sign in.
       - key: BHARATSEC_BOOTSTRAP_USERNAME
-        sync: false
+        value: admin
       - key: BHARATSEC_BOOTSTRAP_PASSWORD
-        sync: false
+        generateValue: true
       # Optional AI providers: set in the Render dashboard (never commit keys).
       - key: GEMINI_API_KEY
         sync: false
