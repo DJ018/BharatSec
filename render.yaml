@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: bharatsec-web
+    runtime: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    # Render's proxy terminates TLS; trust its X-Forwarded-Proto so the app sees https (HSTS, same-origin checks).
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      - key: BHARATSEC_HOST
+        value: 0.0.0.0
+      - key: BHARATSEC_SESSION_SECRET
+        generateValue: true
+      - key: BHARATSEC_COOKIE_SECURE
+        value: "true"
+      - key: BHARATSEC_SESSION_DAYS
+        value: "7"
+      - key: BHARATSEC_ALLOW_REGISTRATION
+        value: "false"
+      - key: BHARATSEC_TRUSTED_PROXY_HOPS
+        value: "1"
+      - key: BHARATSEC_CORS_ORIGINS
+        value: https://bharatsec-web.onrender.com
+      - key: BHARATSEC_BOOTSTRAP_USERNAME
+        sync: false
+      - key: BHARATSEC_BOOTSTRAP_PASSWORD
+        sync: false
+      # Optional AI providers: set in the Render dashboard (never commit keys).
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false

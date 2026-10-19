@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="BharatSec Threat Intel feed analysis, indicator enrichment, asset correlation, and breach exposure monitoring." />
+  <title>BharatSec Threat Intel | Intelligence Desk</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/products/threat-intel.svg" />
+  <script src="assets/js/theme.js"></script>
+  <link rel="stylesheet" href="assets/css/design-system.css" />
+  <link rel="stylesheet" href="assets/css/threat-intel.css?v=ds2" />
+  <script src="assets/js/auth.js"></script>
+</head>
+<body class="ds-app intel-page">
+  <aside class="ds-sidebar" aria-label="Threat Intel navigation">
+    <div class="ds-sidebar-brand">
+      <a class="ds-brand" href="index.html" aria-label="BharatSec home">
+        <img src="assets/images/brand/bharatsec-mark.svg" alt="" width="34" height="34" />
+        <span class="ds-brand-name">Bharat<span>Sec</span></span>
+      </a>
+    </div>
+    <div class="ds-product">
+      <img src="assets/images/products/threat-intel.svg" alt="" />
+      <div><div class="ds-product-name">Threat Intel</div><div class="ds-product-tagline">Threat Intelligence Desk</div></div>
+    </div>
+    <nav class="ds-nav" aria-label="Threat Intel sections">
+      <div class="ds-nav-label">Intelligence</div>
+      <button class="ds-nav-item intel-nav-item active" type="button" data-view="overview"><span class="ds-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19.1 4.9A10 10 0 1 0 22 12"/><path d="M16.2 7.8A6 6 0 1 0 18 12"/><circle cx="12" cy="12" r="2"/><path d="m13.4 10.6 5.7-5.7"/></svg></span>Intel desk</button>
+      <button class="ds-nav-item intel-nav-item" type="button" data-view="indicators"><span class="ds-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>Indicators<span id="nav-ioc-count" class="ds-nav-count">0</span></button>
+      <button class="ds-nav-item intel-nav-item" type="button" data-view="correlations"><span class="ds-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></span>Environment matches<span id="nav-match-count" class="ds-nav-count">0</span></button>
+      <button class="ds-nav-item intel-nav-item" type="button" data-view="exposure"><span class="ds-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/><path d="M12 15v2"/></svg></span>Breach exposure</button>
+    </nav>
+    <div class="ds-nav-label">BharatSec Suite</div>
+    <nav class="ds-suite" aria-label="BharatSec products">
+      <a class="ds-suite-item" href="dashboard.html"><img src="assets/images/brand/bharatsec-mark.svg" alt="" />Domain scanner</a>
+      <a class="ds-suite-item" href="soc.html"><img src="assets/images/products/soc.svg" alt="" />SOC</a>
+      <a class="ds-suite-item" href="threat-intel.html" aria-current="page"><img src="assets/images/products/threat-intel.svg" alt="" />Threat Intel</a>
+      <a class="ds-suite-item" href="cloud.html"><img src="assets/images/products/cloud.svg" alt="" />Cloud</a>
+      <a class="ds-suite-item" href="risk.html"><img src="assets/images/products/risk.svg" alt="" />Risk</a>
+    </nav>
+    <div class="ds-sidebar-footer">
+      <div class="feed-health"><span class="feed-health-dot" aria-hidden="true"></span><div><strong>Feed service</strong><small id="rail-feed-state">Connecting</small></div></div>
+      <div class="ds-user"><span class="ds-avatar">TI</span><div><div class="ds-user-name user-display-name">Analyst</div><div class="ds-user-role">Signed in</div></div>
+        <button class="ds-btn ds-btn--ghost ds-btn--icon ds-btn--sm" id="sign-out" type="button" aria-label="Sign out" title="Sign out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></button></div>
+    </div>
+  </aside>
+  <div class="ds-scrim"></div>
+
+  <div class="ds-main">
+    <header class="ds-topbar">
+      <button class="ds-btn ds-btn--ghost ds-btn--icon ds-menu-btn" type="button" data-drawer-toggle aria-label="Open navigation" aria-expanded="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <div class="ds-breadcrumb"><span>BharatSec</span><span class="ds-breadcrumb-sep">/</span><strong>Threat Intel</strong></div>
+      <div class="ds-topbar-actions">
+        <span class="connection-pill" id="service-state"><i></i>Connecting</span>
+        <button class="ds-btn ds-btn--ghost ds-btn--icon" id="refresh-button" type="button" title="Refresh intelligence" aria-label="Refresh intelligence"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></svg></button>
+        <button class="ds-btn ds-btn--primary sync-button" id="sync-button" type="button" aria-label="Sync feeds" title="Sync threat feeds"><svg class="sync-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></svg><span class="btn-label">Sync feeds</span></button>
+        <button class="ds-theme-toggle" type="button" data-theme-toggle aria-label="Switch theme">
+          <svg class="ds-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a7 7 0 0 0 10.7 10.7Z"/></svg>
+          <svg class="ds-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="ds-content">
+      <div class="ds-page-header">
+        <div>
+          <div class="ds-eyebrow">Signal collection · Analyst review</div>
+          <h1 class="ds-page-title">Threat Intelligence</h1>
+          <p class="ds-page-subtitle">Curated threat signals, enriched indicators, and observable overlap with your monitored environment.</p>
+        </div>
+        <button class="ds-btn ds-btn--secondary" type="button" data-open="ioc-dialog"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add indicator</button>
+      </div>
+
+      <section class="intel-error" id="intel-error" role="alert" hidden>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+        <div><strong>Intelligence service unavailable</strong><span id="intel-error-text"></span></div>
+        <button class="ds-btn ds-btn--secondary ds-btn--sm" id="retry-button" type="button">Retry</button>
+      </section>
+
+      <section class="ds-stats intel-stats" aria-label="Threat intelligence metrics">
+        <div class="ds-stat intel-stat"><div class="stat-top"><span class="ds-stat-label">Active indicators</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span></div><div class="ds-stat-value" id="stat-iocs">—</div><div class="ds-stat-meta">Across configured feeds</div></div>
+        <div class="ds-stat intel-stat"><div class="stat-top"><span class="ds-stat-label">Known exploited CVEs</span><span class="stat-icon stat-icon--critical"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M12 8v4M12 16h.01"/></svg></span></div><div class="ds-stat-value" id="stat-kev">—</div><div class="ds-stat-meta">CISA KEV catalog</div></div>
+        <div class="ds-stat intel-stat"><div class="stat-top"><span class="ds-stat-label">Environment matches</span><span class="stat-icon stat-icon--high"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></span></div><div class="ds-stat-value" id="stat-matches">—</div><div class="ds-stat-meta">Asset-domain overlaps</div></div>
+        <div class="ds-stat intel-stat"><div class="stat-top"><span class="ds-stat-label">Breach exposures</span><span class="stat-icon stat-icon--info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/><path d="M12 15v2"/></svg></span></div><div class="ds-stat-value" id="stat-breaches">—</div><div class="ds-stat-meta">Verified-domain watch</div></div>
+      </section>
+
+      <section class="feed-deck" aria-label="Connected intelligence sources">
+        <article class="ds-card feed-card" data-feed-card="cisa_kev">
+          <div class="feed-top"><div class="feed-mark cisa-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></div><div class="feed-copy"><strong>CISA KEV</strong><small>Known exploited vulnerabilities</small></div><span class="feed-status" id="feed-cisa_kev-status">Loading</span></div>
+          <div class="feed-figures"><div><span class="feed-count" id="feed-cisa_kev-count">—</span><span class="feed-count-label">imported last sync</span></div><span class="feed-meta" id="feed-cisa_kev-meta">—</span></div>
+        </article>
+        <article class="ds-card feed-card" data-feed-card="urlhaus">
+          <div class="feed-top"><div class="feed-mark urlhaus-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></div><div class="feed-copy"><strong>URLhaus</strong><small>Malware distribution URLs</small></div><span class="feed-status" id="feed-urlhaus-status">Loading</span></div>
+          <div class="feed-figures"><div><span class="feed-count" id="feed-urlhaus-count">—</span><span class="feed-count-label">imported last sync</span></div><span class="feed-meta" id="feed-urlhaus-meta">—</span></div>
+        </article>
+        <article class="ds-card feed-card feed-provider">
+          <div class="feed-top"><div class="feed-mark mitre-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div><div class="feed-copy"><strong>MITRE ATT&amp;CK</strong><small>Technique references</small></div><span class="feed-status ok">Mapped</span></div>
+          <div class="feed-figures"><div><span class="feed-count" id="feed-mitre-count">—</span><span class="feed-count-label">techniques in catalog</span></div><span class="feed-meta">Static reference</span></div>
+        </article>
+      </section>
+
+      <div class="intel-tabs-wrap">
+        <div class="ds-tabs intel-tabs" role="tablist" aria-label="Threat intelligence views">
+          <button class="ds-tab intel-tab active" type="button" data-view="overview" role="tab" aria-selected="true">Intel desk</button>
+          <button class="ds-tab intel-tab" type="button" data-view="indicators" role="tab" aria-selected="false">Indicator library</button>
+          <button class="ds-tab intel-tab" type="button" data-view="correlations" role="tab" aria-selected="false">Environment matches</button>
+          <button class="ds-tab intel-tab" type="button" data-view="exposure" role="tab" aria-selected="false">Breach exposure</button>
+        </div>
+        <span id="sync-time" class="sync-time">Waiting for feed sync</span>
+      </div>
+
+      <section class="intel-view" id="view-overview" role="tabpanel">
+        <div class="desk-grid">
+          <section class="ds-card intel-panel">
+            <div class="ds-card-header"><div><h2 class="ds-card-title">Indicator review</h2><p class="ds-card-subtitle">Latest signals awaiting analyst triage</p></div><button class="ds-btn ds-btn--ghost ds-btn--sm" type="button" data-view="indicators">Full library<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+            <div id="desk-indicators" class="indicator-table-host"></div>
+          </section>
+          <section class="ds-card intel-panel">
+            <div class="ds-card-header"><div><h2 class="ds-card-title">ATT&amp;CK techniques</h2><p class="ds-card-subtitle">Behaviour context</p></div><span class="ds-badge ds-badge--info">Feed-mapped</span></div>
+            <div id="technique-list" class="technique-list"></div>
+            <p class="panel-footnote">Technique mappings are contextual to feed type, not observed attacker behaviour.</p>
+          </section>
+        </div>
+        <section class="ds-card intel-panel">
+          <div class="ds-card-header"><div><h2 class="ds-card-title">Correlated indicators</h2><p class="ds-card-subtitle">Overlap with your environment</p></div><button class="ds-btn ds-btn--ghost ds-btn--sm" type="button" data-view="correlations">All matches<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+          <div id="desk-correlations" class="correlation-list"></div>
+        </section>
+      </section>
+
+      <section class="intel-view" id="view-indicators" role="tabpanel" hidden>
+        <section class="ds-card intel-panel">
+          <div class="ds-card-header library-head">
+            <div><h2 class="ds-card-title">Indicator library</h2><p class="ds-card-subtitle">IOC management · 50 per page</p></div>
+            <div class="library-filters">
+              <label class="search-field"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="ds-input" type="search" id="ioc-search" placeholder="Search IOC, CVE, or threat" aria-label="Search indicators" /></label>
+              <select class="ds-select" id="ioc-status-filter" aria-label="Filter indicator status"><option value="">All states</option><option value="new">New</option><option value="investigating">Investigating</option><option value="confirmed">Confirmed</option><option value="ignored">Ignored</option></select>
+            </div>
+          </div>
+          <div id="all-indicators" class="indicator-table-host"></div>
+          <div class="indicator-pagination" id="indicator-pagination" hidden>
+            <span id="indicator-page-label">Page 1</span>
+            <div class="pager">
+              <button class="ds-btn ds-btn--secondary ds-btn--sm" id="indicator-prev" type="button" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>Previous</button>
+              <button class="ds-btn ds-btn--secondary ds-btn--sm" id="indicator-next" type="button">Next<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="intel-view" id="view-correlations" role="tabpanel" hidden>
+        <section class="ds-card intel-panel">
+          <div class="ds-card-header"><div><h2 class="ds-card-title">Environment matches</h2><p class="ds-card-subtitle">Observable overlap</p></div><span id="correlation-count" class="ds-badge">No matches</span></div>
+          <div class="correlation-explainer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+            <div><strong>A match is not a compromise.</strong><span>These are IOC-to-asset overlaps from your authorized inventory and scan findings. They are leads for analyst review, not evidence of intrusion.</span></div>
+          </div>
+          <div id="all-correlations" class="correlation-list"></div>
+        </section>
+      </section>
+
+      <section class="intel-view" id="view-exposure" role="tabpanel" hidden>
+        <section class="ds-card intel-panel exposure-intro">
+          <div class="ds-card-header"><div><h2 class="ds-card-title">Breach exposure watch</h2><p class="ds-card-subtitle">Domain exposure</p></div><span id="hibp-state" class="provider-label">Checking provider</span></div>
+          <div class="ds-card-body exposure-body">
+            <p class="exposure-copy">Search historic breach disclosures for domains verified with Have I Been Pwned. This is not live dark-web monitoring.</p>
+            <div id="hibp-config-notice" class="provider-notice" hidden>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 9.2-9.2M17 6l3 3M14 9l2 2"/></svg>
+              <div><strong>Provider configuration required</strong><span>Set <code>HIBP_API_KEY</code> on the backend and verify each domain with the provider. The key stays server-side.</span></div>
+            </div>
+            <form id="watch-form" class="watch-form">
+              <div class="watch-field"><label class="ds-label" for="watch-domain">Verified domain</label><input class="ds-input mono-input" id="watch-domain" type="text" placeholder="yourcompany.com" maxlength="253" required /></div>
+              <button class="ds-btn ds-btn--secondary" type="submit" id="watch-submit"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add watch</button>
+              <label class="ds-check watch-consent"><input id="watch-authorized" type="checkbox" required /><span>I am authorized to review breach exposure for this domain.</span></label>
+              <span id="watch-error" class="watch-error" role="alert"></span>
+            </form>
+          </div>
+        </section>
+        <section class="ds-card intel-panel exposure-panel">
+          <div class="ds-card-header"><div><h2 class="ds-card-title">Disclosed breach sources</h2><p class="ds-card-subtitle">Exposure records</p></div><span class="ds-badge">Counts only · no emails stored</span></div>
+          <div id="exposure-list" class="exposure-list"></div>
+        </section>
+      </section>
+
+      <footer class="intel-footer"><span>BharatSec Threat Intel · Analyst workspace</span><span>Feed mappings provide context; validate indicators before action.</span></footer>
+    </main>
+  </div>
+
+  <dialog class="ds-dialog intel-dialog" id="ioc-dialog" aria-labelledby="ioc-dialog-title">
+    <form id="ioc-form">
+      <div class="dialog-head">
+        <div><span class="dialog-kicker">Analyst submission</span><h2 id="ioc-dialog-title">Add indicator</h2><p class="dialog-copy">Track a known IOC alongside feed intelligence.</p></div>
+        <button class="ds-btn ds-btn--ghost ds-btn--icon ds-btn--sm" type="button" data-close aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="dialog-body">
+        <div class="field"><label class="ds-label" for="ioc-value">Indicator value</label><input id="ioc-value" class="ds-input mono-input" name="ioc" required maxlength="2048" placeholder="Domain, URL, IP, CVE, or file hash" /></div>
+        <div class="dialog-grid">
+          <div class="field"><label class="ds-label" for="ioc-type">Type</label><select id="ioc-type" class="ds-select" name="ioc_type"><option value="auto">Detect automatically</option><option value="domain">Domain</option><option value="url">URL</option><option value="ip">IP address</option><option value="cve">CVE</option><option value="md5">MD5</option><option value="sha1">SHA-1</option><option value="sha256">SHA-256</option></select></div>
+          <div class="field"><label class="ds-label" for="ioc-confidence">Confidence <span class="optional">0–100</span></label><input id="ioc-confidence" class="ds-input" type="number" name="confidence" min="0" max="100" value="50" /></div>
+        </div>
+        <div class="field"><label class="ds-label" for="ioc-title">Analyst note <span class="optional">Optional</span></label><input id="ioc-title" class="ds-input" name="title" maxlength="300" placeholder="Why this indicator matters" /></div>
+        <div class="field"><label class="ds-label" for="ioc-tags">Tags <span class="optional">Comma separated</span></label><input id="ioc-tags" class="ds-input" name="tags" maxlength="500" placeholder="phishing, campaign-name" /></div>
+        <div id="ioc-error" class="form-error" role="alert"></div>
+      </div>
+      <div class="dialog-actions"><button class="ds-btn ds-btn--secondary" type="button" data-close>Cancel</button><button class="ds-btn ds-btn--primary" type="submit">Add to library</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="ds-dialog intel-dialog enrich-dialog" id="enrich-dialog" aria-labelledby="enrich-title">
+    <div class="dialog-head">
+      <div><span class="dialog-kicker">Indicator enrichment</span><h2 id="enrich-title">Indicator details</h2></div>
+      <button class="ds-btn ds-btn--ghost ds-btn--icon ds-btn--sm" type="button" data-close aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div id="enrichment-content" class="enrichment-content"></div>
+  </dialog>
+  <div class="intel-toast" id="intel-toast" role="status" aria-live="polite"></div>
+  <script src="assets/js/threat-intel.js"></script>
+</body>
+</html>

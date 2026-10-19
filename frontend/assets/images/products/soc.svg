@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="BharatSec SOC">
+  <defs>
+    <linearGradient id="g" x1="32" y1="15" x2="32" y2="49" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F4A261"/>
+      <stop offset="1" stop-color="#7EE0A1"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="62" height="62" rx="15" fill="#10261C"/>
+  <rect x="1.5" y="1.5" width="61" height="61" rx="14.5" fill="none" stroke="#FFFFFF" stroke-opacity=".12"/>
+  <g fill="none" stroke="url(#g)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="15" y="17" width="34" height="23" rx="3.5"/>
+    <path d="M32 40v6M25 47h14"/>
+    <path d="M19.5 29.5h5l3-6 4.5 11 3.5-7.5 2 2.5h7"/>
+  </g>
+  <circle cx="44.5" cy="21.5" r="2" fill="#F4A261"/>
+</svg>

@@ -1,0 +1,14 @@
+# Secrets and local configuration
+.env
+backend/.env
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Local SQLite data (accounts, SOC, threat intel, cloud scans)
+backend/data/*.db
+backend/data/*.db-shm
+backend/data/*.db-wal

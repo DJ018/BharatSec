@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BharatSec — AI-Powered Cyber Risk Intelligence</title>
+  <meta name="description" content="BharatSec continuously evaluates your digital exposure, identifies security weaknesses, and provides AI-powered remediation — in minutes. Built for India." />
+  <link rel="icon" type="image/svg+xml" href="assets/images/brand/bharatsec-mark.svg" />
+  <script src="assets/js/theme.js"></script>
+  <link rel="stylesheet" href="assets/css/design-system.css" />
+  <link rel="stylesheet" href="assets/css/landing.css" />
+  <script src="assets/js/auth.js"></script>
+</head>
+<body class="landing-page">
+
+<!-- Ambient network canvas (drawn by cyber-background.js, sits behind everything) -->
+<canvas id="particle-canvas" aria-hidden="true"></canvas>
+
+<a class="lp-skip" href="#main">Skip to content</a>
+
+<!-- ═══ Navigation ═══════════════════════════════════════════ -->
+<header class="lp-nav" id="navbar">
+  <div class="lp-container lp-nav-inner">
+    <a class="ds-brand" href="index.html" aria-label="BharatSec home">
+      <img src="assets/images/brand/bharatsec-mark.svg" alt="" width="34" height="34" />
+      <span class="ds-brand-name">Bharat<span>Sec</span></span>
+    </a>
+
+    <nav class="lp-nav-links" id="lp-nav-links" aria-label="Primary">
+      <a href="#products">Products</a>
+      <a href="#features">Capabilities</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="/api/docs" target="_blank" rel="noopener">API docs</a>
+    </nav>
+
+    <div class="lp-nav-actions">
+      <button class="ds-theme-toggle" type="button" data-theme-toggle aria-label="Switch theme">
+        <svg class="ds-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a7 7 0 0 0 10.7 10.7Z"/></svg>
+        <svg class="ds-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <div id="nav-auth-area" class="lp-auth-area">
+        <!-- Populated by the inline script below based on sign-in state -->
+        <a href="login.html" class="ds-btn ds-btn--primary">Sign in to scan</a>
+      </div>
+      <button class="ds-btn ds-btn--ghost ds-btn--icon lp-menu-btn" type="button" id="lp-menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="lp-nav-links">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ═══ Hero ═════════════════════════════════════════════════ -->
+<section class="lp-hero" id="hero">
+  <div class="lp-hero-backdrop" aria-hidden="true"></div>
+  <div class="lp-container lp-hero-inner">
+
+    <div class="lp-hero-copy">
+      <span class="lp-pill"><span class="lp-pill-dot"></span>India-rooted cyber risk intelligence</span>
+
+      <h1 class="lp-hero-title">
+        See your exposure.<br />
+        <span class="ds-gradient-text">Strengthen your security posture.</span>
+      </h1>
+
+      <p class="lp-hero-sub">
+        BharatSec uncovers your internet-facing risk, explains what matters, and focuses remediation where it makes the biggest difference.
+      </p>
+
+      <!-- Domain scan -->
+      <div class="lp-scan" id="scan">
+        <label class="lp-scan-label" for="domain-input">Start with your public domain</label>
+        <div class="scan-input-row lp-scan-row">
+          <div class="lp-scan-field">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+            <input
+              type="text" class="lp-scan-input" id="domain-input"
+              placeholder="yourcompany.com"
+              autocomplete="off" spellcheck="false" autocapitalize="off" inputmode="url"
+            />
+          </div>
+          <button class="ds-btn ds-btn--brand ds-btn--lg lp-scan-btn" id="scan-btn" type="button" onclick="startScan()">
+            Run assessment
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+        <label class="ds-check lp-scan-consent">
+          <input type="checkbox" id="auth-check" />
+          <span>I confirm I am authorized to scan this domain</span>
+        </label>
+      </div>
+
+      <ul class="lp-trust" aria-label="Why teams trust BharatSec">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Passive, non-intrusive checks</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Actionable, prioritized findings</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Results in about a minute</li>
+      </ul>
+    </div>
+
+    <!-- Product visual (illustrative) -->
+    <div class="lp-hero-visual">
+      <div class="lp-console" role="img" aria-label="Illustration of the BharatSec exposure radar mapping public DNS, web edge and cloud surface">
+        <div class="lp-console-bar">
+          <span class="lp-console-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="lp-console-title">Exposure radar</span>
+          <span class="lp-console-live"><i></i>Passive</span>
+        </div>
+        <div class="lp-radar">
+          <div class="lp-radar-ring r1"></div>
+          <div class="lp-radar-ring r2"></div>
+          <div class="lp-radar-ring r3"></div>
+          <div class="lp-radar-axis x"></div>
+          <div class="lp-radar-axis y"></div>
+          <div class="lp-radar-sweep"></div>
+          <div class="lp-radar-orbit o1"><i></i></div>
+          <div class="lp-radar-orbit o2"><i></i></div>
+          <span class="lp-radar-blip b1"></span>
+          <span class="lp-radar-blip b2"></span>
+          <span class="lp-radar-blip b3"></span>
+          <span class="lp-radar-blip b4"></span>
+          <div class="lp-radar-core">
+            <img src="assets/images/brand/bharatsec-mark.svg" alt="" width="40" height="40" />
+            <strong>What can the internet see?</strong>
+            <span>Enter a domain to reveal</span>
+          </div>
+          <div class="lp-radar-tag t-dns"><span class="lp-tag-idx">01</span><span><strong>Public DNS</strong><small>Map your perimeter</small></span></div>
+          <div class="lp-radar-tag t-web"><span class="lp-tag-idx">02</span><span><strong>Web edge</strong><small>Trace open signals</small></span></div>
+          <div class="lp-radar-tag t-cloud"><span class="lp-tag-idx">03</span><span><strong>Cloud surface</strong><small>Find what is exposed</small></span></div>
+        </div>
+        <div class="lp-console-foot">
+          <span>Passive reconnaissance</span>
+          <span>Illustrative preview</span>
+        </div>
+      </div>
+
+      <div class="lp-float lp-float-finding" aria-hidden="true">
+        <span class="ds-badge ds-badge--medium ds-badge--dot">Medium</span>
+        <div><strong>DMARC policy not enforced</strong><span>Email spoofing risk · sample finding</span></div>
+      </div>
+      <div class="lp-float lp-float-score" aria-hidden="true">
+        <span class="lp-float-label">BharatSec Score</span>
+        <span class="lp-float-value">72<small>/100</small></span>
+        <span class="lp-float-bar"><i></i></span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ Products ═════════════════════════════════════════════ -->
+<section class="lp-section" id="products">
+  <div class="lp-container">
+    <div class="lp-section-head">
+      <span class="ds-eyebrow">Product suite</span>
+      <h2 class="lp-section-title">One platform. <span class="ds-gradient-text">Six ways to reduce risk.</span></h2>
+      <p class="lp-section-sub">An AI-powered cybersecurity suite built for India — from your first domain scan to continuous operations.</p>
+    </div>
+
+    <div class="lp-products">
+      <article class="lp-product is-featured" data-reveal>
+        <div class="lp-product-top">
+          <img src="assets/images/brand/bharatsec-mark.svg" alt="" width="44" height="44" />
+          <span class="ds-badge ds-badge--success ds-badge--dot">Live</span>
+        </div>
+        <h3><span class="lp-product-kicker">BharatSec AI</span>Domain scanner</h3>
+        <p>Discover your attack surface, get a risk score, and receive prioritized fixes — in minutes.</p>
+        <button class="lp-product-link" type="button" data-scan-focus>
+          Scan your domain
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </article>
+
+      <article class="lp-product" data-reveal>
+        <div class="lp-product-top">
+          <img src="assets/images/brand/bharatsec-mark.svg" alt="" width="44" height="44" />
+          <span class="ds-badge ds-badge--info">In the dashboard</span>
+        </div>
+        <h3><span class="lp-product-kicker">BharatSec</span>Copilot</h3>
+        <p>Ask about findings, risk scores, attack paths and remediation — answers grounded in your scan.</p>
+        <button class="lp-product-link" type="button" data-scan-focus>
+          Start a scan to use Copilot
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </article>
+
+      <article class="lp-product" data-reveal>
+        <div class="lp-product-top">
+          <img src="assets/images/products/soc.svg" alt="" width="44" height="44" />
+          <span class="ds-badge ds-badge--success ds-badge--dot">Live</span>
+        </div>
+        <h3><span class="lp-product-kicker">BharatSec</span>SOC</h3>
+        <p>Monitor authorized public assets, triage recurring alerts, and run incident response on an auditable timeline.</p>
+        <a class="lp-product-link" href="soc.html">
+          Open SOC workspace
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </article>
+
+      <article class="lp-product" data-reveal>
+        <div class="lp-product-top">
+          <img src="assets/images/products/threat-intel.svg" alt="" width="44" height="44" />
+          <span class="ds-badge ds-badge--success ds-badge--dot">Live</span>
+        </div>
+        <h3><span class="lp-product-kicker">BharatSec</span>Threat Intel</h3>
+        <p>Curated feeds, IOC review and enrichment, asset correlation, and ATT&amp;CK context for analyst triage.</p>
+        <a class="lp-product-link" href="threat-intel.html">
+          Open Threat Intel
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </article>
+
+      <article class="lp-product" data-reveal>
+        <div class="lp-product-top">
+          <img src="assets/images/products/cloud.svg" alt="" width="44" height="44" />
+          <span class="ds-badge ds-badge--success ds-badge--dot">Live</span>
+        </div>
+        <h3><span class="lp-product-kicker">BharatSec</span>Cloud</h3>
+        <p>Posture management for AWS, Azure and GCP: misconfigurations, exposed storage, and IAM risk.</p>
+        <a class="lp-product-link" href="cloud.html">
+          Open Cloud workspace
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </article>
+
+      <article class="lp-product" data-reveal>
+        <div class="lp-product-top">
+          <img src="assets/images/products/risk.svg" alt="" width="44" height="44" />
+          <span class="ds-badge ds-badge--success ds-badge--dot">Live</span>
+        </div>
+        <h3><span class="lp-product-kicker">BharatSec</span>Risk</h3>
+        <p>Quantify enterprise risk in financial terms and translate vulnerabilities into board-level impact.</p>
+        <a class="lp-product-link" href="risk.html">
+          Open Risk workspace
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Capabilities ═════════════════════════════════════════ -->
+<section class="lp-section lp-section--tint" id="features">
+  <div class="lp-container">
+    <div class="lp-section-head">
+      <span class="ds-eyebrow">Platform capabilities</span>
+      <h2 class="lp-section-title">Six pillars of <span class="ds-gradient-text">digital security intelligence</span></h2>
+      <p class="lp-section-sub">From raw reconnaissance to AI-powered insight, BharatSec covers every dimension of your digital risk.</p>
+    </div>
+
+    <div class="lp-features">
+      <div class="lp-feature" data-reveal>
+        <span class="lp-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="m12 12 6-6"/></svg></span>
+        <h3>Attack surface discovery</h3>
+        <p>Map subdomains, open ports, DNS records and internet-facing services — exactly what attackers see from outside.</p>
+      </div>
+      <div class="lp-feature" data-reveal>
+        <span class="lp-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+        <h3>Web security audit</h3>
+        <p>Check SSL/TLS, HTTP security headers, HTTPS enforcement and web defences to close the most common entry points.</p>
+      </div>
+      <div class="lp-feature" data-reveal>
+        <span class="lp-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="4"/><path d="M3 21a7 7 0 0 1 10.5-6"/><circle cx="17.5" cy="17.5" r="3"/><path d="m21 21-1.4-1.4"/></svg></span>
+        <h3>Identity &amp; credential risk</h3>
+        <p>Surface leaked credentials, email authentication gaps (SPF, DKIM, DMARC) and WHOIS exposure that enable phishing.</p>
+      </div>
+      <div class="lp-feature" data-reveal>
+        <span class="lp-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></span>
+        <h3>Configuration assessment</h3>
+        <p>Catch misconfigured servers, weak TLS ciphers and exposed cloud storage before attackers do — with clear fixes.</p>
+      </div>
+      <div class="lp-feature" data-reveal>
+        <span class="lp-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H17a3.5 3.5 0 0 0 0-7H7a3.5 3.5 0 0 1 0-7h8.5"/></svg></span>
+        <h3>Attack path mapping</h3>
+        <p>See how weaknesses chain into real attack scenarios, and break the chain at its weakest link.</p>
+      </div>
+      <div class="lp-feature" data-reveal>
+        <span class="lp-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z"/></svg></span>
+        <h3>AI-powered insights</h3>
+        <p>Every finding in plain English, with business impact and step-by-step remediation — no specialist required.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ How it works ═════════════════════════════════════════ -->
+<section class="lp-section" id="how-it-works">
+  <div class="lp-container">
+    <div class="lp-section-head">
+      <span class="ds-eyebrow">How it works</span>
+      <h2 class="lp-section-title">From input to <span class="ds-gradient-text">intelligence</span></h2>
+      <p class="lp-section-sub">Four steps from a domain name to a complete security profile — in about a minute.</p>
+    </div>
+
+    <ol class="lp-steps">
+      <li class="lp-step" data-reveal>
+        <span class="lp-step-num">01</span>
+        <h3>Enter your domain</h3>
+        <p>No installation, no agents, no setup required.</p>
+      </li>
+      <li class="lp-step" data-reveal>
+        <span class="lp-step-num">02</span>
+        <h3>Automated scan</h3>
+        <p>DNS, SSL, HTTP, WHOIS and subdomain analysis run automatically.</p>
+      </li>
+      <li class="lp-step" data-reveal>
+        <span class="lp-step-num">03</span>
+        <h3>Risk intelligence</h3>
+        <p>AI scores your posture, ranks findings and identifies attack paths.</p>
+      </li>
+      <li class="lp-step" data-reveal>
+        <span class="lp-step-num">04</span>
+        <h3>Act &amp; improve</h3>
+        <p>Follow the prioritized plan, and ask the assistant whenever you need guidance.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═══ Stats band ═══════════════════════════════════════════ -->
+<section class="lp-stats-band" aria-label="BharatSec at a glance">
+  <div class="lp-container">
+    <dl class="lp-stats">
+      <div class="lp-stat"><dt>Security scan modules</dt><dd>6+</dd></div>
+      <div class="lp-stat"><dt>Subdomain checks</dt><dd>30+</dd></div>
+      <div class="lp-stat"><dt>Average scan time</dt><dd>60s</dd></div>
+      <div class="lp-stat"><dt>Passive &amp; non-intrusive</dt><dd>100%</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- ═══ Final CTA ════════════════════════════════════════════ -->
+<section class="lp-section lp-cta-section">
+  <div class="lp-container">
+    <div class="lp-cta">
+      <img class="lp-cta-mark" src="assets/images/brand/bharatsec-mark.svg" alt="" width="56" height="56" />
+      <h2>Secure your <span class="ds-gradient-text">digital Bharat</span> today</h2>
+      <p>Free scan. Clear, prioritized results in about a minute.</p>
+      <div class="lp-cta-actions">
+        <button class="ds-btn ds-btn--brand ds-btn--lg" type="button" data-scan-focus>Scan my domain — free</button>
+        <a class="ds-btn ds-btn--secondary ds-btn--lg" href="#products">Explore the suite</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ═══ Footer ═══════════════════════════════════════════════ -->
+<footer class="lp-footer">
+  <div class="lp-container">
+    <div class="lp-footer-grid">
+      <div class="lp-footer-brand">
+        <a class="ds-brand" href="index.html" aria-label="BharatSec home">
+          <img src="assets/images/brand/bharatsec-mark.svg" alt="" width="34" height="34" />
+          <span class="ds-brand-name">Bharat<span>Sec</span></span>
+        </a>
+        <p>AI-powered cyber risk intelligence.<br />Built for India, trusted worldwide.</p>
+      </div>
+
+      <div class="lp-footer-col">
+        <h4>Products</h4>
+        <ul>
+          <li><a href="#scan">Domain scanner</a></li>
+          <li><a href="soc.html">SOC</a></li>
+          <li><a href="threat-intel.html">Threat Intel</a></li>
+          <li><a href="cloud.html">Cloud</a></li>
+          <li><a href="risk.html">Risk</a></li>
+        </ul>
+      </div>
+
+      <div class="lp-footer-col">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="#features">Capabilities</a></li>
+          <li><a href="#how-it-works">How it works</a></li>
+          <li><a href="/api/docs" target="_blank" rel="noopener">API docs</a></li>
+        </ul>
+      </div>
+
+      <div class="lp-footer-col">
+        <h4>Trust</h4>
+        <ul>
+          <li><a href="#responsible-use">Responsible use</a></li>
+          <li><a href="#how-it-works">Passive scanning</a></li>
+          <li><a href="login.html">Sign in</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="lp-footer-note" id="responsible-use">
+      <strong>Responsible use.</strong> BharatSec performs passive reconnaissance only — it reads publicly available DNS, WHOIS, HTTP and certificate data. Scan only domains you own or are authorized to assess.
+    </div>
+
+    <div class="lp-footer-bottom">
+      <span>© <span data-current-year>2026</span> BharatSec · Built in India</span>
+      <span>Passive reconnaissance only · Scan only authorized targets</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══ BharatSec AI assistant (FIFI) ════════════════════════ -->
+<button class="fifi-fab" id="fifi-fab" type="button" onclick="toggleFIFI()" aria-controls="fifi-panel" aria-expanded="false" title="Chat with BharatSec AI">
+  <img class="fifi-fab-avatar" src="assets/images/brand/bharatsec-mark.svg" alt="" width="28" height="28" />
+  <span class="fifi-fab-label">Ask BharatSec AI</span>
+  <span class="fifi-pulse" aria-hidden="true"></span>
+</button>
+
+<div class="fifi-panel" id="fifi-panel" role="dialog" aria-label="BharatSec AI assistant">
+  <div class="fifi-header">
+    <div class="fifi-header-left">
+      <span class="fifi-avatar-wrap">
+        <img src="assets/images/brand/bharatsec-mark.svg" alt="" width="34" height="34" />
+        <span class="fifi-online-dot"></span>
+      </span>
+      <div>
+        <div class="fifi-name">BharatSec AI</div>
+        <div class="fifi-tagline" id="fifi-tagline">Security, AI, business &amp; general knowledge</div>
+      </div>
+    </div>
+    <button class="fifi-close" type="button" onclick="fifiNewChat()" aria-label="Start a new chat" title="New chat">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+    </button>
+    <button class="fifi-close" type="button" onclick="toggleFIFI()" aria-label="Close assistant">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <div class="fifi-messages" id="fifi-messages" aria-live="polite">
+    <div class="fifi-msg ai">
+      <div class="fifi-msg-avatar"><img src="assets/images/brand/bharatsec-mark.svg" alt="" /></div>
+      <div class="fifi-bubble">
+        <strong>Namaste — BharatSec AI here.</strong><br/>
+        Ask me anything: cybersecurity at any depth, Indian cyber law, AI and LLMs, business and startups, coding, or general knowledge. I remember the conversation, so follow-up questions work too.
+      </div>
+    </div>
+  </div>
+
+  <div class="fifi-suggestions" id="fifi-suggestions">
+    <button type="button" class="fifi-chip" onclick="fifSend(this)">How do I set up DMARC?</button>
+    <button type="button" class="fifi-chip" onclick="fifSend(this)">Explain the DPDP Act simply</button>
+    <button type="button" class="fifi-chip" onclick="fifSend(this)">What is prompt injection?</button>
+    <button type="button" class="fifi-chip" onclick="fifSend(this)">How do startups calculate CAC?</button>
+  </div>
+
+  <div class="fifi-input-row">
+    <input
+      type="text" id="fifi-input" class="fifi-input"
+      placeholder="Ask BharatSec AI anything…" aria-label="Message BharatSec AI"
+      onkeydown="if(event.key==='Enter')fifSendMsg()"
+    />
+    <button class="fifi-voice-btn" id="fifi-voice-btn" type="button" aria-label="Voice input">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+    </button>
+    <button class="fifi-send-btn" type="button" onclick="fifSendMsg()" aria-label="Send message">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>
+    </button>
+  </div>
+</div>
+
+<script src="assets/js/cyber-background.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/ai-chat.js"></script>
+<script src="assets/js/fifi.js?v=4"></script>
+<script>
+/* ── Auth integration ─────────────────────────────────────── */
+(function() {
+  const area    = document.getElementById('nav-auth-area');
+  if (!area) return; // safety guard
+
+  bsAuthReady.then((session) => {
+    if (!session) {
+      const signIn = document.createElement('a');
+      signIn.href = 'login.html';
+      signIn.className = 'ds-btn ds-btn--primary';
+      signIn.textContent = 'Sign in to scan';
+      area.replaceChildren(signIn);
+      return;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'lp-user';
+    const pill = document.createElement('div');
+    pill.className = 'nav-user-pill';
+    const avatar = document.createElement('span');
+    avatar.className = 'ds-avatar';
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.textContent = (String(session.name || 'U').trim().charAt(0) || 'U').toUpperCase();
+    const name = document.createElement('span');
+    name.className = 'nav-user-name';
+    name.textContent = session.name;
+    pill.append(avatar, name);
+
+    const signOut = document.createElement('button');
+    signOut.type = 'button';
+    signOut.className = 'ds-btn ds-btn--ghost ds-btn--icon ds-btn--sm nav-logout-btn';
+    signOut.title = 'Sign out';
+    signOut.setAttribute('aria-label', 'Sign out');
+    signOut.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>';
+    signOut.addEventListener('click', async () => {
+      try {
+        await bsLogout();
+        location.reload();
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+    wrapper.append(pill, signOut);
+    area.replaceChildren(wrapper);
+  });
+})();
+
+/* ── Auth-gated scan start ───────────────────────────────────── */
+async function startScan() {
+  await bsAuthReady;
+  if (!bsIsLoggedIn()) {
+    // Redirect to login, then come back to index with the domain filled
+    const domain = document.getElementById('domain-input').value.trim();
+    const ret = domain
+      ? `index.html?domain=${encodeURIComponent(domain)}#scan`
+      : 'index.html';
+    window.location.href = `login.html?return=${encodeURIComponent(ret)}`;
+    return;
+  }
+
+  // Delegate to main.js handleScanSubmit (which does full validation)
+  handleScanSubmit();
+}
+
+/* ── Restore the domain typed before sign-in ─────────────────── */
+(function() {
+  const domain = new URLSearchParams(window.location.search).get('domain');
+  const input = document.getElementById('domain-input');
+  if (domain && input && isValidDomain(domain)) input.value = domain;
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+/* BharatSec Risk — finance-facing view on top of design-system.css.
+   Calm surfaces, tabular numerals, every colour from --ds-* tokens. */
+
+html { scroll-behavior: smooth; }
+.risk-page { overflow-x: hidden; }
+
+/* Scenario palette: categorical, not severity */
+.risk-page {
+  --rk-breach: var(--ds-info);
+  --rk-outage: var(--ds-accent);
+  --rk-fraud: var(--ds-primary);
+}
+
+#overview, #scenarios, #assumptions, #drivers { scroll-margin-top: calc(var(--ds-topbar-h) + 16px); }
+.rk-section { margin-top: var(--ds-space-6); }
+.rk-card { overflow: hidden; }
+
+/* ── Sidebar note ───────────────────────────────────────────────────────── */
+.rk-side-note {
+  display: flex; gap: 10px; padding: 12px;
+  border: 1px solid var(--ds-border); border-radius: var(--ds-radius); background: var(--ds-surface);
+}
+.rk-side-note svg { width: 16px; height: 16px; margin-top: 2px; flex: 0 0 auto; color: var(--ds-info); }
+.rk-side-note strong { display: block; color: var(--ds-text); font-size: var(--ds-text-xs); font-weight: 600; }
+.rk-side-note span { display: block; color: var(--ds-text-3); font-size: 11px; line-height: 1.45; }
+
+/* ── Header + assessment picker ─────────────────────────────────────────── */
+.rk-picker { display: block; width: min(320px, 100%); }
+.rk-picker .ds-label { margin-bottom: 6px; font-size: var(--ds-text-xs); }
+
+/* ── Callouts ───────────────────────────────────────────────────────────── */
+.rk-callout {
+  display: flex; align-items: flex-start; gap: 14px;
+  margin-bottom: var(--ds-space-5); padding: 14px 16px;
+  border: 1px solid var(--ds-border); border-radius: var(--ds-radius-lg); background: var(--ds-surface);
+}
+.rk-callout-icon { width: 20px; height: 20px; flex: 0 0 auto; margin-top: 1px; }
+.rk-callout-body { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.rk-callout-body strong { color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 600; }
+.rk-callout-body span { color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+.rk-callout .ds-btn { align-self: center; }
+.rk-callout--accent { border-color: color-mix(in srgb, var(--ds-accent) 26%, var(--ds-border)); background: linear-gradient(0deg, var(--ds-accent-soft), var(--ds-accent-soft)), var(--ds-surface); }
+.rk-callout--accent .rk-callout-icon { color: var(--ds-accent); }
+.rk-callout--error { border-color: color-mix(in srgb, var(--ds-critical) 30%, var(--ds-border)); background: linear-gradient(0deg, var(--ds-critical-soft), var(--ds-critical-soft)), var(--ds-surface); }
+.rk-callout--error .rk-callout-icon { color: var(--ds-critical); }
+
+/* ── Executive metrics ──────────────────────────────────────────────────── */
+.rk-metrics { display: grid; grid-template-columns: 1.35fr repeat(3, minmax(0, 1fr)); gap: var(--ds-space-4); margin-bottom: var(--ds-space-6); }
+.rk-metric { display: flex; flex-direction: column; min-width: 0; }
+.rk-metric-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rk-metric-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--ds-surface-2); color: var(--ds-text-3); }
+.rk-metric-icon svg { width: 15px; height: 15px; }
+.rk-metric-value { margin-top: 12px; overflow-wrap: anywhere; }
+.rk-metric .ds-stat-meta { margin-top: auto; padding-top: 8px; }
+.rk-metric--primary {
+  position: relative; overflow: hidden;
+  border-color: color-mix(in srgb, var(--ds-primary) 28%, var(--ds-border));
+  background: linear-gradient(160deg, var(--ds-primary-soft), transparent 70%), var(--ds-surface);
+}
+.rk-metric--primary::before { content: ''; position: absolute; inset: 0 0 auto; height: 2px; background: var(--ds-brand-gradient); }
+.rk-metric--primary .rk-metric-icon { background: var(--ds-primary-soft); color: var(--ds-primary); }
+.rk-metric--primary .rk-metric-value { font-size: var(--ds-text-3xl); }
+
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+.rk-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(340px, 1fr); align-items: start; gap: var(--ds-space-5); }
+.rk-currency { font-variant-numeric: tabular-nums; }
+
+/* ── Loss scenario visual ───────────────────────────────────────────────── */
+.rk-mix { display: flex; height: 10px; overflow: hidden; gap: 2px; border-radius: 99px; background: var(--ds-surface-3); }
+.rk-mix i { display: block; height: 100%; min-width: 2px; transition: width var(--ds-base) var(--ds-ease); }
+.rk-mix-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 22px; color: var(--ds-text-2); font-size: var(--ds-text-xs); }
+.rk-mix-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.rk-mix-legend b { color: var(--ds-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.rk-chart { display: grid; gap: 18px; }
+.chart-row { display: grid; gap: 7px; }
+.chart-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.chart-label { display: inline-flex; align-items: center; gap: 8px; min-width: 0; color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 600; }
+.chart-value { color: var(--ds-text); font-size: var(--ds-text-base); font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chart-track { display: block; height: 12px; overflow: hidden; border-radius: 6px; background: var(--ds-surface-2); box-shadow: inset 0 0 0 1px var(--ds-divider); }
+.chart-bar { display: block; height: 100%; border-radius: 6px; transition: width var(--ds-base) var(--ds-ease); }
+.chart-meta { color: var(--ds-text-3); font-size: var(--ds-text-xs); font-variant-numeric: tabular-nums; }
+.chart-bar.breach, .scenario-dot.breach, .rk-mix .breach { background: var(--rk-breach); }
+.chart-bar.outage, .scenario-dot.outage, .rk-mix .outage { background: var(--rk-outage); }
+.chart-bar.fraud, .scenario-dot.fraud, .rk-mix .fraud { background: var(--rk-fraud); }
+.scenario-dot { display: inline-block; width: 8px; height: 8px; flex: 0 0 auto; border-radius: 2px; }
+
+.rk-axis { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 8px; border-top: 1px dashed var(--ds-border); color: var(--ds-text-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+
+.rk-table-wrap { border-top: 1px solid var(--ds-divider); }
+.rk-num { text-align: right !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rk-scenario-table td.rk-num { color: var(--ds-text); }
+.rk-scenario-table td:last-child { font-weight: 650; }
+.scenario-name { display: inline-flex; align-items: center; gap: 9px; color: var(--ds-text); font-weight: 500; white-space: nowrap; }
+.rk-scenario-table .rk-total-row td { border-top: 1px solid var(--ds-border); color: var(--ds-text); font-weight: 650; background: var(--ds-bg-raised); }
+.rk-scenario-table .rk-total-row:hover { background: transparent; }
+.rk-scenario-table .rk-total-row .scenario-name { font-weight: 650; }
+
+.rk-footnote { display: flex; gap: 10px; padding: 12px 20px; border-top: 1px solid var(--ds-divider); color: var(--ds-text-3); font-size: var(--ds-text-xs); line-height: 1.5; }
+.rk-footnote svg { width: 15px; height: 15px; flex: 0 0 auto; margin-top: 1px; }
+
+/* ── Assumptions form ───────────────────────────────────────────────────── */
+.rk-form { display: grid; }
+.rk-group { display: grid; gap: 14px; margin: 0; padding: 18px 20px; border: 0; border-bottom: 1px solid var(--ds-divider); min-width: 0; }
+.rk-group-heading { display: flex; align-items: center; gap: 10px; float: left; width: 100%; margin-bottom: 2px; padding: 0; color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 600; }
+.rk-group-heading + * { clear: both; }
+.rk-group-index { display: grid; place-items: center; width: 24px; height: 20px; border-radius: 6px; background: var(--ds-surface-2); color: var(--ds-text-3); font-family: var(--ds-font-mono); font-size: 10.5px; font-weight: 600; }
+.rk-field { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: 4px 14px; }
+.rk-field-label { color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+.rk-input-wrap { position: relative; display: block; }
+.rk-input-wrap .ds-input { min-height: 38px; padding-right: 84px; font-variant-numeric: tabular-nums; text-align: right; }
+.rk-input-wrap i {
+  position: absolute; top: 50%; right: 1px; display: flex; align-items: center; height: calc(100% - 2px); padding: 0 10px;
+  border-left: 1px solid var(--ds-border); border-radius: 0 var(--ds-radius) var(--ds-radius) 0;
+  background: var(--ds-surface-2); color: var(--ds-text-3); font-size: 11px; font-style: normal; font-weight: 500; white-space: nowrap;
+  transform: translateY(-50%); pointer-events: none;
+}
+.rk-input-wrap input::-webkit-outer-spin-button,
+.rk-input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.rk-input-wrap input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+.rk-hint { grid-column: 2; min-height: 0; color: var(--ds-text-3); font-size: 11px; text-align: right; font-variant-numeric: tabular-nums; }
+.rk-hint:empty { display: none; }
+.rk-form-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; background: var(--ds-bg-raised); }
+.rk-form-status { flex: 1; min-width: 160px; color: var(--ds-low); font-size: var(--ds-text-xs); font-weight: 500; }
+.rk-form-status.error { color: var(--ds-critical); }
+
+/* ── Drivers ────────────────────────────────────────────────────────────── */
+.rk-drivers-table td { vertical-align: top; line-height: 1.5; }
+.rk-drivers-table th:first-child, .rk-drivers-table td:first-child { width: 110px; }
+.rk-drivers-table td:nth-child(2) { color: var(--ds-text); font-weight: 600; }
+.empty-drivers { padding: 32px 20px !important; color: var(--ds-text-3) !important; text-align: center; }
+
+/* ── Methodology ────────────────────────────────────────────────────────── */
+.rk-method {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 16px;
+  padding: 20px; border: 1px solid var(--ds-border); border-radius: var(--ds-radius-lg); background: var(--ds-bg-raised);
+}
+.rk-method-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--ds-info-soft); color: var(--ds-info); }
+.rk-method-icon svg { width: 18px; height: 18px; }
+.rk-method strong { color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 600; }
+.rk-method p { margin-top: 4px; max-width: 860px; color: var(--ds-text-2); font-size: var(--ds-text-sm); line-height: 1.6; }
+
+.rk-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; margin-top: var(--ds-space-8); padding-top: var(--ds-space-5); border-top: 1px solid var(--ds-divider); color: var(--ds-text-3); font-size: var(--ds-text-xs); }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 1280px) {
+  .rk-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rk-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .rk-header { align-items: stretch; }
+  .rk-picker { width: 100%; }
+  .rk-drivers-table thead { display: none; }
+  .rk-drivers-table, .rk-drivers-table tbody, .rk-drivers-table tr, .rk-drivers-table td { display: block; width: auto !important; }
+  .rk-drivers-table tr { padding: 14px 16px; border-bottom: 1px solid var(--ds-divider); }
+  .rk-drivers-table td { padding: 3px 0; border: 0; }
+  .rk-drivers-table td[data-label]:nth-child(n+3)::before {
+    content: attr(data-label); display: block; margin: 6px 0 2px; color: var(--ds-text-3);
+    font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  }
+  .rk-method { grid-template-columns: auto minmax(0, 1fr); }
+  .rk-method > .ds-btn { grid-column: 2; justify-self: start; }
+}
+@media (max-width: 640px) {
+  .rk-metrics { gap: 12px; }
+  .rk-metric { padding: 14px; }
+  .rk-metric--primary { grid-column: 1 / -1; }
+  .rk-metric-value { font-size: var(--ds-text-xl); }
+  .rk-metric--primary .rk-metric-value { font-size: var(--ds-text-2xl); }
+  #metric-confidence { font-size: var(--ds-text-lg); white-space: nowrap; }
+  .rk-metric-icon { display: none; }
+  .rk-metric--primary .rk-metric-icon { display: grid; }
+  .rk-field { grid-template-columns: 1fr; }
+  .rk-hint { grid-column: 1; }
+  .rk-group, .rk-form-footer { padding-left: 16px; padding-right: 16px; }
+  .rk-form-footer .ds-btn { width: 100%; }
+  .rk-scenario-table th, .rk-scenario-table td { padding-left: 12px; padding-right: 12px; }
+  .rk-scenario-table th:nth-child(2), .rk-scenario-table td:nth-child(2),
+  .rk-scenario-table th:nth-child(3), .rk-scenario-table td:nth-child(3) { display: none; }
+  .rk-callout { flex-wrap: wrap; }
+}
