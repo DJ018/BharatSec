@@ -103,6 +103,20 @@ async def _complete_once(client: httpx.AsyncClient, provider: Provider, system: 
     return (response.json()["choices"][0]["message"]["content"] or "").strip()
 
 
+def _describe(exc: Exception) -> str:
+    """Error summary safe for logs: the HTTP status and the provider's short message, never request headers."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        detail = ""
+        try:
+            body = exc.response.json()
+            error = body[0].get("error") if isinstance(body, list) and body else body.get("error")
+            detail = (error.get("message") if isinstance(error, dict) else str(error or ""))[:200]
+        except (ValueError, AttributeError, TypeError, IndexError):
+            pass
+        return f"HTTP {exc.response.status_code}{': ' + detail if detail else ''}"
+    return type(exc).__name__
+
+
 async def complete(providers: Sequence[Provider], system: str, messages: Sequence[Message], *,
                    temperature: float, max_tokens: int, timeout: float) -> Tuple[str, Provider]:
     """Return (answer, provider) from the first provider that answers."""
@@ -118,7 +132,7 @@ async def complete(providers: Sequence[Provider], system: str, messages: Sequenc
                     break
                 except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
                     last_error = exc
-                    logger.warning("%s request failed (attempt %s): %s", provider.name, attempt, type(exc).__name__)
+                    logger.warning("%s request failed (attempt %s): %s", provider.name, attempt, _describe(exc))
                     if attempt == 1 and _retryable(exc):
                         await asyncio.sleep(RETRY_DELAY_SECONDS)
                         continue
@@ -195,7 +209,7 @@ async def stream(providers: Sequence[Provider], system: str, messages: Sequence[
                     if started:
                         raise ProviderError("The answer was interrupted by the AI provider.") from exc
                     last_error = exc
-                    logger.warning("%s stream failed (attempt %s): %s", provider.name, attempt, type(exc).__name__)
+                    logger.warning("%s stream failed (attempt %s): %s", provider.name, attempt, _describe(exc))
                     if attempt == 1 and _retryable(exc):
                         await asyncio.sleep(RETRY_DELAY_SECONDS)
                         continue

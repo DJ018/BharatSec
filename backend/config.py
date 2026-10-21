@@ -52,8 +52,9 @@ except OSError:
     pass  # read-only filesystem: data lives in DATABASE_URL instead
 
 # ── API Keys (optional — set in environment variables) ────────────────────────
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+# Trimmed so a key pasted with stray spaces or quotes still works.
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip().strip("\"'")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip().strip("\"'")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 # Seconds to wait for the provider (per read while streaming).
