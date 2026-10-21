@@ -27,11 +27,21 @@ class Provider:
     name: str      # "gemini" | "openai"
     api_key: str
     model: str
-    fallback_model: str = ""  # used once if the provider reports that `model` no longer exists
+    # Tried in order when `model` is retired (404) or stays overloaded after a retry (429/5xx).
+    fallback_models: Tuple[str, ...] = ()
 
 
 def _model_gone(exc: Exception) -> bool:
     return isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code == 404
+
+
+def _candidates(provider: Provider) -> List[Provider]:
+    return [provider] + [replace(provider, model=model, fallback_models=()) for model in provider.fallback_models]
+
+
+def _try_next_model(exc: Exception | None) -> bool:
+    """A retired or overloaded model is worth swapping; a rejected key or bad request is not."""
+    return exc is not None and (_model_gone(exc) or _retryable(exc))
 
 
 class ProviderError(Exception):
@@ -130,23 +140,24 @@ async def complete(providers: Sequence[Provider], system: str, messages: Sequenc
     """Return (answer, provider) from the first provider that answers."""
     last_error: Exception | None = None
     async with httpx.AsyncClient(timeout=_timeout(timeout)) as client:
-        for provider in providers:
-            for attempt in (1, 2):
-                try:
-                    answer = await _complete_once(client, provider, system, messages, temperature, max_tokens)
-                    if answer:
-                        return answer, provider
-                    last_error = ValueError("empty answer")
-                    break
-                except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
-                    last_error = exc
-                    logger.warning("%s request failed (attempt %s): %s", provider.name, attempt, _describe(exc))
-                    if _model_gone(exc) and provider.fallback_model:
-                        provider = replace(provider, model=provider.fallback_model, fallback_model="")
-                        continue
-                    if attempt == 1 and _retryable(exc):
-                        await asyncio.sleep(RETRY_DELAY_SECONDS)
-                        continue
+        for configured in providers:
+            for provider in _candidates(configured):
+                for attempt in (1, 2):
+                    try:
+                        answer = await _complete_once(client, provider, system, messages, temperature, max_tokens)
+                        if answer:
+                            return answer, provider
+                        last_error = ValueError("empty answer")
+                        break
+                    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
+                        last_error = exc
+                        logger.warning("%s %s request failed (attempt %s): %s",
+                                       provider.name, provider.model, attempt, _describe(exc))
+                        if attempt == 1 and _retryable(exc):
+                            await asyncio.sleep(RETRY_DELAY_SECONDS)
+                            continue
+                        break
+                if not _try_next_model(last_error):
                     break
     raise ProviderError(f"No AI provider answered ({type(last_error).__name__ if last_error else 'none configured'}).")
 
@@ -203,30 +214,31 @@ async def stream(providers: Sequence[Provider], system: str, messages: Sequence[
     """
     last_error: Exception | None = None
     async with httpx.AsyncClient(timeout=_timeout(timeout)) as client:
-        for provider in providers:
-            for attempt in (1, 2):
-                started = False
-                try:
-                    async for chunk in _stream_once(client, provider, system, messages, temperature, max_tokens):
-                        if not started:
-                            started = True
-                            yield "provider", provider
-                        yield "delta", chunk
-                    if started:
-                        return
-                    last_error = ValueError("empty answer")
-                    break
-                except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
-                    if started:
-                        raise ProviderError("The answer was interrupted by the AI provider.") from exc
-                    last_error = exc
-                    logger.warning("%s stream failed (attempt %s): %s", provider.name, attempt, _describe(exc))
-                    if _model_gone(exc) and provider.fallback_model:
-                        provider = replace(provider, model=provider.fallback_model, fallback_model="")
-                        continue
-                    if attempt == 1 and _retryable(exc):
-                        await asyncio.sleep(RETRY_DELAY_SECONDS)
-                        continue
+        for configured in providers:
+            for provider in _candidates(configured):
+                for attempt in (1, 2):
+                    started = False
+                    try:
+                        async for chunk in _stream_once(client, provider, system, messages, temperature, max_tokens):
+                            if not started:
+                                started = True
+                                yield "provider", provider
+                            yield "delta", chunk
+                        if started:
+                            return
+                        last_error = ValueError("empty answer")
+                        break
+                    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
+                        if started:
+                            raise ProviderError("The answer was interrupted by the AI provider.") from exc
+                        last_error = exc
+                        logger.warning("%s %s stream failed (attempt %s): %s",
+                                       provider.name, provider.model, attempt, _describe(exc))
+                        if attempt == 1 and _retryable(exc):
+                            await asyncio.sleep(RETRY_DELAY_SECONDS)
+                            continue
+                        break
+                if not _try_next_model(last_error):
                     break
     raise ProviderError(f"No AI provider answered ({type(last_error).__name__ if last_error else 'none configured'}).")
 

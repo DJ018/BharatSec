@@ -88,7 +88,7 @@ BharatSec AI answers questions on cybersecurity (at any depth), Indian cyber law
 
 The microphone buttons provide speech-to-text input in supported secure browser contexts. Assistant replies are displayed as text and are not spoken aloud.
 
-Optional AI settings: `GEMINI_MODEL` (default `gemini-3.8-flash`; falls back to `gemini-flash-latest` if Google retires it), `OPENAI_MODEL` (default `gpt-4.1-mini`), `COPILOT_TIMEOUT` (default 45 seconds), `AI_MAX_OUTPUT_TOKENS` (default 2048, the longest answer), and `AI_RATE_LIMIT_PER_MINUTE` (default 20 AI requests per user per minute, to protect your provider quota and bill).
+Optional AI settings: `GEMINI_MODEL` (default `gemini-3.8-flash`; falls back to `gemini-flash-latest`, then `gemini-flash-lite-latest`, if it is retired or overloaded), `OPENAI_MODEL` (default `gpt-4.1-mini`), `COPILOT_TIMEOUT` (default 45 seconds), `AI_MAX_OUTPUT_TOKENS` (default 2048, the longest answer), and `AI_RATE_LIMIT_PER_MINUTE` (default 20 AI requests per user per minute, to protect your provider quota and bill).
 
 **Windows (PowerShell, Gemini):**
 

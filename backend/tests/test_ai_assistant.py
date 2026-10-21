@@ -51,10 +51,27 @@ class ProviderLayerTests(unittest.TestCase):
     def test_fails_over_to_openai_when_gemini_is_down(self):
         client = FakeClient({"gemini": [(503, {}), (503, {})], "openai": [(200, OPENAI_OK)]})
         g, o = self._patch_keys()
-        with g, o, patch.object(llm.httpx, "AsyncClient", return_value=client), patch.object(llm, "RETRY_DELAY_SECONDS", 0):
+        with g, o, patch.object(ai_engine, "GEMINI_FALLBACK_MODELS", ()),              patch.object(llm.httpx, "AsyncClient", return_value=client), patch.object(llm, "RETRY_DELAY_SECONDS", 0):
             result = _run(ai_engine.general_ai_respond("Explain zero trust"))
         self.assertEqual(result["source"], "openai")
         self.assertEqual([c[0] for c in client.calls], ["gemini", "gemini", "openai"])
+
+    def test_overloaded_gemini_model_falls_back_to_backup_model(self):
+        client = FakeClient({"gemini": [(503, {}), (503, {}), (200, GEMINI_OK)], "openai": []})
+        g, o = self._patch_keys(openai="")
+        with g, o, patch.object(llm.httpx, "AsyncClient", return_value=client), patch.object(llm, "RETRY_DELAY_SECONDS", 0):
+            result = _run(ai_engine.general_ai_respond("Who wrote Godan?"))
+        self.assertEqual(result["source"], "gemini")
+        self.assertEqual(result["model"], ai_engine.GEMINI_FALLBACK_MODELS[0])
+        self.assertIn(f"/{ai_engine.GEMINI_MODEL}:", client.calls[1][1])
+        self.assertIn(f"/{ai_engine.GEMINI_FALLBACK_MODELS[0]}:", client.calls[2][1])
+
+    def test_rejected_key_does_not_try_backup_models(self):
+        client = FakeClient({"gemini": [(403, {})], "openai": []})
+        g, o = self._patch_keys(openai="")
+        with g, o, patch.object(llm.httpx, "AsyncClient", return_value=client):
+            _run(ai_engine.general_ai_respond("Who wrote Godan?"))
+        self.assertEqual(len(client.calls), 1)
 
     def test_retries_once_after_rate_limit(self):
         client = FakeClient({"gemini": [(429, {}), (200, GEMINI_OK)], "openai": []})
@@ -80,8 +97,8 @@ class ProviderLayerTests(unittest.TestCase):
             result = _run(ai_engine.general_ai_respond("Who wrote Godan?"))
         self.assertEqual(len(client.calls), 2)
         self.assertIn(f"/{ai_engine.GEMINI_MODEL}:", client.calls[0][1])
-        self.assertIn(f"/{ai_engine.GEMINI_FALLBACK_MODEL}:", client.calls[1][1])
-        self.assertEqual(result["model"], ai_engine.GEMINI_FALLBACK_MODEL)
+        self.assertIn(f"/{ai_engine.GEMINI_FALLBACK_MODELS[0]}:", client.calls[1][1])
+        self.assertEqual(result["model"], ai_engine.GEMINI_FALLBACK_MODELS[0])
 
     def test_conversation_history_reaches_the_model(self):
         client = FakeClient({"gemini": [(200, GEMINI_OK)], "openai": []})

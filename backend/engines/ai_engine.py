@@ -11,7 +11,7 @@ from typing import Any, AsyncIterator, Callable, Dict, List, Optional
 import httpx  # noqa: F401  (kept so tests can patch ai_engine.httpx.AsyncClient)
 
 from config import (
-    AI_MAX_OUTPUT_TOKENS, COPILOT_TIMEOUT, GEMINI_API_KEY, GEMINI_FALLBACK_MODEL, GEMINI_MODEL, OPENAI_API_KEY, OPENAI_MODEL,
+    AI_MAX_OUTPUT_TOKENS, COPILOT_TIMEOUT, GEMINI_API_KEY, GEMINI_FALLBACK_MODELS, GEMINI_MODEL, OPENAI_API_KEY, OPENAI_MODEL,
 )
 from engines import knowledge_base, llm
 from models.scan_models import ScanResult, SeverityLevel
@@ -556,9 +556,9 @@ def _providers() -> List[llm.Provider]:
     """Configured language-model providers in failover order (Gemini first, then OpenAI)."""
     providers: List[llm.Provider] = []
     if GEMINI_API_KEY:
-        # Google retires model versions; if the pinned one disappears, its "latest" alias answers instead.
-        fallback = GEMINI_FALLBACK_MODEL if GEMINI_MODEL != GEMINI_FALLBACK_MODEL else ""
-        providers.append(llm.Provider("gemini", GEMINI_API_KEY, GEMINI_MODEL, fallback))
+        # Google retires model versions and its free tier gets overloaded; backup models answer instead.
+        fallbacks = tuple(model for model in GEMINI_FALLBACK_MODELS if model != GEMINI_MODEL)
+        providers.append(llm.Provider("gemini", GEMINI_API_KEY, GEMINI_MODEL, fallbacks))
     if OPENAI_API_KEY:
         providers.append(llm.Provider("openai", OPENAI_API_KEY, OPENAI_MODEL))
     return providers
