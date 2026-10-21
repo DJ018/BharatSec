@@ -62,6 +62,59 @@
     badge.className = `ds-badge ${user.role === 'admin' ? 'ds-badge--accent' : 'ds-badge--primary'}`;
     document.querySelectorAll('.user-display-name').forEach((node) => { node.textContent = user.name; });
     byId('force-banner').hidden = !user.must_change_password;
+    // Accounts created with Google/GitHub/etc. have no password yet: offer to set one instead of changing it.
+    const hasPassword = user.has_password !== false;
+    byId('current-password-field').hidden = !hasPassword;
+    byId('security-title').textContent = hasPassword ? 'Change password' : 'Set a password';
+    byId('security-subtitle').textContent = hasPassword
+      ? 'Use at least 12 characters. Changing it signs you out on your other devices.'
+      : `Optional. Lets you also sign in with your username (@${user.username}) and a password.`;
+    byId('password-submit').textContent = hasPassword ? 'Update password' : 'Set password';
+  }
+
+  // ── Sign-in methods (Google, GitHub, Facebook, Microsoft) ────
+  async function loadConnections() {
+    const message = byId('connections-message');
+    let data;
+    try {
+      data = await api('/identities');
+    } catch (error) {
+      return showMessage(message, error.message, 'error');
+    }
+    const providers = data.providers || [];
+    const connected = new Map((data.identities || []).map((identity) => [identity.provider, identity]));
+    // Providers that can be connected now, plus any already connected (even if later switched off).
+    const keys = [...new Set([...providers.map((provider) => provider.key), ...connected.keys()])];
+    byId('connections').hidden = keys.length === 0;
+    const items = keys.map((key) => {
+      const provider = providers.find((item) => item.key === key) || { key, label: window.bsSocial.LABELS[key] || key };
+      const identity = connected.get(key);
+      const item = el('li', 'ac-connection');
+      const text = el('div', 'ac-connection-text');
+      text.append(el('strong', null, provider.label), el('span', null, identity
+        ? `Connected${identity.email ? ` · ${identity.email}` : ''}`
+        : 'Not connected'));
+      item.append(window.bsSocial.icon(key), text);
+      if (identity) {
+        const disconnect = el('button', 'ds-btn ds-btn--ghost ds-btn--sm', 'Disconnect');
+        disconnect.type = 'button';
+        disconnect.addEventListener('click', async () => {
+          if (!window.confirm(`Stop signing in with ${provider.label}?`)) return;
+          try {
+            await api(`/identities/${encodeURIComponent(key)}`, { method: 'DELETE' });
+            showMessage(message, `${provider.label} disconnected.`, 'success');
+          } catch (error) {
+            showMessage(message, error.message, 'error');
+          }
+          loadConnections();
+        });
+        item.appendChild(disconnect);
+      } else if (providers.some((entry) => entry.key === key)) {
+        item.appendChild(window.bsSocial.button(provider, { link: true }));
+      }
+      return item;
+    });
+    byId('connections-list').replaceChildren(...items);
   }
 
   // ── Password ─────────────────────────────────────────────────
@@ -91,7 +144,7 @@
     const message = byId('password-message');
     const current = byId('current-password').value;
     const next = byId('new-password').value;
-    if (!current) return showMessage(message, 'Enter your current password.', 'error');
+    if (!current && me.has_password !== false) return showMessage(message, 'Enter your current password.', 'error');
     if (next.length < 12) return showMessage(message, 'Your new password must be at least 12 characters.', 'error');
     if (next !== byId('confirm-password').value) return showMessage(message, "The new passwords don't match.", 'error');
     const button = byId('password-submit');
@@ -102,7 +155,7 @@
       renderProfile(user);
       event.target.reset();
       byId('strength-bar').style.width = '0';
-      showMessage(message, 'Password updated. Your other devices have been signed out.', 'success');
+      showMessage(message, 'Password saved. Your other devices have been signed out.', 'success');
     } catch (error) {
       showMessage(message, error.message, 'error');
     } finally {
@@ -143,7 +196,14 @@
     const text = el('div', 'ac-member-text');
     const name = el('strong', null, member.name);
     if (isMe) name.appendChild(el('span', 'ds-badge ac-you', 'You'));
-    text.append(name, el('span', null, `@${member.username}`));
+    const handle = el('span', null, `@${member.username}${member.email ? ` · ${member.email}` : ''}`);
+    if ((member.providers || []).length) {
+      const providers = el('span', 'ac-member-providers');
+      providers.title = `Signs in with ${member.providers.map((key) => window.bsSocial.LABELS[key] || key).join(', ')}`;
+      member.providers.forEach((key) => providers.appendChild(window.bsSocial.icon(key)));
+      handle.appendChild(providers);
+    }
+    text.append(name, handle);
     wrap.appendChild(text);
     who.appendChild(wrap);
 
@@ -225,14 +285,17 @@
     byId('member-form').reset();
     showMessage(byId('member-message'), '');
     byId('member-dialog').showModal();
-    byId('member-username').focus();
+    byId('member-email').focus();
   });
 
   byId('member-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const message = byId('member-message');
     const username = byId('member-username').value.trim();
-    if (!/^[A-Za-z0-9_.-]{3,32}$/.test(username)) {
+    const email = byId('member-email').value.trim();
+    if (!email && !username) return showMessage(message, 'Enter their email, a username, or both.', 'error');
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return showMessage(message, 'Enter a valid email address.', 'error');
+    if (username && !/^[A-Za-z0-9_.-]{3,32}$/.test(username)) {
       return showMessage(message, 'Username must be 3–32 letters, numbers, dots, dashes or underscores.', 'error');
     }
     const button = byId('member-submit');
@@ -240,10 +303,15 @@
     try {
       const data = await api('/users', {
         method: 'POST',
-        body: JSON.stringify({ username, display_name: byId('member-name').value.trim(), role: byId('member-role').value }),
+        body: JSON.stringify({ username, email, display_name: byId('member-name').value.trim(), role: byId('member-role').value }),
       });
       byId('member-dialog').close();
-      showSecret(`Account created for ${data.user.name} (@${data.user.username}). Share this temporary password privately; it is shown only once.`, data.temporary_password);
+      showSecret(
+        data.user.email
+          ? `Account created for ${data.user.name} (@${data.user.username}). They can sign in with Google, GitHub or Facebook using ${data.user.email}, or with this temporary password, shown only once.`
+          : `Account created for ${data.user.name} (@${data.user.username}). Share this temporary password privately; it is shown only once.`,
+        data.temporary_password,
+      );
       loadTeam();
     } catch (error) {
       showMessage(message, error.message, 'error');
@@ -269,6 +337,15 @@
   }
   me = window.bsGetSession();
   renderProfile(me);
+  loadConnections();
+  // A failed connect comes back as ?oauth_error=…; show it, then tidy the address bar.
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('oauth_error')) {
+    showMessage(byId('connections-message'), params.get('oauth_error').slice(0, 300), 'error');
+    params.delete('oauth_error');
+    const query = params.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+  }
   if (me.must_change_password) byId('current-password').focus();
   if (me.role === 'admin') {
     byId('team').hidden = false;

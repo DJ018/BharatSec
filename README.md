@@ -69,6 +69,19 @@ Live at **https://bharat-sec.vercel.app**, deployed from `main` by Vercel's GitH
 - On a fresh database the first account created becomes the admin; public sign-up is closed after that. The session secret is generated and stored in the database unless `BHARATSEC_SESSION_SECRET` is set.
 - Optional Vercel environment variables: `GEMINI_API_KEY`, `OPENAI_API_KEY`, `HIBP_API_KEY`, `VIRUSTOTAL_API_KEY`.
 
+### Sign in with Google, GitHub, Facebook or Microsoft
+
+Each provider's button appears on the sign-in page once its two environment variables are set. Register an app with the provider, give it the redirect URL shown, then add the ID and secret in Vercel → Settings → Environment Variables and redeploy.
+
+| Provider | Where to create the app | Redirect URL | Variables |
+| --- | --- | --- | --- |
+| Google | Google Cloud Console → APIs & Services → Credentials → OAuth client ID (Web application) | `https://bharat-sec.vercel.app/api/auth/oauth/google/callback` | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+| GitHub | GitHub → Settings → Developer settings → OAuth Apps | `https://bharat-sec.vercel.app/api/auth/oauth/github/callback` | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` |
+| Facebook | developers.facebook.com → My Apps → Facebook Login | `https://bharat-sec.vercel.app/api/auth/oauth/facebook/callback` | `FACEBOOK_CLIENT_ID` (App ID), `FACEBOOK_CLIENT_SECRET` (App Secret) |
+| Microsoft | Microsoft Entra admin center → App registrations (any account type) | `https://bharat-sec.vercel.app/api/auth/oauth/microsoft/callback` | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` |
+
+How accounts are matched: a returning provider account signs straight in; otherwise a **verified** email that matches a BharatSec account signs in to that account (admins can add members by email on the Account page); otherwise a new account is created only during first-run setup or when `BHARATSEC_ALLOW_REGISTRATION=true`. New accounts get a username generated from the profile (for example `priya.sharma`, then `priya.sharma2` if taken). Signed-in users can connect or disconnect providers, and set a password, on the Account page. Set `BHARATSEC_PUBLIC_URL` if the site is served from a custom domain.
+
 [`render.yaml`](./render.yaml) remains for a single-server deployment on Render, where the built-in background loops run instead of the cron endpoint.
 
 ## 🔑 Optional: Connect a Copilot AI Provider

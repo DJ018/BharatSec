@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="assets/css/design-system.css" />
   <link rel="stylesheet" href="assets/css/login.css" />
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/social-login.js"></script>
 </head>
 
 <body class="login-page">
@@ -118,6 +119,13 @@
           <div class="auth-success" id="auth-success" role="status">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>
             <span id="auth-success-msg"></span>
+          </div>
+
+          <!-- ── SIGN IN WITH GOOGLE / GITHUB / FACEBOOK / MICROSOFT ── -->
+          <div class="auth-social" id="auth-social" hidden>
+            <div class="social-list" id="social-list"></div>
+            <p class="form-hint social-hint">One click, no password to remember. Your username is created for you from your profile.</p>
+            <div class="social-divider" id="social-divider">or use a username</div>
           </div>
 
           <!-- ── LOGIN FORM ──────────────────────────────────── -->
@@ -247,6 +255,7 @@
         return response.json();
       })
       .then((config) => {
+        renderSocial(config.providers || [], config.setup_required);
         if (config.setup_required) {
           // Brand-new install: the first account created here becomes the administrator.
           switchTab('register');
@@ -266,6 +275,26 @@
         }
       })
       .catch((error) => showError(error.message));
+
+    /* ── Social sign-in ──────────────────────────────────────────── */
+    function renderSocial(providers, setup) {
+      if (!providers.length) return;
+      const list = document.getElementById('social-list');
+      list.replaceChildren(...providers.map((provider) => window.bsSocial.button(provider, { returnTo: getReturnUrl() })));
+      document.getElementById('social-divider').textContent = setup ? 'or create a username and password' : 'or use a username';
+      document.getElementById('auth-social').hidden = false;
+    }
+
+    // A failed provider sign-in comes back as ?oauth_error=…; show it, then tidy the address bar.
+    (() => {
+      const params = new URLSearchParams(window.location.search);
+      const oauthError = params.get('oauth_error');
+      if (!oauthError) return;
+      showError(oauthError.slice(0, 300));
+      params.delete('oauth_error');
+      const query = params.toString();
+      window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
+    })();
 
     /* ── Get return URL ──────────────────────────────────────────── */
     function getReturnUrl() {

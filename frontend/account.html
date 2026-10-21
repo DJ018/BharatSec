@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="assets/css/design-system.css" />
   <link rel="stylesheet" href="assets/css/account.css" />
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/social-login.js"></script>
 </head>
 <body class="ds-app account-page">
   <aside class="ds-sidebar" aria-label="Account navigation">
@@ -78,12 +79,22 @@
         <span class="ds-badge" id="profile-role">—</span>
       </section>
 
+      <section class="ds-card ac-section" id="connections" aria-labelledby="connections-title" hidden>
+        <div class="ds-card-header">
+          <div><h2 class="ds-card-title" id="connections-title">Sign-in methods</h2><p class="ds-card-subtitle">Connect an account to sign in with one click instead of typing your password.</p></div>
+        </div>
+        <div class="ds-card-body">
+          <ul class="ac-connections" id="connections-list"></ul>
+          <p class="ac-message" id="connections-message" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+
       <section class="ds-card ac-section" id="security" aria-labelledby="security-title">
         <div class="ds-card-header">
-          <div><h2 class="ds-card-title" id="security-title">Change password</h2><p class="ds-card-subtitle">Use at least 12 characters. Changing it signs you out on your other devices.</p></div>
+          <div><h2 class="ds-card-title" id="security-title">Change password</h2><p class="ds-card-subtitle" id="security-subtitle">Use at least 12 characters. Changing it signs you out on your other devices.</p></div>
         </div>
         <form class="ds-card-body ac-form" id="password-form" novalidate>
-          <label class="ac-field"><span class="ds-label">Current password</span><input class="ds-input" type="password" id="current-password" autocomplete="current-password" required /></label>
+          <label class="ac-field" id="current-password-field"><span class="ds-label">Current password</span><input class="ds-input" type="password" id="current-password" autocomplete="current-password" required /></label>
           <label class="ac-field"><span class="ds-label">New password</span><input class="ds-input" type="password" id="new-password" autocomplete="new-password" minlength="12" required aria-describedby="strength-text" />
             <span class="ac-strength" aria-hidden="true"><span id="strength-bar"></span></span>
             <span class="ac-hint" id="strength-text">At least 12 characters. A passphrase of a few words works well.</span>
@@ -113,8 +124,9 @@
   <dialog class="ds-dialog ac-dialog" id="member-dialog" aria-labelledby="member-dialog-title">
     <form method="dialog" id="member-form" class="ac-dialog-body">
       <h2 id="member-dialog-title">Add a team member</h2>
-      <p class="ds-muted">They'll get a temporary password and must choose their own at first sign-in.</p>
-      <label class="ac-field"><span class="ds-label">Username</span><input class="ds-input" id="member-username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_.\-]{3,32}" autocomplete="off" placeholder="e.g. priya.sharma" /></label>
+      <p class="ds-muted">Add their email so they can sign in with Google, GitHub or Facebook using that address. They also get a temporary password for username sign-in.</p>
+      <label class="ac-field"><span class="ds-label">Email</span><input class="ds-input" type="email" id="member-email" maxlength="254" autocomplete="off" placeholder="e.g. priya@company.in" /></label>
+      <label class="ac-field"><span class="ds-label">Username <span class="ac-optional">optional — made from the email if blank</span></span><input class="ds-input" id="member-username" maxlength="32" pattern="[A-Za-z0-9_.\-]{3,32}" autocomplete="off" placeholder="e.g. priya.sharma" /></label>
       <label class="ac-field"><span class="ds-label">Display name</span><input class="ds-input" id="member-name" maxlength="80" autocomplete="off" placeholder="e.g. Priya Sharma" /></label>
       <label class="ac-field"><span class="ds-label">Role</span>
         <select class="ds-select" id="member-role"><option value="analyst">Analyst — uses all BharatSec tools</option><option value="admin">Admin — also manages the team</option></select>

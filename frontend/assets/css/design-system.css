@@ -514,3 +514,23 @@ code, kbd, pre, .ds-mono { font-family: var(--ds-font-mono); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* ── Social sign-in buttons (Google, GitHub, Facebook, Microsoft) ───────── */
+.social-list { display: grid; gap: var(--ds-space-2); }
+.social-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 42px; padding: 0 var(--ds-space-4);
+  border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius);
+  background: var(--ds-surface); color: var(--ds-text);
+  font-size: var(--ds-text-sm); font-weight: 600; text-decoration: none;
+  transition: background var(--ds-fast) var(--ds-ease), border-color var(--ds-fast) var(--ds-ease);
+}
+.social-btn:hover { background: var(--ds-surface-hover); border-color: var(--ds-primary); }
+.social-btn:focus-visible { outline: 2px solid var(--ds-primary-ring); outline-offset: 2px; }
+.social-icon { display: inline-flex; width: 18px; height: 18px; flex: 0 0 auto; }
+.social-icon svg { width: 100%; height: 100%; }
+.social-divider {
+  display: flex; align-items: center; gap: var(--ds-space-3);
+  margin: var(--ds-space-5) 0; color: var(--ds-text-3); font-size: var(--ds-text-xs);
+}
+.social-divider::before, .social-divider::after { content: ""; flex: 1; height: 1px; background: var(--ds-divider); }

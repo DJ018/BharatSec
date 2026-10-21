@@ -82,6 +82,22 @@ def init_db() -> None:
             connection.execute("ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0")
         if "last_login_at" not in columns:
             connection.execute("ALTER TABLE users ADD COLUMN last_login_at TEXT")
+        if "email" not in columns:
+            connection.execute("ALTER TABLE users ADD COLUMN email TEXT")
+        connection.executescript(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users(email);
+            CREATE TABLE IF NOT EXISTS oauth_identities (
+                provider TEXT NOT NULL,
+                subject TEXT NOT NULL,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                email TEXT,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY (provider, subject)
+            );
+            CREATE INDEX IF NOT EXISTS oauth_identities_user_idx ON oauth_identities(user_id);
+            """
+        )
 
         user_count = connection.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         if user_count and not connection.execute("SELECT 1 FROM users WHERE role = 'admin'").fetchone():
@@ -201,6 +217,8 @@ def _user_payload(row: Any) -> dict[str, Any]:
         "name": row["display_name"],
         "avatar": "👤",
         "role": row["role"],
+        "email": row["email"],
+        "has_password": bool(row["password_hash"]),
         "must_change_password": bool(row["must_change_password"]),
     }
 
@@ -321,13 +339,16 @@ def create_session(username: str, password: str, remember: bool, response: Respo
     with _database() as connection:
         row = connection.execute("SELECT * FROM users WHERE username = ?", (normalized,)).fetchone()
 
-    password_valid = _verify_password(
-        password,
-        row["password_hash"] if row is not None else _DUMMY_PASSWORD_HASH,
-    )
-    if row is None or not password_valid:
+    # Accounts created through Google/GitHub/etc. have no password; check a dummy hash so timing matches.
+    stored_hash = row["password_hash"] if row is not None and row["password_hash"] else _DUMMY_PASSWORD_HASH
+    password_valid = _verify_password(password, stored_hash)
+    if row is None or not row["password_hash"] or not password_valid:
         raise HTTPException(401, "Incorrect username or password.")
+    return start_session(row, remember, response)
 
+
+def start_session(row: Any, remember: bool, response: Response) -> dict[str, Any]:
+    """Issue a session cookie for an already-authenticated user row."""
     now = datetime.now(timezone.utc)
     session_seconds = AUTH_SESSION_DAYS * 24 * 60 * 60 if remember else 24 * 60 * 60
     expires = now + timedelta(seconds=session_seconds)
@@ -405,11 +426,14 @@ def _validate_new_password(password: str) -> None:
 
 
 def change_password(user_id: int, current_password: str, new_password: str, keep_token: str | None) -> dict[str, Any]:
-    """Change the signed-in user's password and sign out their other sessions."""
+    """Change the signed-in user's password and sign out their other sessions.
+
+    Accounts created through a sign-in provider have no password yet; they set one without a current password.
+    """
     _validate_new_password(new_password)
     with _database() as connection:
         row = connection.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-        if row is None or not _verify_password(current_password, row["password_hash"]):
+        if row is None or (row["password_hash"] and not _verify_password(current_password, row["password_hash"])):
             raise HTTPException(401, "Your current password is incorrect.")
         if _verify_password(new_password, row["password_hash"]):
             raise HTTPException(422, "Choose a password different from your current one.")
@@ -428,11 +452,16 @@ def change_password(user_id: int, current_password: str, new_password: str, keep
 def list_users() -> list[dict[str, Any]]:
     with _database() as connection:
         rows = connection.execute(
-            "SELECT id, username, display_name, role, must_change_password, created_at, last_login_at FROM users ORDER BY id"
+            "SELECT id, username, display_name, role, email, must_change_password, created_at, last_login_at"
+            " FROM users ORDER BY id"
         ).fetchall()
+        linked: dict[int, list[str]] = {}
+        for identity in connection.execute("SELECT user_id, provider FROM oauth_identities ORDER BY provider").fetchall():
+            linked.setdefault(identity["user_id"], []).append(identity["provider"])
     return [
         {
             "id": row["id"], "username": row["username"], "name": row["display_name"], "role": row["role"],
+            "email": row["email"], "providers": linked.get(row["id"], []),
             "must_change_password": bool(row["must_change_password"]),
             "created_at": row["created_at"], "last_login_at": row["last_login_at"],
         }
@@ -440,21 +469,39 @@ def list_users() -> list[dict[str, Any]]:
     ]
 
 
-def admin_create_user(username: str, display_name: str, role: str) -> tuple[dict[str, Any], str]:
-    """Create a member with a temporary password (returned once) they must change at first sign-in."""
-    normalized = username.strip().lower()
-    if not USERNAME_PATTERN.fullmatch(normalized):
-        raise HTTPException(422, "Username must be 3–32 characters using letters, numbers, dots, underscores, or hyphens.")
+def admin_create_user(username: str, display_name: str, role: str, email: str = "") -> tuple[dict[str, Any], str]:
+    """Create a member with a temporary password (returned once) they must change at first sign-in.
+
+    With an email, the member can instead sign in with a Google/GitHub/Facebook/Microsoft account that has
+    that verified email; a blank username is generated from the email.
+    """
     if role not in ROLES:
         raise HTTPException(422, "Role must be admin or analyst.")
+    normalized_email = _normalize_email(email)
+    if email.strip() and not normalized_email:
+        raise HTTPException(422, "Enter a valid email address.")
     temporary = _temporary_password()
     try:
         with _database() as connection:
+            if username.strip():
+                normalized = username.strip().lower()
+                if not USERNAME_PATTERN.fullmatch(normalized):
+                    raise HTTPException(
+                        422, "Username must be 3–32 characters using letters, numbers, dots, underscores, or hyphens."
+                    )
+            elif normalized_email:
+                normalized = _available_username(connection, normalized_email.split("@", 1)[0], display_name)
+            else:
+                raise HTTPException(422, "Enter a username or an email address.")
+            if normalized_email and connection.execute(
+                "SELECT 1 FROM users WHERE email = ?", (normalized_email,)
+            ).fetchone():
+                raise HTTPException(409, "Another account already uses that email address.")
             new_id = connection.execute(
-                """INSERT INTO users (username, display_name, password_hash, created_at, role, must_change_password)
-                   VALUES (?, ?, ?, ?, ?, 1) RETURNING id""",
+                """INSERT INTO users (username, display_name, password_hash, created_at, role, must_change_password, email)
+                   VALUES (?, ?, ?, ?, ?, 1, ?) RETURNING id""",
                 (normalized, display_name.strip() or normalized, _hash_password(temporary),
-                 datetime.now(timezone.utc).isoformat(), role),
+                 datetime.now(timezone.utc).isoformat(), role, normalized_email),
             ).fetchone()[0]
             row = connection.execute("SELECT * FROM users WHERE id = ?", (new_id,)).fetchone()
     except database.IntegrityError as exc:
@@ -515,14 +562,134 @@ def delete_user(actor_id: int, user_id: int) -> None:
         connection.execute("DELETE FROM users WHERE id = ?", (user_id,))  # sessions cascade
 
 
+# ── Sign in with Google, GitHub, Facebook, Microsoft ─────────────────────────
+
+EMAIL_PATTERN = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]+$")
+
+
+def _normalize_email(email: str | None) -> str | None:
+    value = (email or "").strip().lower()
+    return value if len(value) <= 254 and EMAIL_PATTERN.fullmatch(value) else None
+
+
+def _username_base(text: str) -> str:
+    """Turn a profile name, handle or email local part into a valid username stem."""
+    base = re.sub(r"[^a-z0-9_.-]+", ".", text.strip().lower())
+    base = re.sub(r"[._-]{2,}", ".", base).strip("._-")
+    return base[:28]
+
+
+def _available_username(connection: Any, *candidates: str | None) -> str:
+    """First free username built from the candidates: "priya", then "priya2", "priya3", and so on."""
+    stems = [stem for stem in (_username_base(c or "") for c in candidates) if len(stem) >= 3] or ["user"]
+    for stem in stems:
+        if not connection.execute("SELECT 1 FROM users WHERE username = ?", (stem,)).fetchone():
+            return stem
+    for number in range(2, 1000):
+        candidate = f"{stems[0]}{number}"
+        if not connection.execute("SELECT 1 FROM users WHERE username = ?", (candidate,)).fetchone():
+            return candidate
+    return f"{stems[0][:20]}.{secrets.token_hex(4)}"
+
+
+def oauth_sign_in(provider: str, profile: dict[str, Any], link_user_id: int | None = None) -> Any:
+    """Find or create the account for a provider identity and return its user row.
+
+    Order: an identity already linked; the signed-in user who asked to link it; an account whose email matches
+    the provider's verified email; otherwise a new account (first-run setup or open registration) whose
+    username is generated from the profile.
+    """
+    subject = str(profile["subject"])
+    email = _normalize_email(profile.get("email")) if profile.get("email_verified") else None
+    now = datetime.now(timezone.utc).isoformat()
+    with _database() as connection:
+        database.schema_lock(connection, "auth-account-create")
+        identity = connection.execute(
+            "SELECT user_id FROM oauth_identities WHERE provider = ? AND subject = ?", (provider, subject)
+        ).fetchone()
+        if identity is not None:
+            if link_user_id is not None and identity["user_id"] != link_user_id:
+                raise HTTPException(409, "That account is already connected to a different BharatSec user.")
+            user_id = identity["user_id"]
+        elif link_user_id is not None:
+            if not connection.execute("SELECT 1 FROM users WHERE id = ?", (link_user_id,)).fetchone():
+                raise HTTPException(404, "Account not found.")
+            if connection.execute(
+                "SELECT 1 FROM oauth_identities WHERE provider = ? AND user_id = ?", (provider, link_user_id)
+            ).fetchone():
+                raise HTTPException(409, "Disconnect your current account for this provider before connecting another.")
+            user_id = link_user_id
+        else:
+            match = connection.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone() if email else None
+            if match is not None:
+                user_id = match["id"]
+            else:
+                has_users = connection.execute("SELECT 1 FROM users LIMIT 1").fetchone() is not None
+                if has_users and not ALLOW_REGISTRATION:
+                    raise HTTPException(
+                        403,
+                        "No BharatSec account uses this email. Ask your administrator to add you with this email address.",
+                    )
+                name = (profile.get("name") or "").strip()[:80]
+                username = _available_username(
+                    connection, profile.get("username_hint"), email.split("@", 1)[0] if email else None, name,
+                )
+                user_id = connection.execute(
+                    """INSERT INTO users (username, display_name, password_hash, created_at, role, email)
+                       VALUES (?, ?, '', ?, ?, ?) RETURNING id""",
+                    (username, name or username, now, "analyst" if has_users else "admin", email),
+                ).fetchone()[0]
+        if identity is None:
+            connection.execute(
+                "INSERT INTO oauth_identities (provider, subject, user_id, email, created_at) VALUES (?, ?, ?, ?, ?)",
+                (provider, subject, user_id, email, now),
+            )
+        # A member who was given a temporary password but signs in with a provider never needs it: discard it
+        # so it cannot be used later, and don't force a password change.
+        connection.execute(
+            "UPDATE users SET password_hash = '', must_change_password = 0 WHERE id = ? AND must_change_password = 1",
+            (user_id,),
+        )
+        if email:
+            # Keep a verified email on the account so any provider using that email can sign in to it.
+            connection.execute(
+                "UPDATE users SET email = ? WHERE id = ? AND email IS NULL"
+                " AND NOT EXISTS (SELECT 1 FROM users other WHERE other.email = ?)",
+                (email, user_id, email),
+            )
+        return connection.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+
+
+def list_identities(user_id: int) -> list[dict[str, Any]]:
+    with _database() as connection:
+        rows = connection.execute(
+            "SELECT provider, email, created_at FROM oauth_identities WHERE user_id = ? ORDER BY provider", (user_id,)
+        ).fetchall()
+    return [{"provider": row["provider"], "email": row["email"], "connected_at": row["created_at"]} for row in rows]
+
+
+def unlink_identity(user_id: int, provider: str) -> None:
+    with _database() as connection:
+        row = connection.execute("SELECT password_hash FROM users WHERE id = ?", (user_id,)).fetchone()
+        if row is None:
+            raise HTTPException(404, "Account not found.")
+        others = connection.execute(
+            "SELECT COUNT(*) FROM oauth_identities WHERE user_id = ? AND provider != ?", (user_id, provider)
+        ).fetchone()[0]
+        if not row["password_hash"] and others == 0:
+            raise HTTPException(409, "Set a password first, or you would have no way to sign in.")
+        connection.execute("DELETE FROM oauth_identities WHERE user_id = ? AND provider = ?", (user_id, provider))
+
+
 class PasswordChangeRequest(BaseModel):
-    current_password: str = Field(..., min_length=1, max_length=256)
+    current_password: str = Field("", max_length=256)
     new_password: str = Field(..., min_length=12, max_length=256)
 
 
 class MemberCreateRequest(BaseModel):
-    username: str = Field(..., min_length=3, max_length=32)
+    username: str = Field("", max_length=32)
     display_name: str = Field("", max_length=80)
+    email: str = Field("", max_length=254)
     role: str = Field("analyst", pattern="^(admin|analyst)$")
 
 

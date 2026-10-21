@@ -104,7 +104,7 @@ class AuthApiTests(unittest.TestCase):
         with patch.object(auth_service, "ALLOW_REGISTRATION", False):
             # Brand-new install: the first sign-up claims the administrator account...
             config = self.client.get("/api/auth/config").json()
-            self.assertEqual(config, {"registration_enabled": True, "setup_required": True})
+            self.assertEqual(config, {"registration_enabled": True, "setup_required": True, "providers": []})
             first = self.client.post(
                 "/api/auth/register",
                 json={"username": "first-admin", "password": "Correct-Horse-Battery-42"},
@@ -113,7 +113,7 @@ class AuthApiTests(unittest.TestCase):
             self.assertEqual(first.json()["user"]["role"], "admin")
             # ...after which public sign-up is closed.
             self.assertEqual(self.client.get("/api/auth/config").json(),
-                             {"registration_enabled": False, "setup_required": False})
+                             {"registration_enabled": False, "setup_required": False, "providers": []})
             response = TestClient(app).post(
                 "/api/auth/register",
                 json={"username": "blocked-user", "password": "Correct-Horse-Battery-42"},

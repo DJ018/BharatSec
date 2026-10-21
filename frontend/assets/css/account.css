@@ -61,3 +61,20 @@
   .ac-table td { padding: 0; border: 0; }
   .ac-row-actions { justify-content: flex-start; }
 }
+
+/* Sign-in methods */
+.ac-connections { display: grid; gap: var(--ds-space-2); margin: 0; padding: 0; list-style: none; }
+.ac-connection {
+  display: flex; align-items: center; gap: var(--ds-space-3);
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border: 1px solid var(--ds-border); border-radius: var(--ds-radius); background: var(--ds-surface-2);
+}
+.ac-connection .social-icon { width: 20px; height: 20px; }
+.ac-connection-text { display: grid; flex: 1; min-width: 0; }
+.ac-connection-text strong { color: var(--ds-text); font-weight: 600; }
+.ac-connection-text span { overflow: hidden; color: var(--ds-text-3); font-size: var(--ds-text-xs); text-overflow: ellipsis; white-space: nowrap; }
+.ac-connection .social-btn { min-height: 32px; padding: 0 var(--ds-space-3); font-size: var(--ds-text-xs); }
+.ac-connection .social-btn .social-icon { display: none; }
+.ac-optional { margin-left: 4px; color: var(--ds-text-3); font-weight: 400; text-transform: none; letter-spacing: 0; }
+.ac-member-providers { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }
+.ac-member-providers .social-icon { width: 13px; height: 13px; }
