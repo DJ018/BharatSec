@@ -1,16 +1,17 @@
 """
 BharatSec — API Router: Scan
-Handles scan lifecycle: start, status, results
+Scan lifecycle: create (start), execute (run), status, results.
+
+Scans are persisted (engines/scan_store) and executed inside their own request, so the flow works
+on serverless platforms: the client calls /start, then /{id}/run, and polls /{id}/status meanwhile.
 """
 import uuid
 import asyncio
 import re
 import logging
 from datetime import datetime, timezone
-from typing import Dict
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException
 
 from models.scan_models import ScanRequest, ScanResult, ScanStatus
 from engines.osint_engine import get_dns_records, get_whois, enumerate_subdomains, get_web_info
@@ -18,6 +19,7 @@ from engines.security_engine import get_ssl_info
 from engines.net_guard import BlockedDestinationError, resolve_public_address
 from engines.risk_engine import generate_findings, calculate_score, generate_attack_paths, get_top_priorities
 from engines.ai_engine import get_ai_analysis, generate_ai_summary
+from engines import scan_store
 
 logger = logging.getLogger("bharatsec.scan")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -25,9 +27,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 router = APIRouter(prefix="/api/scan", tags=["scan"])
-
-# In-memory scan store (use DB in production)
-scans: Dict[str, ScanResult] = {}
 
 
 # ── Domain validation ─────────────────────────────────────────────────────────
@@ -73,11 +72,19 @@ async def _reject_non_public_target(domain: str) -> None:
         pass
 
 
-# ── Background scan task ──────────────────────────────────────────────────────
+# ── Scan execution ────────────────────────────────────────────────────────────
+
+async def _checkpoint(scan: ScanResult) -> None:
+    """Persist progress so status polls (possibly served by another instance) see it."""
+    await asyncio.to_thread(scan_store.save, scan)
+
 
 async def run_scan(scan_id: str, domain: str):
-    scan = scans[scan_id]
+    scan = await asyncio.to_thread(scan_store.get, scan_id)
+    if scan is None:
+        return
     scan.status = ScanStatus.RUNNING
+    await _checkpoint(scan)
 
     try:
         # Step 1: DNS Records
@@ -85,6 +92,7 @@ async def run_scan(scan_id: str, domain: str):
             logger.info(f"[{scan_id}] Step 1/5: DNS records for {domain}")
             scan.dns = await get_dns_records(domain)
             scan.progress = 10
+            await _checkpoint(scan)
         except Exception as e:
             logger.warning(f"[{scan_id}] DNS step failed: {e}")
 
@@ -93,6 +101,7 @@ async def run_scan(scan_id: str, domain: str):
             logger.info(f"[{scan_id}] Step 2/5: WHOIS for {domain}")
             scan.whois = await get_whois(domain)
             scan.progress = 20
+            await _checkpoint(scan)
         except Exception as e:
             logger.warning(f"[{scan_id}] WHOIS step failed: {e}")
 
@@ -101,6 +110,7 @@ async def run_scan(scan_id: str, domain: str):
             logger.info(f"[{scan_id}] Step 3/5: Web analysis for {domain}")
             scan.web = await get_web_info(domain)
             scan.progress = 40
+            await _checkpoint(scan)
         except Exception as e:
             logger.warning(f"[{scan_id}] Web analysis step failed: {e}")
 
@@ -110,6 +120,7 @@ async def run_scan(scan_id: str, domain: str):
             loop = asyncio.get_running_loop()
             scan.ssl = await loop.run_in_executor(None, get_ssl_info, domain)
             scan.progress = 60
+            await _checkpoint(scan)
         except Exception as e:
             logger.warning(f"[{scan_id}] SSL step failed: {e}")
 
@@ -118,11 +129,13 @@ async def run_scan(scan_id: str, domain: str):
             logger.info(f"[{scan_id}] Step 5/5: Subdomain enum for {domain}")
             scan.subdomains = await enumerate_subdomains(domain, scan.dns)
             scan.progress = 80
+            await _checkpoint(scan)
         except Exception as e:
             logger.warning(f"[{scan_id}] Subdomain step failed: {e}")
 
         # Risk analysis
         scan.progress = 90
+        await _checkpoint(scan)
         logger.info(f"[{scan_id}] Running risk analysis...")
         scan.findings = generate_findings(scan)
 
@@ -180,12 +193,21 @@ async def run_scan(scan_id: str, domain: str):
         scan.status = ScanStatus.ERROR
         scan.ai_summary = "The scan stopped because of an internal scan error. Check the backend log and retry."
         logger.exception("[%s] Scan failed for %s: %s", scan_id, domain, e)
+    await _checkpoint(scan)
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
+def _load(scan_id: str) -> ScanResult:
+    scan = scan_store.get(scan_id)
+    if not scan:
+        raise HTTPException(404, "Scan not found")
+    return scan
+
+
 @router.post("/start")
-async def start_scan(request: ScanRequest, background_tasks: BackgroundTasks):
+async def start_scan(request: ScanRequest):
+    """Create a scan. The client then calls /{scan_id}/run to execute it."""
     if not request.authorized:
         raise HTTPException(400, "You must confirm authorization to scan this target.")
 
@@ -198,23 +220,28 @@ async def start_scan(request: ScanRequest, background_tasks: BackgroundTasks):
         domain=domain,
         started_at=datetime.now(timezone.utc).isoformat(),
     )
-    scans[scan_id] = scan
-    background_tasks.add_task(run_scan, scan_id, domain)
-
+    await asyncio.to_thread(scan_store.save, scan)
     return {"scan_id": scan_id, "domain": domain, "status": "started"}
+
+
+@router.post("/{scan_id}/run")
+async def execute_scan(scan_id: str):
+    """Run a created scan to completion inside this request (each scan runs at most once)."""
+    scan = _load(scan_id)
+    if await asyncio.to_thread(scan_store.claim_for_run, scan_id):
+        await run_scan(scan_id, scan.domain)
+        scan = _load(scan_id)
+    return {"scan_id": scan_id, "status": scan.status, "progress": scan.progress}
 
 
 @router.get("/recent")
 async def get_recent_scans():
-    completed_scans = (scan for scan in scans.values() if scan.status == ScanStatus.COMPLETE)
-    return sorted(completed_scans, key=lambda item: item.completed_at, reverse=True)[:20]
+    return await asyncio.to_thread(scan_store.recent_completed, 20)
 
 
 @router.get("/{scan_id}/status")
 async def get_scan_status(scan_id: str):
-    scan = scans.get(scan_id)
-    if not scan:
-        raise HTTPException(404, "Scan not found")
+    scan = _load(scan_id)
     return {
         "scan_id": scan_id,
         "status": scan.status,
@@ -226,25 +253,17 @@ async def get_scan_status(scan_id: str):
 
 @router.get("/{scan_id}/results")
 async def get_scan_results(scan_id: str):
-    scan = scans.get(scan_id)
-    if not scan:
-        raise HTTPException(404, "Scan not found")
-    if scan.status == ScanStatus.RUNNING:
+    scan = _load(scan_id)
+    if scan.status in (ScanStatus.RUNNING, ScanStatus.PENDING):
         raise HTTPException(202, "Scan still in progress")
     return scan
 
 
 @router.get("/{scan_id}/score")
 async def get_scan_score(scan_id: str):
-    scan = scans.get(scan_id)
-    if not scan:
-        raise HTTPException(404, "Scan not found")
-    return scan.score
+    return _load(scan_id).score
 
 
 @router.get("/")
 async def list_scans():
-    return [
-        {"scan_id": s.scan_id, "domain": s.domain, "status": s.status, "score": s.score.overall}
-        for s in scans.values()
-    ]
+    return await asyncio.to_thread(scan_store.list_summaries)

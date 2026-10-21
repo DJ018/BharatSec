@@ -1,0 +1,13 @@
+.venv
+**/.venv
+**/__pycache__
+**/*.pyc
+.env
+backend/.env
+backend/data
+backend/tests
+frontend/tests
+node_modules
+.oxcode*
+render.yaml
+.claude

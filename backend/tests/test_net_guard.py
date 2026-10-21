@@ -113,10 +113,19 @@ class SslCheckGuardTests(unittest.TestCase):
 
 class ScanStartGuardTests(unittest.TestCase):
     def setUp(self):
+        import tempfile
+        from pathlib import Path
+        from engines import scan_store
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.store_patch = patch.object(scan_store, "DB_PATH", Path(self.temp_dir.name) / "scans.db")
+        self.store_patch.start()
+        scan_store.init_db()
         self.client = authenticated_client()
 
     def tearDown(self):
         self.client.close()
+        self.store_patch.stop()
+        self.temp_dir.cleanup()
 
     def test_scan_of_privately_resolving_domain_is_refused(self):
         blocked = BlockedDestinationError("internal.example resolves to a non-public address")
@@ -138,7 +147,7 @@ class ScanStartGuardTests(unittest.TestCase):
                 json={"domain": "unregistered-example.com", "authorized": True},
             )
         self.assertEqual(response.status_code, 200)
-        run_scan.assert_awaited_once()
+        self.assertEqual(response.json()["status"], "started")
 
 
 if __name__ == "__main__":

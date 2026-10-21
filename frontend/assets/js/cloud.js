@@ -279,6 +279,9 @@
         body: JSON.stringify({ provider: state.selectedProvider, authorized: true }),
       });
       state.selectedScan = scan;
+      // The scan executes inside this request; progress is polled separately.
+      api(`/scans/${encodeURIComponent(scan.scan_id)}/run`, { method: 'POST' })
+        .catch((error) => console.warn('[BharatSec] Cloud scan run request ended early:', error.message));
       toast(`${PROVIDER_NAMES[scan.provider]} scan started. No resources will be changed.`);
       await loadData();
       state.selectedScan = state.scans.find((item) => item.scan_id === scan.scan_id) || scan;

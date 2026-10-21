@@ -12,15 +12,15 @@ BACKEND_DIR = Path(__file__).parent.resolve()
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 import os
 
 import auth as auth_service
-from config import AUTH_COOKIE_SECURE, BHARATSEC_HOST, CORS_ORIGINS, IS_LOOPBACK_HOST
-from engines import cloud_engine, soc_engine, threat_intel_engine
+from config import AUTH_COOKIE_SECURE, BHARATSEC_HOST, CORS_ORIGINS, IS_LOOPBACK_HOST, IS_SERVERLESS
+from engines import cloud_engine, scan_store, soc_engine, threat_intel_engine
 from routers import auth as auth_router, cloud, scan, ai, soc, threat_intel
 
 PROTECTED_PAGES = {
@@ -33,13 +33,30 @@ PROTECTED_PAGES = {
 }
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+CRON_SECRET = os.getenv("CRON_SECRET", "")
+CRON_MIN_INTERVAL_SECONDS = 60
+CRON_MAX_ASSET_CHECKS = 20
+
+
+def init_databases() -> None:
     auth_service.init_db()
     soc_engine.init_db()
     threat_intel_engine.init_db()
     cloud_engine.init_db()
-    background_tasks = [
+    scan_store.init_db()
+
+
+if IS_SERVERLESS:
+    # Serverless platforms may not run the lifespan hook, so tables are created at import.
+    init_databases()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if not IS_SERVERLESS:
+        init_databases()
+    # Long-running loops only work on a persistent server; serverless deployments use /api/cron/tick.
+    background_tasks = [] if IS_SERVERLESS else [
         asyncio.create_task(soc_engine.monitor_loop(), name="bharatsec-soc-monitor"),
         asyncio.create_task(threat_intel_engine.feed_loop(), name="bharatsec-threat-intel-sync"),
     ]
@@ -82,7 +99,7 @@ async def enforce_authentication_and_security_headers(request, call_next):
     path = request.url.path
     is_auth_route = path.startswith("/api/auth/")
     is_public_route = (
-        path in {"/", "/index.html", "/login", "/login.html", "/api/health"}
+        path in {"/", "/index.html", "/login", "/login.html", "/api/health", "/api/cron/tick"}
         or path.startswith("/assets/")
         or path.startswith("/favicon")
     )
@@ -187,6 +204,25 @@ if FRONTEND_DIR.exists():
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "service": "BharatSec", "version": "1.0.0"}
+
+
+# ── Scheduled jobs (serverless) ───────────────────────────────────────────────
+@app.api_route("/api/cron/tick", methods=["GET", "POST"])
+async def cron_tick(request: Request):
+    """Run due SOC checks and feed syncs. Safe to call often: work is paced through the database."""
+    if CRON_SECRET and request.headers.get("authorization") != f"Bearer {CRON_SECRET}":
+        return JSONResponse({"detail": "Not authorized."}, status_code=401)
+    if not auth_service.claim_interval("cron-tick", CRON_MIN_INTERVAL_SECONDS):
+        return {"status": "skipped", "reason": "A tick ran less than a minute ago."}
+    due_assets = soc_engine.list_due_assets()[:CRON_MAX_ASSET_CHECKS]
+    if due_assets:
+        await asyncio.gather(*(soc_engine.check_asset(asset["id"]) for asset in due_assets), return_exceptions=True)
+    feeds_synced = False
+    if auth_service.claim_interval("threat-intel-sync", threat_intel_engine.SYNC_INTERVAL_SECONDS):
+        await threat_intel_engine.sync_feeds()
+        await threat_intel_engine.sync_breach_watches()
+        feeds_synced = True
+    return {"status": "ok", "assets_checked": len(due_assets), "feeds_synced": feeds_synced}
 
 
 if __name__ == "__main__":

@@ -108,6 +108,9 @@ async function launchScan(domain) {
       await sleep(400);
       await fetchAndRender(scanId);
     } else {
+      // The scan executes inside this request; keep it open while status is polled separately.
+      fetch(`${API}/api/scan/${encodeURIComponent(scanId)}/run`, { method: 'POST' })
+        .catch((error) => console.warn('[BharatSec] Scan run request ended early:', error.message));
       updateProgress(5, `Scan started for ${domain}...`);
       pollStatus(scanId, domain);
     }

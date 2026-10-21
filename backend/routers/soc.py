@@ -2,7 +2,7 @@
 import ipaddress
 import logging
 import re
-import sqlite3
+import database
 from typing import Literal
 from urllib.parse import urlsplit
 
@@ -113,7 +113,7 @@ async def add_asset(request: AssetCreate):
     domain = _normalize_domain(request.domain)
     try:
         return soc_engine.create_asset(domain, request.name.strip(), request.check_interval_seconds)
-    except sqlite3.IntegrityError as exc:
+    except database.IntegrityError as exc:
         raise HTTPException(409, "This domain is already in the monitored asset list.") from exc
 
 

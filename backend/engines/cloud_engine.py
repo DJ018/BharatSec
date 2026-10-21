@@ -3,12 +3,13 @@ import json
 import itertools
 import logging
 import os
-import sqlite3
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Generator
+
+import database
 
 logger = logging.getLogger("bharatsec.cloud")
 DB_PATH = Path(os.getenv("CLOUD_DATABASE_PATH", str(Path(__file__).resolve().parents[1] / "data" / "cloud.db")))
@@ -56,29 +57,15 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def _connect() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(DB_PATH, timeout=15)
-    connection.row_factory = sqlite3.Row
-    connection.execute("PRAGMA foreign_keys = ON")
-    return connection
-
-
 @contextmanager
-def _db() -> Generator[sqlite3.Connection, None, None]:
-    connection = _connect()
-    try:
+def _db() -> Generator[Any, None, None]:
+    with database.transaction(DB_PATH) as connection:
         yield connection
-        connection.commit()
-    except Exception:
-        connection.rollback()
-        raise
-    finally:
-        connection.close()
 
 
 def init_db() -> None:
     with _db() as connection:
+        database.schema_lock(connection, "cloud")
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS cloud_scans (
@@ -94,6 +81,8 @@ def init_db() -> None:
             """
         )
         connection.execute("CREATE INDEX IF NOT EXISTS cloud_scans_recent ON cloud_scans(started_at DESC)")
+        if "claimed" not in database.table_columns(connection, "cloud_scans"):
+            connection.execute("ALTER TABLE cloud_scans ADD COLUMN claimed INTEGER NOT NULL DEFAULT 0")
 
 
 def list_providers() -> list[dict[str, Any]]:
@@ -127,6 +116,16 @@ def create_scan(provider: str) -> dict[str, Any]:
             (scan_id, provider, started_at),
         )
     return {"scan_id": scan_id, "provider": provider, "status": "running", "started_at": started_at}
+
+
+def claim_for_run(scan_id: str) -> bool:
+    """Mark a newly created scan as started, so concurrent /run calls execute it only once."""
+    with _db() as connection:
+        cursor = connection.execute(
+            "UPDATE cloud_scans SET claimed = 1 WHERE scan_id = ? AND status = 'running' AND claimed = 0",
+            (scan_id,),
+        )
+        return cursor.rowcount == 1
 
 
 def get_scan(scan_id: str) -> dict[str, Any] | None:

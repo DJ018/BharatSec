@@ -1,9 +1,9 @@
-"""SQLite-backed accounts and revocable browser sessions."""
+"""Accounts, roles and revocable browser sessions (SQLite locally, Postgres in production)."""
 import hashlib
 import hmac
+import logging
 import re
 import secrets
-import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Any, Generator
@@ -11,6 +11,7 @@ from typing import Any, Generator
 from fastapi import HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
+import database
 from config import (
     ALLOW_REGISTRATION,
     AUTH_COOKIE_SECURE,
@@ -31,29 +32,23 @@ PASSWORD_ITERATIONS = 310_000
 USERNAME_PATTERN = re.compile(r"^[a-zA-Z0-9_.-]{3,32}$")
 
 
-def _connect() -> sqlite3.Connection:
-    connection = sqlite3.connect(AUTH_DB_PATH, timeout=10)
-    connection.row_factory = sqlite3.Row
-    connection.execute("PRAGMA foreign_keys = ON")
-    return connection
-
-
 @contextmanager
-def _database() -> Generator[sqlite3.Connection, None, None]:
-    connection = _connect()
-    try:
+def _database() -> Generator[Any, None, None]:
+    with database.transaction(AUTH_DB_PATH, timeout=10) as connection:
         yield connection
-        connection.commit()
-    except Exception:
-        connection.rollback()
-        raise
-    finally:
-        connection.close()
 
 
 def init_db() -> None:
-    AUTH_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with _database() as connection:
+        database.schema_lock(connection, "auth")
+        connection.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
+            """
+        )
         connection.executescript(
             """
             CREATE TABLE IF NOT EXISTS users (
@@ -80,7 +75,7 @@ def init_db() -> None:
             """
         )
         # Account-management columns, added in place so existing databases keep their users.
-        columns = {row["name"] for row in connection.execute("PRAGMA table_info(users)")}
+        columns = database.table_columns(connection, "users")
         if "role" not in columns:
             connection.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'analyst'")
         if "must_change_password" not in columns:
@@ -106,9 +101,10 @@ def init_db() -> None:
                     ),
                 )
             elif not IS_LOOPBACK_HOST:
-                raise RuntimeError(
-                    "No BharatSec accounts exist. Set BHARATSEC_BOOTSTRAP_USERNAME and "
-                    "BHARATSEC_BOOTSTRAP_PASSWORD before first production startup."
+                # First-run setup: the first person to sign up becomes the administrator.
+                # Claim it right after deploying (or set BHARATSEC_BOOTSTRAP_* to pre-create the admin).
+                logging.getLogger("bharatsec.auth").warning(
+                    "No BharatSec accounts exist yet: the first sign-up will become the administrator."
                 )
 
 
@@ -137,9 +133,49 @@ def _verify_password(password: str, encoded: str) -> bool:
 _DUMMY_PASSWORD_HASH = _hash_password("invalid-account-password")
 
 
+_session_secret_cache: str | None = None
+
+
+def _session_secret() -> str:
+    """Configured secret, or one generated once and kept in the database (serverless deployments)."""
+    global _session_secret_cache
+    if AUTH_SESSION_SECRET:
+        return AUTH_SESSION_SECRET
+    if _session_secret_cache is None:
+        with _database() as connection:
+            row = connection.execute("SELECT value FROM app_settings WHERE key = 'session_secret'").fetchone()
+            if row is None:
+                connection.execute(
+                    "INSERT INTO app_settings (key, value) VALUES ('session_secret', ?) ON CONFLICT(key) DO NOTHING",
+                    (secrets.token_urlsafe(48),),
+                )
+                row = connection.execute("SELECT value FROM app_settings WHERE key = 'session_secret'").fetchone()
+        _session_secret_cache = row["value"]
+    return _session_secret_cache
+
+
+def claim_interval(job: str, interval_seconds: float) -> bool:
+    """True at most once per interval across all instances; used to pace scheduled jobs."""
+    key = f"job:{job}"
+    now = datetime.now(timezone.utc).timestamp()
+    with _database() as connection:
+        database.schema_lock(connection, key)
+        row = connection.execute("SELECT value FROM app_settings WHERE key = ?", (key,)).fetchone()
+        try:
+            if row is not None and now - float(row["value"]) < interval_seconds:
+                return False
+        except ValueError:
+            pass
+        connection.execute(
+            "INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (key, str(now)),
+        )
+    return True
+
+
 def _sign_session_token(random_token: str) -> str:
     signature = hmac.new(
-        AUTH_SESSION_SECRET.encode("utf-8"),
+        _session_secret().encode("utf-8"),
         random_token.encode("ascii"),
         hashlib.sha256,
     ).hexdigest()
@@ -158,7 +194,7 @@ def _valid_session_token(token: str) -> bool:
 ROLES = ("admin", "analyst")
 
 
-def _user_payload(row: sqlite3.Row) -> dict[str, Any]:
+def _user_payload(row: Any) -> dict[str, Any]:
     return {
         "id": row["id"],
         "username": row["username"],
@@ -241,9 +277,13 @@ def clear_rate_limit(scope: str, identifier: str) -> None:
         )
 
 
+def setup_required() -> bool:
+    """True on a brand-new install: no accounts exist yet, so the first sign-up creates the admin."""
+    with _database() as connection:
+        return connection.execute("SELECT 1 FROM users LIMIT 1").fetchone() is None
+
+
 def create_account(username: str, password: str, display_name: str) -> dict[str, Any]:
-    if not ALLOW_REGISTRATION:
-        raise HTTPException(403, "Public registration is disabled. Contact your BharatSec administrator.")
     normalized = username.strip().lower()
     if not USERNAME_PATTERN.fullmatch(normalized):
         raise HTTPException(422, "Username must be 3–32 characters using letters, numbers, dots, underscores, or hyphens.")
@@ -252,10 +292,15 @@ def create_account(username: str, password: str, display_name: str) -> dict[str,
 
     try:
         with _database() as connection:
+            # Serialise sign-ups so two people can't both claim a brand-new install as admin.
+            database.schema_lock(connection, "auth-account-create")
+            has_users = connection.execute("SELECT 1 FROM users LIMIT 1").fetchone() is not None
+            if has_users and not ALLOW_REGISTRATION:
+                raise HTTPException(403, "Public registration is disabled. Contact your BharatSec administrator.")
             # The very first account on a fresh install administers the workspace.
-            role = "analyst" if connection.execute("SELECT 1 FROM users LIMIT 1").fetchone() else "admin"
-            cursor = connection.execute(
-                "INSERT INTO users (username, display_name, password_hash, created_at, role) VALUES (?, ?, ?, ?, ?)",
+            role = "analyst" if has_users else "admin"
+            new_id = connection.execute(
+                "INSERT INTO users (username, display_name, password_hash, created_at, role) VALUES (?, ?, ?, ?, ?) RETURNING id",
                 (
                     normalized,
                     display_name.strip() or normalized,
@@ -263,9 +308,9 @@ def create_account(username: str, password: str, display_name: str) -> dict[str,
                     datetime.now(timezone.utc).isoformat(),
                     role,
                 ),
-            )
-            row = connection.execute("SELECT * FROM users WHERE id = ?", (cursor.lastrowid,)).fetchone()
-    except sqlite3.IntegrityError as exc:
+            ).fetchone()[0]
+            row = connection.execute("SELECT * FROM users WHERE id = ?", (new_id,)).fetchone()
+    except database.IntegrityError as exc:
         raise HTTPException(409, "An account with that username already exists.") from exc
 
     return _user_payload(row)
@@ -405,26 +450,26 @@ def admin_create_user(username: str, display_name: str, role: str) -> tuple[dict
     temporary = _temporary_password()
     try:
         with _database() as connection:
-            cursor = connection.execute(
+            new_id = connection.execute(
                 """INSERT INTO users (username, display_name, password_hash, created_at, role, must_change_password)
-                   VALUES (?, ?, ?, ?, ?, 1)""",
+                   VALUES (?, ?, ?, ?, ?, 1) RETURNING id""",
                 (normalized, display_name.strip() or normalized, _hash_password(temporary),
                  datetime.now(timezone.utc).isoformat(), role),
-            )
-            row = connection.execute("SELECT * FROM users WHERE id = ?", (cursor.lastrowid,)).fetchone()
-    except sqlite3.IntegrityError as exc:
+            ).fetchone()[0]
+            row = connection.execute("SELECT * FROM users WHERE id = ?", (new_id,)).fetchone()
+    except database.IntegrityError as exc:
         raise HTTPException(409, "An account with that username already exists.") from exc
     return _user_payload(row), temporary
 
 
-def _target_user(connection: sqlite3.Connection, user_id: int) -> sqlite3.Row:
+def _target_user(connection: Any, user_id: int) -> Any:
     row = connection.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
     if row is None:
         raise HTTPException(404, "Team member not found.")
     return row
 
 
-def _ensure_another_admin(connection: sqlite3.Connection, user_id: int) -> None:
+def _ensure_another_admin(connection: Any, user_id: int) -> None:
     others = connection.execute("SELECT COUNT(*) FROM users WHERE role = 'admin' AND id != ?", (user_id,)).fetchone()[0]
     if others == 0:
         raise HTTPException(409, "BharatSec needs at least one administrator. Make someone else an admin first.")

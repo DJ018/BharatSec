@@ -247,6 +247,17 @@
         return response.json();
       })
       .then((config) => {
+        if (config.setup_required) {
+          // Brand-new install: the first account created here becomes the administrator.
+          switchTab('register');
+          document.getElementById('tab-login').hidden = true;
+          document.getElementById('tab-login').style.display = 'none';
+          document.getElementById('auth-switch').hidden = true;
+          document.getElementById('auth-switch').style.display = 'none';
+          document.getElementById('auth-title').textContent = 'Set up BharatSec';
+          document.getElementById('auth-sub').textContent = 'Create the administrator account. You choose the password; you can add your team afterwards.';
+          return;
+        }
         if (!config.registration_enabled) {
           document.getElementById('tab-reg').hidden = true;
           document.getElementById('tab-reg').style.display = 'none';

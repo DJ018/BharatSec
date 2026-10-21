@@ -102,7 +102,19 @@ class AuthApiTests(unittest.TestCase):
 
     def test_registration_can_be_disabled_for_deployment(self):
         with patch.object(auth_service, "ALLOW_REGISTRATION", False):
-            response = self.client.post(
+            # Brand-new install: the first sign-up claims the administrator account...
+            config = self.client.get("/api/auth/config").json()
+            self.assertEqual(config, {"registration_enabled": True, "setup_required": True})
+            first = self.client.post(
+                "/api/auth/register",
+                json={"username": "first-admin", "password": "Correct-Horse-Battery-42"},
+            )
+            self.assertEqual(first.status_code, 201)
+            self.assertEqual(first.json()["user"]["role"], "admin")
+            # ...after which public sign-up is closed.
+            self.assertEqual(self.client.get("/api/auth/config").json(),
+                             {"registration_enabled": False, "setup_required": False})
+            response = TestClient(app).post(
                 "/api/auth/register",
                 json={"username": "blocked-user", "password": "Correct-Horse-Battery-42"},
             )

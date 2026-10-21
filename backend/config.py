@@ -43,7 +43,13 @@ def _env_number(name: str, default: float, *, minimum: float, maximum: float, ca
 # ── Project paths ─────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).parent
 DATA_DIR = BASE_DIR / "data"
-DATA_DIR.mkdir(exist_ok=True)
+# Serverless platforms (Vercel) run each request in a short-lived instance with a read-only disk.
+IS_SERVERLESS = bool(os.getenv("VERCEL"))
+HAS_DATABASE_URL = bool((os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or "").strip())
+try:
+    DATA_DIR.mkdir(exist_ok=True)
+except OSError:
+    pass  # read-only filesystem: data lives in DATABASE_URL instead
 
 # ── API Keys (optional — set in environment variables) ────────────────────────
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
@@ -59,13 +65,17 @@ AI_RATE_LIMIT_PER_MINUTE = _env_number("AI_RATE_LIMIT_PER_MINUTE", 20, minimum=1
 
 # ── Authentication and deployment ────────────────────────────────────────────
 BHARATSEC_HOST = os.getenv("BHARATSEC_HOST", "127.0.0.1").strip()
-_is_loopback_host = BHARATSEC_HOST.lower() in {"127.0.0.1", "localhost", "::1"}
+# A serverless deployment is always public, whatever BHARATSEC_HOST says.
+_is_loopback_host = BHARATSEC_HOST.lower() in {"127.0.0.1", "localhost", "::1"} and not IS_SERVERLESS
 IS_LOOPBACK_HOST = _is_loopback_host
 AUTH_SESSION_SECRET = os.getenv("BHARATSEC_SESSION_SECRET", "") or (
     "local-development-only-bharatsec-session-secret"
     if _is_loopback_host else ""
 )
-if not AUTH_SESSION_SECRET and not _is_loopback_host:
+if IS_SERVERLESS and not HAS_DATABASE_URL:
+    raise RuntimeError("Serverless deployments need DATABASE_URL (Postgres); local files do not persist between requests.")
+# Without a configured secret, a public deployment with a database generates one and stores it there.
+if not AUTH_SESSION_SECRET and not _is_loopback_host and not HAS_DATABASE_URL:
     raise RuntimeError("Set BHARATSEC_SESSION_SECRET to a random value of at least 32 characters before binding beyond localhost.")
 if AUTH_SESSION_SECRET and len(AUTH_SESSION_SECRET) < 32:
     raise RuntimeError("BHARATSEC_SESSION_SECRET must contain at least 32 characters.")

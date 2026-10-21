@@ -7,7 +7,6 @@ import logging
 import os
 import re
 import socket
-import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,6 +15,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 
+import database
 from config import DATA_DIR, USER_AGENT
 
 logger = logging.getLogger("bharatsec.threat_intel")
@@ -53,29 +53,15 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def _connect() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(DB_PATH, timeout=15)
-    connection.row_factory = sqlite3.Row
-    connection.execute("PRAGMA foreign_keys = ON")
-    return connection
-
-
 @contextmanager
-def _db() -> Iterator[sqlite3.Connection]:
-    connection = _connect()
-    try:
+def _db() -> Iterator[Any]:
+    with database.transaction(DB_PATH) as connection:
         yield connection
-        connection.commit()
-    except Exception:
-        connection.rollback()
-        raise
-    finally:
-        connection.close()
 
 
 def init_db() -> None:
     with _db() as connection:
+        database.schema_lock(connection, "threat_intel")
         connection.executescript(
             """
             CREATE TABLE IF NOT EXISTS ti_indicators (
@@ -125,7 +111,7 @@ def init_db() -> None:
         )
 
 
-def _indicator_row(row: sqlite3.Row) -> dict[str, Any]:
+def _indicator_row(row: Any) -> dict[str, Any]:
     value = dict(row)
     value["tags"] = json.loads(value.pop("tags_json"))
     value["enrichment"] = json.loads(value.pop("enrichment_json"))
@@ -196,7 +182,7 @@ def normalize_ioc(value: str, requested_type: str = "auto") -> tuple[str, str]:
 
 
 def _upsert_indicator_in_connection(
-    connection: sqlite3.Connection,
+    connection: Any,
     value: str,
     kind: str = "auto",
     source: str = "Analyst",
@@ -209,20 +195,24 @@ def _upsert_indicator_in_connection(
     ioc, ioc_type = normalize_ioc(value, kind)
     timestamp = _now()
     first_seen = first_seen_at or timestamp
-    connection.execute(
-        """INSERT INTO ti_indicators
+    row = connection.execute(
+        _UPSERT_INDICATOR_SQL + " RETURNING id",
+        (ioc, ioc_type, source, title[:300], threat_type[:120], max(0, min(100, confidence)), first_seen, timestamp, json.dumps((tags or [])[:30])),
+    ).fetchone()
+    return row["id"]
+
+
+# Shared by single upserts and bulk feed imports. Portable SQL: no SQLite-only scalar MAX().
+_UPSERT_INDICATOR_SQL = """INSERT INTO ti_indicators
            (ioc, ioc_type, source, title, threat_type, confidence, first_seen_at, last_seen_at, tags_json)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(ioc, source) DO UPDATE SET
                title = CASE WHEN excluded.title = '' THEN ti_indicators.title ELSE excluded.title END,
                threat_type = CASE WHEN excluded.threat_type = '' THEN ti_indicators.threat_type ELSE excluded.threat_type END,
-               confidence = MAX(ti_indicators.confidence, excluded.confidence),
+               confidence = CASE WHEN excluded.confidence > ti_indicators.confidence
+                                 THEN excluded.confidence ELSE ti_indicators.confidence END,
                last_seen_at = excluded.last_seen_at,
-               tags_json = excluded.tags_json""",
-        (ioc, ioc_type, source, title[:300], threat_type[:120], max(0, min(100, confidence)), first_seen, timestamp, json.dumps((tags or [])[:30])),
-    )
-    row = connection.execute("SELECT id FROM ti_indicators WHERE ioc = ? AND source = ?", (ioc, source)).fetchone()
-    return row["id"]
+               tags_json = excluded.tags_json"""
 
 
 def upsert_indicator(
@@ -366,25 +356,24 @@ def _urlhaus_records(payload: Any) -> list[dict[str, Any]]:
 
 
 def _import_records(source: str, records: list[dict[str, Any]]) -> int:
-    imported = 0
+    """Normalise feed records and upsert them in batches (one round trip per batch on Postgres)."""
+    timestamp = _now()
+    rows: dict[str, tuple] = {}
+    for record in records:
+        try:
+            ioc, ioc_type = normalize_ioc(record["ioc"], record["type"])
+        except ValueError:
+            continue
+        rows[ioc] = (  # last occurrence wins, so one batch never updates the same row twice
+            ioc, ioc_type, source, record["title"][:300], record["threat_type"][:120],
+            max(0, min(100, record["confidence"])), record.get("first_seen_at") or timestamp, timestamp,
+            json.dumps((record["tags"] or [])[:30]),
+        )
+    values = list(rows.values())
     with _db() as connection:
-        for record in records:
-            try:
-                _upsert_indicator_in_connection(
-                    connection,
-                    record["ioc"],
-                    record["type"],
-                    source,
-                    record["title"],
-                    record["threat_type"],
-                    record["confidence"],
-                    record["tags"],
-                    record.get("first_seen_at"),
-                )
-                imported += 1
-            except ValueError:
-                continue
-    return imported
+        for start in range(0, len(values), 1000):
+            connection.executemany(_UPSERT_INDICATOR_SQL, values[start:start + 1000])
+    return len(values)
 
 
 async def _sync_one_feed(feed_key: str) -> dict[str, Any]:
@@ -436,15 +425,12 @@ def _monitored_assets() -> list[dict[str, Any]]:
 
 def _monitored_scan_texts(assets: list[dict[str, Any]]) -> list[tuple[str, str]]:
     """(domain, upper-cased findings text) for completed scans of monitored assets."""
-    try:
-        from routers.scan import scans
-    except ImportError:
-        logger.debug("Scan router unavailable for CVE correlation")
-        return []
+    from engines import scan_store
+
     asset_domains = {asset["domain"].lower() for asset in assets}
     return [
         (scan.domain, " ".join(f"{f.title} {f.description} {f.evidence}" for f in scan.findings).upper())
-        for scan in list(scans.values())
+        for scan in scan_store.recent_completed(100)
         if scan.domain.lower() in asset_domains
     ]
 

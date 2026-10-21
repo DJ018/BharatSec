@@ -8,7 +8,9 @@ router = APIRouter(prefix="/api/auth", tags=["authentication"])
 
 @router.get("/config")
 def auth_config():
-    return {"registration_enabled": auth_service.ALLOW_REGISTRATION}
+    setup = auth_service.setup_required()
+    # On a brand-new install the first sign-up creates the administrator, even when sign-up is otherwise off.
+    return {"registration_enabled": auth_service.ALLOW_REGISTRATION or setup, "setup_required": setup}
 
 
 @router.post("/register", status_code=201)

@@ -4,13 +4,13 @@ from contextlib import contextmanager
 import logging
 import os
 import socket
-import sqlite3
 import ssl
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
+import database
 from config import DATA_DIR, USER_AGENT
 from engines.net_guard import is_public_address
 
@@ -24,23 +24,14 @@ def _now() -> str:
 
 
 @contextmanager
-def _connect() -> Iterator[sqlite3.Connection]:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(DB_PATH, timeout=10)
-    connection.row_factory = sqlite3.Row
-    connection.execute("PRAGMA foreign_keys = ON")
-    try:
+def _connect() -> Iterator[Any]:
+    with database.transaction(DB_PATH, timeout=10) as connection:
         yield connection
-        connection.commit()
-    except Exception:
-        connection.rollback()
-        raise
-    finally:
-        connection.close()
 
 
 def init_db() -> None:
     with _connect() as connection:
+        database.schema_lock(connection, "soc")
         connection.executescript(
             """
             CREATE TABLE IF NOT EXISTS soc_assets (
@@ -104,7 +95,7 @@ def init_db() -> None:
         )
 
 
-def _row(row: sqlite3.Row | None) -> dict[str, Any] | None:
+def _row(row: Any) -> dict[str, Any] | None:
     return dict(row) if row is not None else None
 
 
@@ -124,13 +115,12 @@ def get_asset(asset_id: int) -> dict[str, Any] | None:
 def create_asset(domain: str, name: str, interval_seconds: int) -> dict[str, Any]:
     timestamp = _now()
     with _connect() as connection:
-        cursor = connection.execute(
+        asset_id = connection.execute(
             """INSERT INTO soc_assets
                (domain, name, check_interval_seconds, created_at)
-               VALUES (?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?) RETURNING id""",
             (domain, name or domain, interval_seconds, timestamp),
-        )
-        asset_id = cursor.lastrowid
+        ).fetchone()[0]
     return get_asset(asset_id)
 
 
@@ -151,16 +141,24 @@ def delete_asset(asset_id: int) -> bool:
 
 
 def list_due_assets() -> list[dict[str, Any]]:
+    """Enabled assets whose check interval has elapsed, never-checked first, then oldest check first."""
     with _connect() as connection:
-        rows = connection.execute(
-            """SELECT * FROM soc_assets
-               WHERE enabled = 1 AND (
-                   last_checked_at IS NULL OR
-                   (julianday('now') - julianday(last_checked_at)) * 86400 >= check_interval_seconds
-               )
-               ORDER BY last_checked_at IS NOT NULL, last_checked_at"""
-        ).fetchall()
-    return [dict(row) for row in rows]
+        rows = connection.execute("SELECT * FROM soc_assets WHERE enabled = 1").fetchall()
+    now = datetime.now(timezone.utc)
+
+    def overdue(asset: dict[str, Any]) -> bool:
+        if not asset["last_checked_at"]:
+            return True
+        try:
+            checked = datetime.fromisoformat(asset["last_checked_at"])
+        except ValueError:
+            return True
+        if checked.tzinfo is None:
+            checked = checked.replace(tzinfo=timezone.utc)
+        return (now - checked).total_seconds() >= asset["check_interval_seconds"]
+
+    due = [dict(row) for row in rows if overdue(dict(row))]
+    return sorted(due, key=lambda asset: (asset["last_checked_at"] is not None, asset["last_checked_at"] or ""))
 
 
 def list_alerts(state: str | None = None) -> list[dict[str, Any]]:
@@ -198,7 +196,7 @@ def update_alert_state(alert_id: int, state: str) -> dict[str, Any] | None:
                 "UPDATE soc_alerts SET state = ?, updated_at = ? WHERE id = ?",
                 (state, _now(), alert_id),
             )
-        except sqlite3.IntegrityError as exc:
+        except database.IntegrityError as exc:
             # Only one active alert per asset condition may exist (partial unique index).
             raise AlertConflictError(
                 "An active alert for this condition already exists; update that alert instead."
@@ -245,7 +243,7 @@ def list_incident_events(incident_id: int) -> list[dict[str, Any]]:
     return [dict(row) for row in rows]
 
 
-def _add_event(connection: sqlite3.Connection, incident_id: int, event_type: str, author: str, message: str) -> None:
+def _add_event(connection: Any, incident_id: int, event_type: str, author: str, message: str) -> None:
     connection.execute(
         """INSERT INTO soc_incident_events
            (incident_id, event_type, author, message, created_at)
@@ -265,13 +263,12 @@ def create_incident(
 ) -> dict[str, Any]:
     timestamp = _now()
     with _connect() as connection:
-        cursor = connection.execute(
+        incident_id = connection.execute(
             """INSERT INTO soc_incidents
                (asset_id, title, severity, description, owner, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id""",
             (asset_id, title, severity, description, owner, timestamp, timestamp),
-        )
-        incident_id = cursor.lastrowid
+        ).fetchone()[0]
         _add_event(connection, incident_id, "created", author, "Incident opened.")
         if alert_id is not None:
             connection.execute(

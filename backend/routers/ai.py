@@ -20,7 +20,7 @@ from engines.ai_engine import (
     get_ai_analysis,
 )
 from models.scan_models import AIAnalyzeRequest, CopilotRequest, CopilotTurn
-from routers.scan import scans
+from engines import scan_store
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
@@ -55,7 +55,7 @@ def _sse(events: AsyncIterator[Dict[str, Any]]) -> StreamingResponse:
 
 
 def _scan_or_404(scan_id: str):
-    scan = scans.get(scan_id)
+    scan = scan_store.get(scan_id)
     if not scan:
         raise HTTPException(404, "Scan not found. Start a scan first.")
     return scan

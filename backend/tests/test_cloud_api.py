@@ -49,6 +49,12 @@ class CloudApiTests(unittest.TestCase):
                     started = client.post("/api/cloud/scans", json={"provider": "aws", "authorized": True})
                     self.assertEqual(started.status_code, 202)
                     scan_id = started.json()["scan_id"]
+                    ran = client.post(f"/api/cloud/scans/{scan_id}/run")
+                    self.assertEqual(ran.json()["status"], "complete")
+                    # A second /run never executes the scan again.
+                    with patch.object(cloud_engine, "run_scan") as rerun:
+                        client.post(f"/api/cloud/scans/{scan_id}/run")
+                    rerun.assert_not_called()
                     scan = client.get(f"/api/cloud/scans/{scan_id}")
                     self.assertEqual(scan.status_code, 200)
                     self.assertEqual(scan.json()["status"], "complete")
