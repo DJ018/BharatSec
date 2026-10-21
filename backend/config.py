@@ -96,7 +96,8 @@ if BOOTSTRAP_PASSWORD and len(BOOTSTRAP_PASSWORD) < 12:
     raise RuntimeError("BHARATSEC_BOOTSTRAP_PASSWORD must contain at least 12 characters.")
 # Number of reverse proxies in front of the app that append to X-Forwarded-For.
 # 0 (default) ignores the header; set it only when every request passes through those proxies.
-TRUSTED_PROXY_HOPS = int(os.getenv("BHARATSEC_TRUSTED_PROXY_HOPS", "0"))
+# On Vercel every request arrives through its edge proxy, so one hop is the default there.
+TRUSTED_PROXY_HOPS = int(os.getenv("BHARATSEC_TRUSTED_PROXY_HOPS", "1" if IS_SERVERLESS else "0"))
 if not 0 <= TRUSTED_PROXY_HOPS <= 5:
     raise RuntimeError("BHARATSEC_TRUSTED_PROXY_HOPS must be between 0 and 5.")
 
