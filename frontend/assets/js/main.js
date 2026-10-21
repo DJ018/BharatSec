@@ -279,3 +279,10 @@ if (domainInput) {
     if (!observerAlive) items.forEach(function (el) { el.classList.add('is-visible'); });
   }, 2500);
 })();
+
+// Arriving at index.html#scan (e.g. from the "Domain scanner" link) puts the cursor in the domain box.
+(function focusScanBox() {
+  if (window.location.hash !== '#scan') return;
+  const input = document.getElementById('domain-input');
+  if (input) input.focus({ preventScroll: false });
+})();

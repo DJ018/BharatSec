@@ -33,6 +33,21 @@ PROTECTED_PAGES = {
 }
 
 
+# Pages use a few inline scripts and handlers, Chart.js from jsDelivr and Google Fonts; nothing else is allowed.
+CONTENT_SECURITY_POLICY = "; ".join([
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' data:",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+])
+PERMISSIONS_POLICY = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+
 CRON_SECRET = os.getenv("CRON_SECRET", "")
 CRON_MIN_INTERVAL_SECONDS = 60
 CRON_MAX_ASSET_CHECKS = 20
@@ -135,6 +150,10 @@ async def enforce_authentication_and_security_headers(request, call_next):
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", PERMISSIONS_POLICY)
+    response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+    if not path.startswith(("/api/docs", "/api/redoc")):  # Swagger/ReDoc load their own CDN assets
+        response.headers.setdefault("Content-Security-Policy", CONTENT_SECURITY_POLICY)
     if is_api_route or is_protected_page or is_auth_route:
         response.headers["Cache-Control"] = "no-store"
     elif is_public_route:
@@ -153,6 +172,11 @@ if FRONTEND_DIR.exists():
     @app.get("/", include_in_schema=False)
     async def serve_index():
         return FileResponse(str(FRONTEND_DIR / "index.html"))
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def serve_favicon():
+        # Pages declare the SVG mark as their icon; some browsers still ask for /favicon.ico.
+        return FileResponse(str(FRONTEND_DIR / "assets" / "images" / "brand" / "bharatsec-mark.svg"), media_type="image/svg+xml")
 
     @app.get("/index.html", include_in_schema=False)
     async def serve_index_html():

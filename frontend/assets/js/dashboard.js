@@ -64,9 +64,9 @@ window.addEventListener('DOMContentLoaded', () => {
   let domain = (params.get('domain') || '').trim().toLowerCase()
     .replace(/^https?:\/\//, '').split('/')[0];
 
-  // Reject demo or malformed domains — redirect to homepage
+  // No (valid) domain yet: send the user to the scan box on the homepage, ready to type.
   if (!domain || domain === 'demo' || !DOMAIN_PATTERN.test(domain)) {
-    window.location.href = 'index.html';
+    window.location.replace('index.html#scan');
     return;
   }
 

@@ -18,6 +18,7 @@ const bsAuthReady = fetch('/api/auth/me', {
     if (bsSession?.must_change_password && !exempt.includes(window.location.pathname)) {
       window.location.replace('/account.html?force=1#security');
     }
+    if (bsSession) bsNudgeScheduledJobs();
     return bsSession;
   })
   .catch(() => null);
@@ -91,4 +92,17 @@ async function bsRequireAuth(returnUrl) {
   const destination = returnUrl || window.location.href;
   window.location.href = `/login.html?return=${encodeURIComponent(destination)}`;
   return false;
+}
+
+/* The server has no always-on process, so SOC checks and threat-feed syncs run when /api/cron/tick is called.
+   A schedule calls it too; this backup asks while someone is using the app, at most every 5 minutes per browser.
+   The server paces the work itself, so extra calls are cheap no-ops. */
+function bsNudgeScheduledJobs() {
+  const key = 'bs_jobs_nudged_at';
+  try {
+    const last = Number(localStorage.getItem(key) || 0);
+    if (Date.now() - last < 5 * 60 * 1000) return;
+    localStorage.setItem(key, String(Date.now()));
+  } catch { /* storage blocked: still nudge */ }
+  fetch('/api/cron/tick', { method: 'POST', credentials: 'same-origin', keepalive: true }).catch(() => {});
 }
