@@ -9,5 +9,4 @@ backend/tests
 frontend/tests
 node_modules
 .oxcode*
-render.yaml
 .claude

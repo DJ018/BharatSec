@@ -82,8 +82,6 @@ Each provider's button appears on the sign-in page once its two environment vari
 
 How accounts are matched: a returning provider account signs straight in; otherwise a **verified** email that matches a BharatSec account signs in to that account (admins can add members by email on the Account page); otherwise a new account is created only during first-run setup or when `BHARATSEC_ALLOW_REGISTRATION=true`. New accounts get a username generated from the profile (for example `priya.sharma`, then `priya.sharma2` if taken). Signed-in users can connect or disconnect providers, and set a password, on the Account page. Set `BHARATSEC_PUBLIC_URL` if the site is served from a custom domain.
 
-[`render.yaml`](./render.yaml) remains for a single-server deployment on Render, where the built-in background loops run instead of the cron endpoint.
-
 ## 🔑 Optional: Connect a Copilot AI Provider
 
 BharatSec AI answers questions on cybersecurity (at any depth), Indian cyber law (CERT-In, IT Act, DPDP Act), AI and LLMs, business and startups, programming, and general knowledge. The landing-page assistant uses `POST /api/ai/chat/stream` and the dashboard Copilot uses `POST /api/ai/copilot/stream` (scan-grounded); both stream answers token by token, render formatted Markdown safely, and remember the last 12 conversation turns. Non-streaming `POST /api/ai/chat` and `POST /api/ai/copilot` remain available. Answers come from **Gemini** when `GEMINI_API_KEY` is set and **OpenAI** when `OPENAI_API_KEY` is set; with both, Gemini is tried first and OpenAI takes over automatically if Gemini is rate-limited or down (each provider gets one retry). Without any key, BharatSec AI runs in **offline knowledge mode**: it answers from a built-in knowledge base (security, Indian cyber law, AI, business basics, this platform) and says clearly when a question needs a provider key. `GET /api/ai/status` reports which mode is active. Provider keys are **not required for domain scans and do not make network/DNS scanning faster**.
@@ -126,7 +124,6 @@ BharatSec/
 ├── README.md
 ├── api/index.py                    ← Vercel entry point
 ├── vercel.json                     ← Vercel routing, limits and daily cron
-├── render.yaml                     ← Render single-server blueprint
 ├── backend/
 │   ├── main.py                     ← FastAPI entry point, auth middleware, page routes
 │   ├── config.py                   ← Settings loaded from environment / .env

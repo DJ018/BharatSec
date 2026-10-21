@@ -47,7 +47,7 @@ PROVIDER_INFO = {
     },
     "gcp": {
         "name": "Google Cloud",
-        "credential_chain": "Application Default Credentials: GOOGLE_APPLICATION_CREDENTIALS, gcloud ADC, or attached workload identity.",
+        "credential_chain": "GCP_SERVICE_ACCOUNT_JSON (service-account key contents), or Application Default Credentials: GOOGLE_APPLICATION_CREDENTIALS, gcloud ADC, or attached workload identity.",
         "setup": "Configure Application Default Credentials for the backend. Grant resourcemanager.projects.list and resourcemanager.projects.getIamPolicy, storage.buckets.list/get/getIamPolicy, and compute.instances.list on projects you want to assess.",
     },
 }
@@ -604,7 +604,19 @@ def scan_gcp() -> dict[str, Any]:
     except ImportError as exc:
         raise RuntimeError("Google Cloud scans require google-auth and google-cloud-storage. Install the backend requirements and retry.") from exc
 
-    credentials, default_project = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform.read-only"])
+    scopes = ["https://www.googleapis.com/auth/cloud-platform.read-only"]
+    service_account_json = os.getenv("GCP_SERVICE_ACCOUNT_JSON", "").strip()
+    if service_account_json:
+        # Serverless hosts (Vercel) cannot hold a key file, so the service-account key can be supplied as a setting.
+        from google.oauth2 import service_account
+        try:
+            info = json.loads(service_account_json)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("GCP_SERVICE_ACCOUNT_JSON is not valid JSON. Paste the whole service-account key file.") from exc
+        credentials = service_account.Credentials.from_service_account_info(info, scopes=scopes)
+        default_project = info.get("project_id")
+    else:
+        credentials, default_project = google.auth.default(scopes=scopes)
     session = AuthorizedSession(credentials)
     project_warnings: list[str] = []
     projects: list[dict[str, Any]] = []
