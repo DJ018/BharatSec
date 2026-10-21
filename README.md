@@ -58,15 +58,18 @@ For example, create a session secret in PowerShell with:
 [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
 ```
 
-### Render demo deployment
+### Production deployment (Vercel)
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/DJ018/BharatSec)
+Live at **https://bharat-sec.vercel.app**, deployed from `main` by Vercel's GitHub integration.
 
-The repository includes [`render.yaml`](./render.yaml) for a free Render demo service named `bharatsec-web`. Create the service from the Render Blueprint and provide `BHARATSEC_BOOTSTRAP_USERNAME` plus a strong `BHARATSEC_BOOTSTRAP_PASSWORD` when prompted. The blueprint generates the session secret, enables secure cookies, disables public registration, and allows only `https://bharatsec-web.onrender.com`. If Render assigns a different service URL, update `BHARATSEC_CORS_ORIGINS` to that exact HTTPS origin.
+- [`api/index.py`](./api/index.py) serves the FastAPI app as one Python function; [`vercel.json`](./vercel.json) routes every path to it and sets a 300-second limit so scans finish inside a request.
+- Data lives in a Neon Postgres database connected through Vercel Storage (`DATABASE_URL`). Locally, without `DATABASE_URL`, the same code uses SQLite files in `backend/data/`.
+- Scans are created with `POST /api/scan/start` and executed by `POST /api/scan/{id}/run` (cloud: `POST /api/cloud/scans/{id}/run`); the browser starts the run and polls status.
+- Background loops are replaced by `GET /api/cron/tick` (SOC checks for due assets, threat feed and breach-watch syncs). It runs at most once a minute and is called every 15 minutes by [`.github/workflows/cron.yml`](./.github/workflows/cron.yml), plus Vercel's daily cron. Set `CRON_SECRET` in Vercel to require `Authorization: Bearer <secret>`.
+- On a fresh database the first account created becomes the admin; public sign-up is closed after that. The session secret is generated and stored in the database unless `BHARATSEC_SESSION_SECRET` is set.
+- Optional Vercel environment variables: `GEMINI_API_KEY`, `OPENAI_API_KEY`, `HIBP_API_KEY`, `VIRUSTOTAL_API_KEY`.
 
-Render's free service has ephemeral storage and may spin down; accounts and SQLite data can reset when the service restarts or redeploys. Use a paid service with a persistent disk before storing real customer, SOC, threat-intelligence, or cloud-scan data.
-
----
+[`render.yaml`](./render.yaml) remains for a single-server deployment on Render, where the built-in background loops run instead of the cron endpoint.
 
 ## 🔑 Optional: Connect a Copilot AI Provider
 
@@ -108,7 +111,9 @@ Get a free Gemini API key at: https://makersuite.google.com/app/apikey
 ```
 BharatSec/
 ├── README.md
-├── render.yaml                     ← Render demo deployment blueprint
+├── api/index.py                    ← Vercel entry point
+├── vercel.json                     ← Vercel routing, limits and daily cron
+├── render.yaml                     ← Render single-server blueprint
 ├── backend/
 │   ├── main.py                     ← FastAPI entry point, auth middleware, page routes
 │   ├── config.py                   ← Settings loaded from environment / .env
