@@ -9,7 +9,7 @@ API keys travel only in request headers, never in URLs, so they cannot leak into
 import asyncio
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import AsyncIterator, Dict, List, Sequence, Tuple
 
 import httpx
@@ -27,6 +27,11 @@ class Provider:
     name: str      # "gemini" | "openai"
     api_key: str
     model: str
+    fallback_model: str = ""  # used once if the provider reports that `model` no longer exists
+
+
+def _model_gone(exc: Exception) -> bool:
+    return isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code == 404
 
 
 class ProviderError(Exception):
@@ -44,6 +49,9 @@ def _gemini_payload(system: str, messages: Sequence[Message], temperature: float
         # Gemini 2.5 Flash "thinking" tokens count against maxOutputTokens; chat answers do not need them.
         # (2.5 Pro cannot disable thinking, so it keeps its default budget.)
         generation["thinkingConfig"] = {"thinkingBudget": 0}
+    elif model.startswith("gemini-3"):
+        # Gemini 3 models think by default; a low level keeps chat answers fast and within the token budget.
+        generation["thinkingConfig"] = {"thinkingLevel": "low"}
     return {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": [
@@ -133,6 +141,9 @@ async def complete(providers: Sequence[Provider], system: str, messages: Sequenc
                 except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
                     last_error = exc
                     logger.warning("%s request failed (attempt %s): %s", provider.name, attempt, _describe(exc))
+                    if _model_gone(exc) and provider.fallback_model:
+                        provider = replace(provider, model=provider.fallback_model, fallback_model="")
+                        continue
                     if attempt == 1 and _retryable(exc):
                         await asyncio.sleep(RETRY_DELAY_SECONDS)
                         continue
@@ -210,6 +221,9 @@ async def stream(providers: Sequence[Provider], system: str, messages: Sequence[
                         raise ProviderError("The answer was interrupted by the AI provider.") from exc
                     last_error = exc
                     logger.warning("%s stream failed (attempt %s): %s", provider.name, attempt, _describe(exc))
+                    if _model_gone(exc) and provider.fallback_model:
+                        provider = replace(provider, model=provider.fallback_model, fallback_model="")
+                        continue
                     if attempt == 1 and _retryable(exc):
                         await asyncio.sleep(RETRY_DELAY_SECONDS)
                         continue

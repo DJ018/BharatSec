@@ -55,7 +55,8 @@ except OSError:
 # Trimmed so a key pasted with stray spaces or quotes still works.
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip().strip("\"'")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip().strip("\"'")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip()
+GEMINI_FALLBACK_MODEL = "gemini-flash-latest"
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 # Seconds to wait for the provider (per read while streaming).
 COPILOT_TIMEOUT = _env_number("COPILOT_TIMEOUT", 45.0, minimum=5.0, maximum=300.0)

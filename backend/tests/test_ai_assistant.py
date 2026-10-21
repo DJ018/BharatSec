@@ -73,6 +73,16 @@ class ProviderLayerTests(unittest.TestCase):
         self.assertEqual(result["source"], "rules")
         self.assertIn("DPDP", result["content"])
 
+    def test_retired_gemini_model_falls_back_to_latest_alias(self):
+        client = FakeClient({"gemini": [(404, {"error": {"message": "model no longer available"}}), (200, GEMINI_OK)], "openai": []})
+        g, o = self._patch_keys(openai="")
+        with g, o, patch.object(llm.httpx, "AsyncClient", return_value=client):
+            result = _run(ai_engine.general_ai_respond("Who wrote Godan?"))
+        self.assertEqual(len(client.calls), 2)
+        self.assertIn(f"/{ai_engine.GEMINI_MODEL}:", client.calls[0][1])
+        self.assertIn(f"/{ai_engine.GEMINI_FALLBACK_MODEL}:", client.calls[1][1])
+        self.assertEqual(result["model"], ai_engine.GEMINI_FALLBACK_MODEL)
+
     def test_conversation_history_reaches_the_model(self):
         client = FakeClient({"gemini": [(200, GEMINI_OK)], "openai": []})
         history = [
