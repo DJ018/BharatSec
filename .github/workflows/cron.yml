@@ -12,4 +12,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run BharatSec scheduled jobs
-        run: curl --fail --silent --show-error --max-time 290 https://bharat-sec.vercel.app/api/cron/tick
+        run: curl --fail --silent --show-error --max-time 290 https://bharatsec.vercel.app/api/cron/tick

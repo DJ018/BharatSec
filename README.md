@@ -60,7 +60,7 @@ For example, create a session secret in PowerShell with:
 
 ### Production deployment (Vercel)
 
-Live at **https://bharat-sec.vercel.app**, deployed from `main` by Vercel's GitHub integration.
+Live at **https://bharatsec.vercel.app** (also **https://bharatsec.poornayuhub.in** and the original **https://bharat-sec.vercel.app**), deployed from `main` by Vercel's GitHub integration.
 
 - [`api/index.py`](./api/index.py) serves the FastAPI app as one Python function; [`vercel.json`](./vercel.json) routes every path to it and sets a 300-second limit so scans finish inside a request.
 - Data lives in a Neon Postgres database connected through Vercel Storage (`DATABASE_URL`). Locally, without `DATABASE_URL`, the same code uses SQLite files in `backend/data/`.
@@ -76,10 +76,10 @@ Each provider's button appears on the sign-in page once its two environment vari
 
 | Provider | Where to create the app | Redirect URL | Variables |
 | --- | --- | --- | --- |
-| Google | Google Cloud Console → APIs & Services → Credentials → OAuth client ID (Web application) | `https://bharat-sec.vercel.app/api/auth/oauth/google/callback` | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
-| GitHub | GitHub → Settings → Developer settings → OAuth Apps | `https://bharat-sec.vercel.app/api/auth/oauth/github/callback` | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` |
-| Facebook | developers.facebook.com → My Apps → Facebook Login | `https://bharat-sec.vercel.app/api/auth/oauth/facebook/callback` | `FACEBOOK_CLIENT_ID` (App ID), `FACEBOOK_CLIENT_SECRET` (App Secret) |
-| Microsoft | Microsoft Entra admin center → App registrations (any account type) | `https://bharat-sec.vercel.app/api/auth/oauth/microsoft/callback` | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` |
+| Google | Google Cloud Console → APIs & Services → Credentials → OAuth client ID (Web application) | `https://bharatsec.vercel.app/api/auth/oauth/google/callback` | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+| GitHub | GitHub → Settings → Developer settings → OAuth Apps | `https://bharatsec.vercel.app/api/auth/oauth/github/callback` | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` |
+| Facebook | developers.facebook.com → My Apps → Facebook Login | `https://bharatsec.vercel.app/api/auth/oauth/facebook/callback` | `FACEBOOK_CLIENT_ID` (App ID), `FACEBOOK_CLIENT_SECRET` (App Secret) |
+| Microsoft | Microsoft Entra admin center → App registrations (any account type) | `https://bharatsec.vercel.app/api/auth/oauth/microsoft/callback` | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` |
 
 How accounts are matched: a returning provider account signs straight in; otherwise a **verified** email that matches a BharatSec account signs in to that account (admins can add members by email on the Account page); otherwise a new account is created only during first-run setup or when `BHARATSEC_ALLOW_REGISTRATION=true`. New accounts get a username generated from the profile (for example `priya.sharma`, then `priya.sharma2` if taken). Signed-in users can connect or disconnect providers, and set a password, on the Account page. Set `BHARATSEC_PUBLIC_URL` if the site is served from a custom domain.
 
