@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Generator
 
 import database
+from config import IS_SERVERLESS
 
 logger = logging.getLogger("bharatsec.cloud")
 DB_PATH = Path(os.getenv("CLOUD_DATABASE_PATH", str(Path(__file__).resolve().parents[1] / "data" / "cloud.db")))
@@ -37,7 +38,7 @@ def _port_spec_covers_admin(spec: str) -> bool:
 PROVIDER_INFO = {
     "aws": {
         "name": "Amazon Web Services",
-        "credential_chain": "AWS environment credentials, shared config/profile, web identity, container credentials, or instance role.",
+        "credential_chain": "BHARATSEC_AWS_ACCESS_KEY_ID / BHARATSEC_AWS_SECRET_ACCESS_KEY (optional BHARATSEC_AWS_REGION, default ap-south-1); when self-hosted, also the standard AWS credential chain.",
         "setup": "Configure an AWS profile or role for the backend. Read-only checks need sts:GetCallerIdentity; s3:ListAllMyBuckets, s3:GetAccountPublicAccessBlock, s3:GetBucketPublicAccessBlock, s3:GetBucketPolicyStatus, s3:GetBucketAcl, s3:GetEncryptionConfiguration, s3:GetBucketLogging; iam:GetAccountAuthorizationDetails, iam:ListAccessKeys; and ec2:DescribeRegions, ec2:DescribeSecurityGroups, ec2:DescribeInstances.",
     },
     "azure": {
@@ -250,7 +251,19 @@ def scan_aws() -> dict[str, Any]:
     except ImportError as exc:
         raise RuntimeError("AWS scans require boto3. Install the backend requirements and retry.") from exc
 
-    session = boto3.Session()
+    access_key = os.getenv("BHARATSEC_AWS_ACCESS_KEY_ID", "").strip()
+    secret_key = os.getenv("BHARATSEC_AWS_SECRET_ACCESS_KEY", "").strip()
+    region = os.getenv("BHARATSEC_AWS_REGION", "").strip() or "ap-south-1"
+    if access_key and secret_key:
+        session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=region)
+    elif IS_SERVERLESS:
+        # Serverless hosts run on AWS themselves; their own credentials must never be mistaken for the customer's.
+        raise RuntimeError(
+            "AWS credentials are not configured. Add BHARATSEC_AWS_ACCESS_KEY_ID and BHARATSEC_AWS_SECRET_ACCESS_KEY "
+            "for a read-only (SecurityAudit) IAM user."
+        )
+    else:
+        session = boto3.Session(region_name=os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or region)
     credentials = session.get_credentials()
     if credentials is None:
         raise RuntimeError("AWS credentials were not found. Configure an AWS profile, environment credentials, or an attached role for the backend.")

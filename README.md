@@ -68,6 +68,7 @@ Live at **https://bharat-sec.vercel.app**, deployed from `main` by Vercel's GitH
 - Background loops are replaced by `GET /api/cron/tick` (SOC checks for due assets, threat feed and breach-watch syncs). It runs at most once a minute and is called every 15 minutes by [`.github/workflows/cron.yml`](./.github/workflows/cron.yml), plus Vercel's daily cron. Set `CRON_SECRET` in Vercel to require `Authorization: Bearer <secret>`.
 - On a fresh database the first account created becomes the admin; public sign-up is closed after that. The session secret is generated and stored in the database unless `BHARATSEC_SESSION_SECRET` is set.
 - Optional Vercel environment variables: `GEMINI_API_KEY`, `OPENAI_API_KEY`, `HIBP_API_KEY`, `VIRUSTOTAL_API_KEY`.
+- Cloud scans on Vercel: AWS uses `BHARATSEC_AWS_ACCESS_KEY_ID`, `BHARATSEC_AWS_SECRET_ACCESS_KEY` and optional `BHARATSEC_AWS_REGION` (default `ap-south-1`) for an IAM user with only the `SecurityAudit` policy. Vercel reserves the standard `AWS_*` names, and the scanner never falls back to the platform's own AWS credentials. Azure uses `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`; Google Cloud uses `GCP_SERVICE_ACCOUNT_JSON`.
 
 ### Sign in with Google, GitHub, Facebook or Microsoft
 
