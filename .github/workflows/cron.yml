@@ -1,0 +1,15 @@
+name: Scheduled jobs
+
+# Vercel's free plan runs crons once a day; this calls the same endpoint every 15 minutes
+# so SOC monitoring and threat feed syncs stay current. The endpoint paces itself.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run BharatSec scheduled jobs
+        run: curl --fail --silent --show-error --max-time 290 https://bharat-sec.vercel.app/api/cron/tick
