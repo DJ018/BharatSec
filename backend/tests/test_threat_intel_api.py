@@ -104,13 +104,67 @@ class ThreatIntelApiTests(unittest.TestCase):
             async def get(self, *args, **kwargs):
                 return FakeResponse()
 
+            async def post(self, *args, **kwargs):
+                return FakeResponse()
+
         with tempfile.TemporaryDirectory() as folder:
             with patch.object(intel, "DB_PATH", Path(folder) / "intel.db"), \
+                 patch.object(intel, "URLHAUS_AUTH_KEY", "test-key"), \
                  patch.object(intel.httpx, "AsyncClient", return_value=FakeClient()):
                 intel.init_db()
                 result = asyncio.run(intel._sync_one_feed("urlhaus"))
         self.assertEqual(result["status"], "error")
         self.assertIn("unrecognized format", result["detail"])
+
+    def test_urlhaus_without_auth_key_asks_for_one_instead_of_failing(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(intel, "DB_PATH", Path(folder) / "intel.db"), \
+                 patch.object(intel, "URLHAUS_AUTH_KEY", ""), \
+                 patch.object(intel.httpx, "AsyncClient") as client:
+                intel.init_db()
+                result = asyncio.run(intel._sync_one_feed("urlhaus"))
+        client.assert_not_called()
+        self.assertEqual(result["status"], "needs_key")
+        self.assertIn("URLHAUS_AUTH_KEY", result["detail"])
+
+    def test_urlhaus_api_sends_auth_key_and_parses_recent_urls(self):
+        sent = {}
+
+        class ApiResponse:
+            status_code = 200
+
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return {"query_status": "ok", "urls": [{"url": "http://bad.example/x.exe", "url_status": "online",
+                                                         "threat": "malware_download", "date_added": "2026-10-20 10:00:00 UTC",
+                                                         "tags": ["exe"]}]}
+
+        class ApiClient:
+            def __init__(self, **kwargs):
+                sent["headers"] = kwargs.get("headers", {})
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                return False
+
+            async def post(self, url, *args, **kwargs):
+                sent["url"] = url
+                return ApiResponse()
+
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(intel, "DB_PATH", Path(folder) / "intel.db"), \
+                 patch.object(intel, "URLHAUS_AUTH_KEY", "test-key"), \
+                 patch.object(intel.httpx, "AsyncClient", side_effect=lambda **kw: ApiClient(**kw)):
+                intel.init_db()
+                result = asyncio.run(intel._sync_one_feed("urlhaus"))
+        self.assertEqual(result["status"], "ok", result)
+        self.assertEqual(result["fetched_count"], 1)
+        self.assertEqual(sent["headers"]["Auth-Key"], "test-key")
+        self.assertIn("urlhaus-api.abuse.ch/v1/urls/recent", sent["url"])
 
     def test_breach_check_parses_hibp_json(self):
         responses = [

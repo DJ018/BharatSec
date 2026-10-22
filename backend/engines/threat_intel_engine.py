@@ -22,6 +22,8 @@ logger = logging.getLogger("bharatsec.threat_intel")
 DB_PATH = Path(os.getenv("THREAT_INTEL_DATABASE_PATH", str(DATA_DIR / "threat_intel.db")))
 VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "")
 HIBP_API_KEY = os.getenv("HIBP_API_KEY", "")
+# abuse.ch requires a free Auth-Key for URLhaus since mid-2025 (https://auth.abuse.ch/).
+URLHAUS_AUTH_KEY = (os.getenv("URLHAUS_AUTH_KEY") or os.getenv("ABUSE_CH_AUTH_KEY") or "").strip()
 SYNC_INTERVAL_SECONDS = max(300, int(os.getenv("TI_SYNC_INTERVAL_SECONDS", "900")))
 INITIAL_SYNC_DELAY_SECONDS = max(1, int(os.getenv("TI_INITIAL_SYNC_DELAY_SECONDS", "5")))
 BREACH_SYNC_INTERVAL_SECONDS = max(86400, int(os.getenv("TI_BREACH_SYNC_INTERVAL_SECONDS", "86400")))
@@ -34,7 +36,10 @@ FEEDS = {
     },
     "urlhaus": {
         "name": "abuse.ch URLhaus",
-        "url": "https://urlhaus.abuse.ch/downloads/json_recent/",
+        # The public json_recent download was retired (HTTP 410); the keyed API serves recent URLs.
+        "url": "https://urlhaus-api.abuse.ch/v1/urls/recent/limit/1000/",
+        "method": "POST",
+        "auth_key_env": "URLHAUS_AUTH_KEY",
         "description": "Recently reported malware distribution URLs.",
     },
 }
@@ -349,7 +354,7 @@ def _urlhaus_records(payload: Any) -> list[dict[str, Any]]:
             "title": f"URLhaus malware URL ({item.get('url_status') or 'reported'})",
             "threat_type": item.get("threat") or "malware distribution",
             "confidence": 90 if item.get("url_status") == "online" else 80,
-            "first_seen_at": item.get("dateadded"),
+            "first_seen_at": item.get("dateadded") or item.get("date_added"),
             "tags": item.get("tags") or [],
         })
     return records
@@ -378,15 +383,27 @@ def _import_records(source: str, records: list[dict[str, Any]]) -> int:
 
 async def _sync_one_feed(feed_key: str) -> dict[str, Any]:
     feed = FEEDS[feed_key]
+    headers = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+    if feed.get("auth_key_env"):
+        if not URLHAUS_AUTH_KEY:
+            detail = f"Add a free abuse.ch Auth-Key as {feed['auth_key_env']} to sync this feed."
+            _save_feed_run(feed_key, "needs_key", 0, detail)
+            return {"key": feed_key, "status": "needs_key", "fetched_count": 0, "detail": detail}
+        headers["Auth-Key"] = URLHAUS_AUTH_KEY
     try:
         async with httpx.AsyncClient(
             timeout=httpx.Timeout(25, connect=8),
             follow_redirects=True,
-            headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+            headers=headers,
         ) as client:
-            response = await client.get(feed["url"])
+            if feed.get("method") == "POST":
+                response = await client.post(feed["url"])
+            else:
+                response = await client.get(feed["url"])
             response.raise_for_status()
             payload = response.json()
+        if isinstance(payload, dict) and payload.get("query_status") == "no_results":
+            payload = {"urls": []}
         records = _cisa_records(payload) if feed_key == "cisa_kev" else _urlhaus_records(payload)
         if payload and not records:
             raise ValueError("Feed returned data in an unrecognized format; no indicators were parsed.")

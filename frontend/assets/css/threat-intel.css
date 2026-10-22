@@ -73,6 +73,7 @@
 .feed-status.ok { background: var(--ds-low-soft); color: var(--ds-low); }
 .feed-status.error { background: var(--ds-critical-soft); color: var(--ds-critical); }
 .feed-status.not_synced { background: var(--ds-medium-soft); color: var(--ds-medium); }
+.feed-status.needs_key { background: var(--ds-info-soft); color: var(--ds-info); }
 .feed-figures { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: var(--ds-space-4); border-top: 1px solid var(--ds-divider); }
 .feed-figures > div { display: grid; }
 .feed-count { color: var(--ds-text); font-size: var(--ds-text-xl); font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }

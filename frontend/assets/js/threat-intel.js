@@ -64,7 +64,7 @@
   }
 
   function sourceClass(feed) {
-    return feed.status === 'ok' ? 'ok' : feed.status === 'error' ? 'error' : 'not_synced';
+    return ['ok', 'error', 'needs_key'].includes(feed.status) ? feed.status : 'not_synced';
   }
 
   function renderFeeds() {
@@ -74,10 +74,10 @@
       const status = byId(`feed-${feed.key}-status`);
       if (!status) continue;
       status.className = `feed-status ${sourceClass(feed)}`;
-      status.textContent = feed.status === 'not_synced' ? 'Not synced' : feed.status === 'ok' ? 'Operational' : 'Feed error';
+      status.textContent = { ok: 'Operational', error: 'Feed error', needs_key: 'Key needed' }[feed.status] || 'Not synced';
       status.title = feed.detail;
       const count = byId(`feed-${feed.key}-count`);
-      if (count) count.textContent = feed.status === 'not_synced' ? 'N/A' : Number(feed.fetched_count || 0).toLocaleString();
+      if (count) count.textContent = ['not_synced', 'needs_key'].includes(feed.status) ? 'N/A' : Number(feed.fetched_count || 0).toLocaleString();
       const meta = byId(`feed-${feed.key}-meta`);
       if (meta) {
         meta.textContent = feed.checked_at ? `Checked ${timeAgo(feed.checked_at)}` : 'Never synced';

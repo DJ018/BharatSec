@@ -173,7 +173,7 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
 
 /* The dial: a precise instrument face that echoes the Ashoka Chakra. */
 .lp-radar { position: relative; z-index: 1; padding: 40px 0 36px; }
-.lp-radar-face { position: relative; width: min(62%, 420px); aspect-ratio: 1; margin: 0 auto; }
+.lp-radar-face { position: relative; width: min(62%, 420px); aspect-ratio: 1; margin: 0 auto; container-type: inline-size; }
 .lp-dial { position: absolute; inset: 6%; width: 88%; height: 88%; overflow: visible; }
 .lp-dial line, .lp-dial circle { fill: none; vector-effect: non-scaling-stroke; }
 .lp-dial-ring { stroke: var(--ds-border-strong); stroke-width: 1; }
@@ -219,20 +219,20 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
 
 .lp-radar-core {
   position: absolute; top: 50%; left: 50%; z-index: 4; translate: -50% -50%;
-  display: grid; justify-items: center; align-content: center; gap: 6px;
-  width: 34%; aspect-ratio: 1; padding: 12px;
+  display: grid; justify-items: center; align-content: center; gap: 1.6cqi;
+  width: 38%; aspect-ratio: 1; padding: 4cqi; overflow: hidden;
   border: 1px solid var(--ds-border-strong); border-radius: 50%;
   background: radial-gradient(circle at 50% 28%, var(--ds-surface-2), var(--ds-surface) 72%);
   box-shadow: 0 0 0 8px color-mix(in oklab, var(--ds-saffron) 6%, transparent),
               0 0 0 18px color-mix(in oklab, var(--ds-green) 4%, transparent), var(--ds-shadow);
   text-align: center;
 }
-.lp-radar-core img { width: 36px; height: 36px; }
+.lp-radar-core img { width: 9cqi; height: 9cqi; }
 .lp-radar-core strong {
   max-width: 14ch; color: var(--ds-text);
-  font-family: 'Instrument Serif', Georgia, serif; font-size: clamp(1rem, 1.6vw, 1.2rem); font-style: italic; font-weight: 400; line-height: 1.15;
+  font-family: 'Instrument Serif', Georgia, serif; font-size: 4.7cqi; font-style: italic; font-weight: 400; line-height: 1.15;
 }
-.lp-radar-core span { color: var(--ds-text-3); font-family: var(--ds-font-mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; }
+.lp-radar-core span { max-width: 22ch; color: var(--ds-text-3); font-family: var(--ds-font-mono); font-size: max(7.5px, 2.3cqi); letter-spacing: .08em; line-height: 1.4; text-transform: uppercase; }
 
 /* Legend: the three things a scan maps, numbered like the signals. */
 .lp-radar-legend {
@@ -533,8 +533,8 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
   .lp-float-score { width: 132px; padding: 10px 12px; }
   .lp-float-value { font-size: var(--ds-text-xl); }
   .lp-signal b { display: none; }
-  .lp-radar-core { width: 44%; gap: 4px; }
-  .lp-radar-core img { width: 28px; height: 28px; }
+  .lp-radar-core { width: 44%; }
+  .lp-radar-core strong { font-size: 5.4cqi; }
   .lp-radar-core span { display: none; }
   .lp-products, .lp-features, .lp-steps { grid-template-columns: 1fr; }
   .lp-feature { padding: var(--ds-space-6); }
