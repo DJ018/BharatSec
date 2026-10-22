@@ -22,8 +22,7 @@ cd backend
 pip install -r requirements.txt
 python main.py
 ```
-Backend runs at: http://localhost:8000  
-API Docs at: http://localhost:8000/api/docs
+Backend runs at: http://localhost:8000
 
 Create an account at http://127.0.0.1:8000/login before using protected features. Keep the backend terminal open during the scan. For local runs, BharatSec serves the dashboard and API from the same origin. Verify the server at http://127.0.0.1:8000/api/health.
 

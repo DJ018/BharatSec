@@ -86,8 +86,10 @@ app = FastAPI(
     title="BharatSec",
     description="AI-Powered Cyber Risk Intelligence Platform",
     version="1.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
+    # No public API documentation pages: they only matter to developers and reveal every endpoint.
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
     lifespan=lifespan,
 )
 
@@ -118,7 +120,7 @@ async def enforce_authentication_and_security_headers(request, call_next):
         or path.startswith("/assets/")
         or path.startswith("/favicon")
     )
-    is_api_route = path.startswith("/api/") or path == "/openapi.json"
+    is_api_route = path.startswith("/api/")
     is_protected_page = path in PROTECTED_PAGES
     response = None
     if (
@@ -152,8 +154,7 @@ async def enforce_authentication_and_security_headers(request, call_next):
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("Permissions-Policy", PERMISSIONS_POLICY)
     response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
-    if not path.startswith(("/api/docs", "/api/redoc")):  # Swagger/ReDoc load their own CDN assets
-        response.headers.setdefault("Content-Security-Policy", CONTENT_SECURITY_POLICY)
+    response.headers.setdefault("Content-Security-Policy", CONTENT_SECURITY_POLICY)
     if is_api_route or is_protected_page or is_auth_route:
         response.headers["Cache-Control"] = "no-store"
     elif is_public_route:
