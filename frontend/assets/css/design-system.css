@@ -9,7 +9,9 @@
    - Page-specific classes may compose tokens freely.
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap');
+/* Devanagari display face, subset to the one word the site uses: भारत */
+@import url('https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&display=swap&text=%E0%A4%AD%E0%A4%BE%E0%A4%B0%E0%A4%A4');
 
 /* ── Tokens: dark (default) ─────────────────────────────────────────────── */
 :root,
@@ -80,6 +82,11 @@
   --ds-aurora: radial-gradient(60% 50% at 15% 0%, rgba(244, 162, 97, .14), transparent 70%),
                radial-gradient(55% 45% at 85% 10%, rgba(126, 224, 161, .12), transparent 70%);
   --ds-grid-line: rgba(214, 236, 222, .045);
+
+  /* Bharat motifs: ivory (the white of the tricolour) and a jaali lattice texture */
+  --bh-ivory: #f3e7cf;
+  --bh-jaali: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='rgba(246,236,217,0.065)' stroke-width='1'%3E%3Crect x='14' y='14' width='28' height='28'/%3E%3Crect x='14' y='14' width='28' height='28' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='6'/%3E%3Cpath d='M0 0L14 14M56 0L42 14M0 56L14 42M56 56L42 42'/%3E%3C/g%3E%3C/svg%3E");
+  --bh-chakra-opacity: .14;
 }
 
 /* ── Tokens: light ──────────────────────────────────────────────────────── */
@@ -141,6 +148,10 @@
   --ds-aurora: radial-gradient(60% 50% at 15% 0%, rgba(232, 137, 61, .1), transparent 70%),
                radial-gradient(55% 45% at 85% 10%, rgba(34, 165, 90, .09), transparent 70%);
   --ds-grid-line: rgba(16, 38, 28, .05);
+
+  --bh-ivory: #b9a273;
+  --bh-jaali: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='rgba(28,58,40,0.06)' stroke-width='1'%3E%3Crect x='14' y='14' width='28' height='28'/%3E%3Crect x='14' y='14' width='28' height='28' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='6'/%3E%3Cpath d='M0 0L14 14M56 0L42 14M0 56L14 42M56 56L42 42'/%3E%3C/g%3E%3C/svg%3E");
+  --bh-chakra-opacity: .2;
 }
 
 /* ── Scale tokens (theme independent) ──────────────────────────────────── */

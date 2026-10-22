@@ -1,5 +1,5 @@
 /* BharatSec ambient shader.
-   Paints a slow, domain-warped aurora in the brand colours (saffron to green) on every
+   Paints a slow, domain-warped aurora in the tricolour (saffron, ivory, India green) on every
    <canvas data-fx-shader>. Colours come from the design tokens, so it follows the light and
    dark themes. It renders at reduced resolution and 30 fps, pauses when off screen or in a
    background tab, draws a single still frame for people who prefer reduced motion, and
@@ -22,6 +22,7 @@
     uniform vec3 u_warm;
     uniform vec3 u_cool;
     uniform vec3 u_mid;
+    uniform vec3 u_ivory;
     uniform float u_intensity;
     uniform float u_light;
 
@@ -60,8 +61,11 @@
                     fbm(p * 1.7 + 2.0 * q + vec2(8.3, 2.8) - t));
       float field = fbm(p * 1.1 + 2.4 * r);
 
-      vec3 colour = mix(u_warm, u_cool, smoothstep(0.3, 0.75, field * 0.55 + uv.x * 0.75 - 0.1));
-      colour = mix(colour, u_mid, clamp(length(q) * 0.45, 0.0, 1.0) * 0.45);
+      // Tricolour bands flowing diagonally: saffron (top left), ivory, India green (bottom right).
+      float band = clamp(uv.x * 0.55 + (1.0 - uv.y) * 0.45 + (field - 0.5) * 0.6, 0.0, 1.0);
+      vec3 colour = mix(u_warm, u_ivory * 0.75, smoothstep(0.12, 0.5, band));
+      colour = mix(colour, u_cool, smoothstep(0.5, 0.88, band));
+      colour = mix(colour, u_mid, clamp(length(q) * 0.35, 0.0, 1.0) * 0.2);
 
       // Soft light that drifts toward the pointer.
       vec2 pointer = (u_mouse - 0.5) * vec2(u_res.x / u_res.y, 1.0);
@@ -156,7 +160,7 @@
     const uniform = (name) => gl.getUniformLocation(program, name);
     const u = {
       res: uniform('u_res'), time: uniform('u_time'), mouse: uniform('u_mouse'),
-      bg: uniform('u_bg'), warm: uniform('u_warm'), cool: uniform('u_cool'), mid: uniform('u_mid'),
+      bg: uniform('u_bg'), warm: uniform('u_warm'), cool: uniform('u_cool'), mid: uniform('u_mid'), ivory: uniform('u_ivory'),
       intensity: uniform('u_intensity'), light: uniform('u_light'),
     };
 
@@ -167,6 +171,7 @@
       gl.uniform3fv(u.warm, toVec3(token('--ds-saffron'), [0.96, 0.64, 0.38]));
       gl.uniform3fv(u.cool, toVec3(token('--ds-green'), [0.49, 0.88, 0.63]));
       gl.uniform3fv(u.mid, toVec3(token('--ds-medium'), [0.95, 0.79, 0.3]));
+      gl.uniform3fv(u.ivory, toVec3(token('--bh-ivory'), [0.95, 0.9, 0.81]));
       // Light backgrounds need a gentler wash to keep text contrast.
       gl.uniform1f(u.intensity, baseIntensity * (light ? 0.42 : 0.68));
       gl.uniform1f(u.light, light ? 1 : 0);

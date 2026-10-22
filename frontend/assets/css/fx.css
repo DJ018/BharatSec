@@ -132,6 +132,50 @@ p, .ds-page-subtitle, .lp-section-sub { text-wrap: pretty; }
 @keyframes fx-vt-out { to { opacity: 0; filter: blur(2px); } }
 @keyframes fx-vt-in { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } }
 
+/* ── Bharat motifs: Ashoka Chakra, jaali lattice, serif display ─────────── */
+/* A fine-line 24-spoke chakra turns very slowly behind the hero and sign-in panel. */
+.bh-chakra {
+  position: absolute; pointer-events: none;
+  opacity: var(--bh-chakra-opacity);
+  animation: bh-turn 240s linear infinite;
+  mask-image: radial-gradient(circle at 50% 50%, #000 45%, transparent 72%);
+}
+@keyframes bh-turn { to { rotate: 360deg; } }
+.lp-hero-backdrop .bh-chakra {
+  left: 50%; top: clamp(24px, 6vw, 72px); translate: -50% 0;
+  width: min(820px, 96vw); height: auto;
+}
+.lg-brand > .bh-chakra { z-index: 0; right: -240px; bottom: -260px; width: 720px; height: auto; }
+
+/* Jaali (pierced-screen lattice) replaces the old grid, fading out from the centre. */
+.bh-jaali {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: var(--bh-jaali); background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 62% 52% at 50% 30%, #000 8%, transparent 74%);
+}
+.lg-brand-glow::after { mask-image: radial-gradient(ellipse 80% 70% at 30% 40%, #000 10%, transparent 72%); }
+
+/* Display serif for the emotional half of headlines. */
+.lp-hero-title .ds-gradient-text, .lg-brand-title .ds-gradient-text {
+  display: inline-block; padding: 0 .08em .08em 0;
+  font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  font-size: 1.14em; font-style: italic; font-weight: 400; letter-spacing: -.012em; line-height: 1;
+}
+.bh-devanagari {
+  font-family: 'Tiro Devanagari Hindi', 'Nirmala UI', 'Noto Serif Devanagari', 'Noto Sans Devanagari', serif;
+  font-size: 1.12em; font-weight: 400; letter-spacing: 0; text-transform: none;
+  background: linear-gradient(90deg, var(--ds-saffron), var(--bh-ivory) 55%, var(--ds-green));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.bh-sep { display: inline-block; width: 1px; height: 12px; margin: 0 2px; background: var(--ds-border-strong); vertical-align: middle; }
+
+/* A hairline of the tricolour under the landing navigation. */
+.lp-nav::after {
+  content: ''; position: absolute; inset: auto 0 -1px; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--ds-saffron) 22%, var(--bh-ivory) 50%, var(--ds-green) 78%, transparent);
+  opacity: .35;
+}
+
 /* ── Reduced motion: keep the look, drop the movement ──────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .fx-js :is(.lp-hero-copy > *, .lp-hero-visual, .ds-page-header, .ds-stats,
@@ -139,5 +183,6 @@ p, .ds-page-subtitle, .lp-section-sub { text-wrap: pretty; }
              .auth-card, .lg-brand-body > *, .lg-suite) { opacity: 1; }
   .lp-reveal-ready [data-reveal] { filter: none; }
   .fx-magnet, .ds-nav-item:hover, .ds-suite-item:hover { transform: none; }
+  .bh-chakra { animation: none; }
   @view-transition { navigation: none; }
 }

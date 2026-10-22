@@ -22,12 +22,6 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
 }
 .lp-skip:focus { top: 12px; }
 
-/* Ambient network canvas (cyber-background.js) */
-.landing-page #particle-canvas {
-  position: fixed; inset: 0; z-index: 0;
-  width: 100%; height: 100%; pointer-events: none;
-  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
-}
 .landing-page main, .lp-footer { position: relative; z-index: 1; }
 
 /* ── Navigation ────────────────────────────────────────────────────────── */
@@ -87,12 +81,6 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
 .lp-hero-backdrop {
   position: absolute; inset: calc(var(--lp-nav-h) * -1) 0 0; z-index: -1; pointer-events: none;
   background: var(--ds-aurora);
-}
-.lp-hero-backdrop::after {
-  content: ''; position: absolute; inset: 0;
-  background-image: linear-gradient(var(--ds-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--ds-grid-line) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 20%, transparent 75%);
 }
 .lp-hero-inner { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: center; gap: clamp(40px, 6vw, 80px); }
 .lp-hero-copy { display: grid; justify-items: start; gap: var(--ds-space-6); }
@@ -170,12 +158,6 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
     radial-gradient(circle at 50% 52%, var(--ds-primary-soft), transparent 55%),
     linear-gradient(160deg, var(--ds-surface-2), var(--ds-surface));
   box-shadow: var(--ds-shadow-lg), var(--ds-card-highlight);
-}
-.lp-console::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background-image: linear-gradient(var(--ds-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--ds-grid-line) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: radial-gradient(ellipse at 50% 50%, #000 20%, transparent 80%);
 }
 .lp-console-bar, .lp-console-foot {
   position: relative; z-index: 2;
@@ -360,8 +342,8 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
 }
 .lp-cta::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
-  background-image: linear-gradient(var(--ds-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--ds-grid-line) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-image: var(--bh-jaali);
+  background-size: 56px 56px;
   mask-image: radial-gradient(ellipse 60% 70% at 50% 0%, #000, transparent 75%);
 }
 .lp-cta > * { position: relative; }

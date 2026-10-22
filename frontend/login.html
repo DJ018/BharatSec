@@ -36,7 +36,7 @@
     <!-- ── Brand / value panel ───────────────────────────────── -->
     <aside class="lg-brand" aria-label="About BharatSec">
       <canvas class="fx-shader" data-fx-shader data-intensity="0.85" aria-hidden="true"></canvas>
-      <canvas id="particle-canvas" aria-hidden="true"></canvas>
+      <svg class="bh-chakra" viewBox="0 0 400 400" aria-hidden="true" focusable="false"><defs><linearGradient id="bh-chakra-ink" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--ds-saffron)"/><stop offset=".5" style="stop-color:var(--bh-ivory)"/><stop offset="1" style="stop-color:var(--ds-green)"/></linearGradient></defs><g fill="none" stroke="url(#bh-chakra-ink)" stroke-width="1.1" stroke-linecap="round"><circle cx="200" cy="200" r="188"/><circle cx="200" cy="200" r="176"/><circle cx="200" cy="200" r="30"/><circle cx="200" cy="200" r="12"/><line x1="230.0" y1="200.0" x2="376.0" y2="200.0"/><circle cx="374.5" cy="223.0" r="6"/><line x1="229.0" y1="207.8" x2="370.0" y2="245.6"/><circle cx="362.6" cy="267.4" r="6"/><line x1="226.0" y1="215.0" x2="352.4" y2="288.0"/><circle cx="339.6" cy="307.1" r="6"/><line x1="221.2" y1="221.2" x2="324.5" y2="324.5"/><circle cx="307.1" cy="339.6" r="6"/><line x1="215.0" y1="226.0" x2="288.0" y2="352.4"/><circle cx="267.4" cy="362.6" r="6"/><line x1="207.8" y1="229.0" x2="245.6" y2="370.0"/><circle cx="223.0" cy="374.5" r="6"/><line x1="200.0" y1="230.0" x2="200.0" y2="376.0"/><circle cx="177.0" cy="374.5" r="6"/><line x1="192.2" y1="229.0" x2="154.4" y2="370.0"/><circle cx="132.6" cy="362.6" r="6"/><line x1="185.0" y1="226.0" x2="112.0" y2="352.4"/><circle cx="92.9" cy="339.6" r="6"/><line x1="178.8" y1="221.2" x2="75.5" y2="324.5"/><circle cx="60.4" cy="307.1" r="6"/><line x1="174.0" y1="215.0" x2="47.6" y2="288.0"/><circle cx="37.4" cy="267.4" r="6"/><line x1="171.0" y1="207.8" x2="30.0" y2="245.6"/><circle cx="25.5" cy="223.0" r="6"/><line x1="170.0" y1="200.0" x2="24.0" y2="200.0"/><circle cx="25.5" cy="177.0" r="6"/><line x1="171.0" y1="192.2" x2="30.0" y2="154.4"/><circle cx="37.4" cy="132.6" r="6"/><line x1="174.0" y1="185.0" x2="47.6" y2="112.0"/><circle cx="60.4" cy="92.9" r="6"/><line x1="178.8" y1="178.8" x2="75.5" y2="75.5"/><circle cx="92.9" cy="60.4" r="6"/><line x1="185.0" y1="174.0" x2="112.0" y2="47.6"/><circle cx="132.6" cy="37.4" r="6"/><line x1="192.2" y1="171.0" x2="154.4" y2="30.0"/><circle cx="177.0" cy="25.5" r="6"/><line x1="200.0" y1="170.0" x2="200.0" y2="24.0"/><circle cx="223.0" cy="25.5" r="6"/><line x1="207.8" y1="171.0" x2="245.6" y2="30.0"/><circle cx="267.4" cy="37.4" r="6"/><line x1="215.0" y1="174.0" x2="288.0" y2="47.6"/><circle cx="307.1" cy="60.4" r="6"/><line x1="221.2" y1="178.8" x2="324.5" y2="75.5"/><circle cx="339.6" cy="92.9" r="6"/><line x1="226.0" y1="185.0" x2="352.4" y2="112.0"/><circle cx="362.6" cy="132.6" r="6"/><line x1="229.0" y1="192.2" x2="370.0" y2="154.4"/><circle cx="374.5" cy="177.0" r="6"/></g></svg>
       <div class="lg-brand-glow" aria-hidden="true"></div>
 
       <a class="ds-brand" href="index.html" aria-label="BharatSec home">
@@ -45,7 +45,7 @@
       </a>
 
       <div class="lg-brand-body">
-        <span class="ds-eyebrow">India-rooted cyber risk intelligence</span>
+        <span class="ds-eyebrow"><span class="bh-devanagari" lang="hi">भारत</span><span class="bh-sep" aria-hidden="true"></span>India-rooted cyber risk intelligence</span>
         <h1 class="lg-brand-title">
           See the outside.<br />
           <span class="ds-gradient-text">Secure what's within.</span>
@@ -248,7 +248,6 @@
     </main>
   </div>
 
-  <script src="assets/js/cyber-background.js"></script>
   <script>
     /* ── Check if already logged in ─────────────────────────────── */
     bsAuthReady.then((session) => {

@@ -16,20 +16,17 @@
   border-right: 1px solid var(--ds-border);
   background: var(--ds-bg-raised);
 }
-/* The canvas covers the viewport (cyber-background.js sizes it to the window);
-   the form panel paints above it, so it only shows through this panel. */
-.lg-brand #particle-canvas { position: fixed; inset: 0; z-index: 0; width: 100vw; height: 100vh; pointer-events: none; opacity: .9; }
 .lg-brand-glow {
   position: absolute; inset: 0; z-index: 0; pointer-events: none;
   background: var(--ds-aurora);
 }
 .lg-brand-glow::after {
   content: ''; position: absolute; inset: 0;
-  background-image: linear-gradient(var(--ds-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--ds-grid-line) 1px, transparent 1px);
-  background-size: 48px 48px;
+  background-image: var(--bh-jaali);
+  background-size: 56px 56px;
   mask-image: radial-gradient(ellipse 80% 70% at 30% 40%, #000 15%, transparent 75%);
 }
-.lg-brand > *:not(#particle-canvas):not(.lg-brand-glow):not(.fx-shader) { position: relative; z-index: 1; }
+.lg-brand > *:not(.bh-chakra):not(.lg-brand-glow):not(.fx-shader) { position: relative; z-index: 1; }
 .lg-brand > .ds-brand { align-self: flex-start; }
 
 .lg-brand-body { display: grid; gap: var(--ds-space-5); max-width: 520px; }
