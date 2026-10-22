@@ -673,12 +673,15 @@ async def copilot_respond(message: str, scan: "ScanResult", history: Optional[Li
     return {"content": _copilot_rules(message, scan), "source": "rules"}
 
 
-_EM_DASH = re.compile(r"\s*" + chr(0x2014) + r"\s*")  # chr(0x2014) is the em dash
+_EM_DASH = re.compile(r"\s*([,;:.!?])?\s*" + chr(0x2014) + r"\s*")  # chr(0x2014) is the em dash
 
 
 def _plain_dashes(text: str) -> str:
-    """BharatSec's house style has no em dashes; models sometimes add them anyway."""
-    return _EM_DASH.sub(", ", text)
+    """BharatSec's house style has no em dashes; models sometimes add them anyway.
+
+    A dash between words becomes a comma; punctuation already before the dash is kept instead of doubled.
+    """
+    return _EM_DASH.sub(lambda match: f"{match.group(1) or ','} ", text)
 
 
 async def _stream_with_fallback(system: str, messages: List[llm.Message], temperature: float,
