@@ -10,6 +10,10 @@
   <link rel="stylesheet" href="assets/css/design-system.css" />
   <link rel="stylesheet" href="assets/css/landing.css" />
   <script src="assets/js/auth.js"></script>
+  <link rel="stylesheet" href="assets/css/fx.css" />
+  <script src="https://cdn.jsdelivr.net/npm/motion@11.18.2/dist/motion.js" integrity="sha384-lFfU+kVPBF9H3h8c1O+KQNuTRX7dilL8RZiy/kxQiYulHvYCHv4z+eba37GD2qTC" crossorigin="anonymous" defer></script>
+  <script src="assets/js/shader-bg.js" defer></script>
+  <script src="assets/js/fx.js" defer></script>
 </head>
 <body class="landing-page">
 
@@ -53,7 +57,7 @@
 
 <!-- ═══ Hero ═════════════════════════════════════════════════ -->
 <section class="lp-hero" id="hero">
-  <div class="lp-hero-backdrop" aria-hidden="true"></div>
+  <div class="lp-hero-backdrop" aria-hidden="true"><canvas class="fx-shader" data-fx-shader></canvas></div>
   <div class="lp-container lp-hero-inner">
 
     <div class="lp-hero-copy">

@@ -13,8 +13,13 @@
   <script src="assets/js/auth.js"></script>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="assets/css/fx.css" />
+  <script src="https://cdn.jsdelivr.net/npm/motion@11.18.2/dist/motion.js" integrity="sha384-lFfU+kVPBF9H3h8c1O+KQNuTRX7dilL8RZiy/kxQiYulHvYCHv4z+eba37GD2qTC" crossorigin="anonymous" defer></script>
+  <script src="assets/js/shader-bg.js" defer></script>
+  <script src="assets/js/fx.js" defer></script>
 </head>
 <body class="ds-app dashboard-page">
+<canvas class="fx-shader fx-ambient" data-fx-shader data-intensity="0.55" aria-hidden="true"></canvas>
 
 <!-- ── Scan progress overlay ─────────────────────────────────── -->
 <div class="scan-progress-overlay" id="scan-overlay" role="dialog" aria-modal="true" aria-labelledby="scan-overlay-title">

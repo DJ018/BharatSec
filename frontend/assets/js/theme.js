@@ -7,6 +7,17 @@
   var KEY = 'bharatsec-theme';
   var root = document.documentElement;
 
+  // Entrance animations (assets/js/fx.js): hide their targets before first paint so they can rise in,
+  // unless the visitor prefers reduced motion. If fx.js or Motion never arrives, show everything.
+  try {
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      root.classList.add('fx-js');
+      setTimeout(function () {
+        if (!root.classList.contains('fx-live')) root.classList.remove('fx-js');
+      }, 2500);
+    }
+  } catch (e) { /* no matchMedia: no entrance animation */ }
+
   function read() {
     try {
       var saved = localStorage.getItem(KEY);

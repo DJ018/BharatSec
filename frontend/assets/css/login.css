@@ -29,7 +29,7 @@
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse 80% 70% at 30% 40%, #000 15%, transparent 75%);
 }
-.lg-brand > *:not(#particle-canvas):not(.lg-brand-glow) { position: relative; z-index: 1; }
+.lg-brand > *:not(#particle-canvas):not(.lg-brand-glow):not(.fx-shader) { position: relative; z-index: 1; }
 .lg-brand > .ds-brand { align-self: flex-start; }
 
 .lg-brand-body { display: grid; gap: var(--ds-space-5); max-width: 520px; }

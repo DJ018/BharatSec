@@ -1,0 +1,143 @@
+/* ==========================================================================
+   BharatSec experience layer
+   Loaded last on every page, on top of design-system.css and the page stylesheet.
+   Adds depth and motion without changing layout: shader backdrops, glass surfaces,
+   a pointer spotlight, glowing focus, button shine, dialog and page transitions.
+   Everything here is cosmetic and switches off for prefers-reduced-motion.
+   ========================================================================== */
+
+:root {
+  --fx-ease: cubic-bezier(.22, 1, .36, 1);
+  --fx-glass-strong: color-mix(in oklab, var(--ds-surface) 86%, transparent);
+  --fx-spot: color-mix(in oklab, var(--ds-primary) 15%, transparent);
+  --fx-spot-warm: color-mix(in oklab, var(--ds-saffron) 9%, transparent);
+  --fx-ring: color-mix(in oklab, var(--ds-primary) 42%, transparent);
+  --fx-lift: 0 22px 48px -24px color-mix(in oklab, var(--ds-primary) 45%, transparent);
+}
+:root[data-theme="light"] {
+  --fx-spot: color-mix(in oklab, var(--ds-primary) 9%, transparent);
+  --fx-spot-warm: color-mix(in oklab, var(--ds-saffron) 7%, transparent);
+  --fx-lift: 0 22px 44px -26px color-mix(in oklab, var(--ds-primary) 38%, transparent);
+}
+
+/* ── Typography polish ─────────────────────────────────────────────────── */
+h1, h2, h3, .ds-page-title, .lp-section-title, .lp-hero-title, .auth-title { text-wrap: balance; }
+p, .ds-page-subtitle, .lp-section-sub { text-wrap: pretty; }
+.ds-page-title { letter-spacing: -.035em; }
+
+/* ── Entrance (html.fx-js is set by theme.js; fx.js animates these in) ── */
+.fx-js :is(.lp-hero-copy > *, .lp-hero-visual, .ds-page-header, .ds-stats,
+           .ds-content > .ds-card, .ds-content > .ds-section, .ds-content > section,
+           .auth-card, .lg-brand-body > *, .lg-suite) { opacity: 0; }
+
+/* Landing scroll reveal gains a soft focus pull. */
+.lp-reveal-ready [data-reveal] { filter: blur(6px); transition: opacity 700ms var(--fx-ease), transform 700ms var(--fx-ease), filter 700ms var(--fx-ease); }
+.lp-reveal-ready [data-reveal].is-visible { filter: none; }
+
+/* ── Shader backdrops (assets/js/shader-bg.js) ─────────────────────────── */
+.fx-shader {
+  position: absolute; inset: 0; display: block;
+  width: 100%; height: 100%; pointer-events: none;
+  opacity: 0; transition: opacity 1.4s var(--fx-ease);
+}
+.fx-shader.is-ready { opacity: 1; }
+
+/* Landing hero: aurora behind the headline, fading into the page. */
+.lp-hero-backdrop .fx-shader { mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 96%); }
+
+/* Sign-in brand panel. */
+.lg-brand > .fx-shader { z-index: 0; }
+
+/* App pages: a quiet band of light behind the page header. */
+.fx-ambient {
+  position: fixed; inset: 0 0 auto var(--ds-sidebar-w); z-index: 0;
+  width: auto; height: 440px;
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .55) 45%, transparent 100%);
+}
+.ds-app .ds-main { position: relative; z-index: 1; }
+@media (max-width: 1024px) { .fx-ambient { left: 0; } }
+
+/* ── Glass surfaces ────────────────────────────────────────────────────── */
+.ds-card, .ds-stat {
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+.ds-dialog { background-color: var(--fx-glass-strong); backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%); }
+.ds-sidebar { background-color: color-mix(in oklab, var(--ds-bg-raised) 92%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+.auth-card { backdrop-filter: blur(22px) saturate(150%); -webkit-backdrop-filter: blur(22px) saturate(150%); }
+
+/* ── Pointer spotlight (fx.js sets --fx-x/--fx-y and .fx-lit) ─────────── */
+:where(.fx-spot) { position: relative; isolation: isolate; }
+.fx-spot::after {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit; pointer-events: none;
+  background:
+    radial-gradient(380px circle at var(--fx-x, 50%) var(--fx-y, 0%), var(--fx-spot), transparent 46%),
+    radial-gradient(620px circle at var(--fx-x, 50%) var(--fx-y, 0%), var(--fx-spot-warm), transparent 60%);
+  opacity: 0; transition: opacity 400ms var(--fx-ease);
+}
+.fx-spot.fx-lit::after { opacity: 1; }
+.fx-spot.fx-lit { border-color: var(--fx-ring); box-shadow: var(--ds-shadow-sm), var(--fx-lift); }
+.ds-card, .ds-stat, .lp-feature, .lp-product, .lp-step, .lp-stat, .ac-connection {
+  transition: border-color 300ms var(--fx-ease), box-shadow 400ms var(--fx-ease), transform 400ms var(--fx-ease);
+}
+
+/* ── Buttons: shine, press and magnetic lean ───────────────────────────── */
+.ds-btn { transition: background var(--ds-fast) var(--ds-ease), border-color var(--ds-fast) var(--ds-ease), color var(--ds-fast) var(--ds-ease),
+                      box-shadow 260ms var(--fx-ease), transform 260ms var(--fx-ease), filter var(--ds-fast); }
+.ds-btn:active:not(:disabled) { transform: translate(var(--fx-mx, 0), var(--fx-my, 0)) scale(.97); }
+.fx-magnet { transform: translate(var(--fx-mx, 0), var(--fx-my, 0)); }
+.ds-btn--brand, .ds-btn--primary { position: relative; overflow: hidden; isolation: isolate; }
+.ds-btn--brand::after, .ds-btn--primary::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(110deg, transparent 32%, rgba(255, 255, 255, .38) 50%, transparent 68%);
+  transform: translateX(-130%);
+}
+.ds-btn--brand:hover:not(:disabled)::after, .ds-btn--primary:hover:not(:disabled)::after {
+  transform: translateX(130%); transition: transform 900ms var(--fx-ease);
+}
+.ds-btn--brand:hover:not(:disabled) { box-shadow: var(--ds-glow), 0 0 42px -10px color-mix(in oklab, var(--ds-saffron) 55%, transparent); }
+
+/* ── Inputs: glowing focus ─────────────────────────────────────────────── */
+.ds-input:focus, .ds-select:focus, .ds-textarea:focus, .lp-scan-field:focus-within {
+  box-shadow: 0 0 0 4px var(--ds-primary-ring), 0 0 28px -8px var(--fx-ring);
+}
+
+/* ── Navigation ────────────────────────────────────────────────────────── */
+.ds-nav-item, .ds-suite-item { transition: background 200ms var(--fx-ease), color 200ms var(--fx-ease), transform 200ms var(--fx-ease); }
+.ds-nav-item:hover, .ds-suite-item:hover { transform: translateX(2px); }
+.ds-nav-item[aria-current="page"], .ds-nav-item.active, .ds-nav-item.is-active {
+  background: linear-gradient(90deg, var(--ds-primary-soft), transparent 92%);
+}
+
+/* ── Badges: live status breathes ──────────────────────────────────────── */
+.ds-status--live::before { animation: fx-breathe 2.4s var(--fx-ease) infinite; }
+@keyframes fx-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--ds-low) 55%, transparent); }
+  50% { box-shadow: 0 0 0 5px transparent; }
+}
+
+/* ── Dialogs and toasts ────────────────────────────────────────────────── */
+.ds-dialog[open] { animation: fx-pop 360ms var(--fx-ease); }
+.ds-dialog[open]::backdrop { animation: fx-fade 300ms ease; backdrop-filter: blur(6px); }
+.ds-toast.show, .ds-toast.is-visible { animation: fx-rise 420ms var(--fx-ease); }
+@keyframes fx-pop { from { opacity: 0; transform: translateY(10px) scale(.97); filter: blur(4px); } }
+@keyframes fx-fade { from { opacity: 0; } }
+@keyframes fx-rise { from { opacity: 0; transform: translateY(12px); } }
+
+/* ── Page transitions between BharatSec pages (supporting browsers) ───── */
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: 160ms ease both fx-vt-out; }
+::view-transition-new(root) { animation: 380ms var(--fx-ease) both fx-vt-in; }
+@keyframes fx-vt-out { to { opacity: 0; filter: blur(2px); } }
+@keyframes fx-vt-in { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } }
+
+/* ── Reduced motion: keep the look, drop the movement ──────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .fx-js :is(.lp-hero-copy > *, .lp-hero-visual, .ds-page-header, .ds-stats,
+             .ds-content > .ds-card, .ds-content > .ds-section, .ds-content > section,
+             .auth-card, .lg-brand-body > *, .lg-suite) { opacity: 1; }
+  .lp-reveal-ready [data-reveal] { filter: none; }
+  .fx-magnet, .ds-nav-item:hover, .ds-suite-item:hover { transform: none; }
+  @view-transition { navigation: none; }
+}
