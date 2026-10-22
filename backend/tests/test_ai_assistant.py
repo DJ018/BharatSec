@@ -90,6 +90,17 @@ class ProviderLayerTests(unittest.TestCase):
         self.assertEqual(result["source"], "rules")
         self.assertIn("DPDP", result["content"])
 
+    def test_model_answers_never_contain_em_dashes(self):
+        dash = chr(0x2014)
+        reply = {"candidates": [{"content": {"parts": [{"text": f"Zero trust {dash} never trust,{dash}always verify."}]}}]}
+        client = FakeClient({"gemini": [(200, reply)], "openai": []})
+        g, o = self._patch_keys(openai="")
+        with g, o, patch.object(llm.httpx, "AsyncClient", return_value=client):
+            result = _run(ai_engine.general_ai_respond("Explain zero trust"))
+        self.assertNotIn(dash, result["content"])
+        self.assertEqual(result["content"], "Zero trust, never trust, always verify.")
+        self.assertIn("never use em dashes", client.calls[0][2]["json"]["systemInstruction"]["parts"][0]["text"])
+
     def test_retired_gemini_model_falls_back_to_latest_alias(self):
         client = FakeClient({"gemini": [(404, {"error": {"message": "model no longer available"}}), (200, GEMINI_OK)], "openai": []})
         g, o = self._patch_keys(openai="")
