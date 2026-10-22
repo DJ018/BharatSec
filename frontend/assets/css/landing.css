@@ -153,95 +153,112 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
 .lp-hero-visual { position: relative; padding: 24px 0; }
 .lp-console {
   position: relative; overflow: hidden;
-  border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius-xl);
+  border: 1px solid var(--ds-border-strong); border-radius: 24px;
   background:
-    radial-gradient(circle at 50% 52%, var(--ds-primary-soft), transparent 55%),
-    linear-gradient(160deg, var(--ds-surface-2), var(--ds-surface));
+    radial-gradient(circle at 50% 46%, color-mix(in oklab, var(--ds-saffron) 7%, transparent), transparent 46%),
+    linear-gradient(165deg, var(--ds-card-glass), color-mix(in oklab, var(--ds-bg) 70%, transparent));
+  backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%);
   box-shadow: var(--ds-shadow-lg), var(--ds-card-highlight);
 }
-.lp-console-bar, .lp-console-foot {
+.lp-console-bar {
   position: relative; z-index: 2;
-  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-  color: var(--ds-text-3); font-family: var(--ds-font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px;
+  border-bottom: 1px solid var(--ds-divider);
+  color: var(--ds-text-3); font-family: var(--ds-font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
 }
-.lp-console-bar { border-bottom: 1px solid var(--ds-divider); background: var(--ds-bg-raised); }
-.lp-console-foot { justify-content: space-between; border-top: 1px solid var(--ds-divider); }
-.lp-console-dots { display: inline-flex; gap: 6px; }
-.lp-console-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--ds-surface-3); }
-.lp-console-title { color: var(--ds-text-2); font-weight: 600; }
-.lp-console-live { display: inline-flex; align-items: center; gap: 7px; padding-left: 12px; border-left: 1px solid var(--ds-border); color: var(--ds-primary); }
-.lp-console-live i { width: 7px; height: 7px; border-radius: 50%; background: var(--ds-primary); box-shadow: 0 0 0 3px var(--ds-primary-soft); animation: ds-pulse 2s infinite; }
+.lp-console-title { display: inline-flex; align-items: center; gap: 10px; color: var(--ds-text-2); font-weight: 600; }
+.lp-console-title img { width: 18px; height: 18px; }
+.lp-console-live { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px; border: 1px solid color-mix(in oklab, var(--ds-primary) 30%, transparent); border-radius: 99px; color: var(--ds-primary); }
+.lp-console-live i { width: 6px; height: 6px; border-radius: 50%; background: var(--ds-primary); box-shadow: 0 0 0 3px var(--ds-primary-soft); animation: ds-pulse 2s infinite; }
 
-.lp-radar { position: relative; z-index: 1; aspect-ratio: 1 / .9; min-height: 340px; }
-.lp-radar-ring, .lp-radar-sweep, .lp-radar-orbit, .lp-radar-axis, .lp-radar-core {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-}
-.lp-radar-ring { aspect-ratio: 1; border: 1px solid var(--ds-border-strong); border-radius: 50%; }
-.lp-radar-ring.r1 { width: 84%; border-style: dashed; animation: lp-turn 90s linear infinite; }
-.lp-radar-ring.r2 { width: 62%; }
-.lp-radar-ring.r3 { width: 40%; border-style: dashed; border-color: color-mix(in srgb, var(--ds-accent) 40%, transparent); animation: lp-turn 60s linear infinite reverse; }
-.lp-radar-axis { background: var(--ds-border); }
-.lp-radar-axis.x { width: 88%; height: 1px; }
-.lp-radar-axis.y { width: 1px; height: 94%; }
+/* The dial: a precise instrument face that echoes the Ashoka Chakra. */
+.lp-radar { position: relative; z-index: 1; padding: 40px 0 36px; }
+.lp-radar-face { position: relative; width: min(62%, 420px); aspect-ratio: 1; margin: 0 auto; }
+.lp-dial { position: absolute; inset: 6%; width: 88%; height: 88%; overflow: visible; }
+.lp-dial line, .lp-dial circle { fill: none; vector-effect: non-scaling-stroke; }
+.lp-dial-ring { stroke: var(--ds-border-strong); stroke-width: 1; }
+.lp-dial-ring.is-soft { stroke: var(--ds-border); }
+.lp-dial-ring.is-dashed { stroke: color-mix(in oklab, var(--ds-saffron) 30%, transparent); stroke-dasharray: 2 6; }
+.lp-dial-spokes line { stroke: url(#lp-dial-ink); stroke-width: 1; opacity: .22; }
+.lp-dial-ticks line { stroke: var(--ds-text-3); stroke-width: 1; opacity: .35; }
+.lp-dial-major line { stroke: url(#lp-dial-ink); stroke-width: 1.6; stroke-linecap: round; }
+.lp-dial-spokes, .lp-dial-ticks, .lp-dial-major { transform-origin: 50% 50%; transform-box: view-box; animation: lp-turn 120s linear infinite; }
+
 .lp-radar-sweep {
-  width: 84%; aspect-ratio: 1; border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0deg 280deg, color-mix(in srgb, var(--ds-green) 6%, transparent) 310deg, color-mix(in srgb, var(--ds-green) 22%, transparent) 358deg, transparent 360deg);
-  mask-image: radial-gradient(circle, transparent 0 22%, #000 23%);
-  animation: lp-turn 10s linear infinite;
+  position: absolute; inset: 7.5%; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg 290deg,
+    color-mix(in oklab, var(--ds-saffron) 5%, transparent) 320deg,
+    color-mix(in oklab, var(--ds-green) 20%, transparent) 359deg, transparent 360deg);
+  mask-image: radial-gradient(circle, transparent 0 21%, #000 22%);
+  animation: lp-turn 9s linear infinite;
 }
-.lp-radar-orbit { border: 1px solid color-mix(in srgb, var(--ds-green) 30%, transparent); border-radius: 50%; }
-.lp-radar-orbit.o1 { width: 72%; height: 28%; rotate: -24deg; }
-.lp-radar-orbit.o2 { width: 74%; height: 34%; rotate: 34deg; border-color: color-mix(in srgb, var(--ds-accent) 32%, transparent); }
-.lp-radar-orbit i { position: absolute; top: 50%; right: -4px; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: var(--ds-green); box-shadow: 0 0 0 4px var(--ds-primary-soft); }
-.lp-radar-orbit.o2 i { right: auto; left: -4px; background: var(--ds-accent); box-shadow: 0 0 0 4px var(--ds-accent-soft); }
 @keyframes lp-turn { to { rotate: 360deg; } }
 
-.lp-radar-blip { position: absolute; z-index: 2; width: 6px; height: 6px; border-radius: 50%; background: var(--ds-accent); box-shadow: 0 0 0 4px var(--ds-accent-soft); animation: lp-blip 2.6s ease-in-out infinite; }
-.lp-radar-blip.b1 { top: 24%; left: 62%; }
-.lp-radar-blip.b2 { top: 62%; left: 22%; animation-delay: -.8s; background: var(--ds-green); box-shadow: 0 0 0 4px var(--ds-primary-soft); }
-.lp-radar-blip.b3 { top: 72%; left: 70%; animation-delay: -1.5s; }
-.lp-radar-blip.b4 { top: 34%; left: 28%; animation-delay: -2s; background: var(--ds-info); box-shadow: 0 0 0 4px var(--ds-info-soft); }
-@keyframes lp-blip { 50% { opacity: .35; scale: .7; } }
+/* Three signals sit on the dial; their numbers match the legend below. */
+.lp-signal { position: absolute; z-index: 3; translate: -50% -50%; display: grid; place-items: center; }
+.lp-signal i {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--sig);
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--sig) 16%, transparent), 0 0 18px color-mix(in oklab, var(--sig) 70%, transparent);
+  animation: lp-signal 3s ease-in-out infinite;
+}
+.lp-signal b {
+  position: absolute; left: 16px; top: -18px;
+  padding: 1px 6px; border: 1px solid color-mix(in oklab, var(--sig) 35%, transparent); border-radius: 6px;
+  background: color-mix(in oklab, var(--ds-surface) 85%, transparent);
+  color: var(--sig); font-family: var(--ds-font-mono); font-size: 10px; font-weight: 600; letter-spacing: .04em;
+}
+.s-dns { --sig: var(--ds-saffron); }
+.s-web { --sig: var(--bh-ivory); }
+.s-cloud { --sig: var(--ds-green); }
+.lp-signal.s-web i { animation-delay: -1s; }
+.lp-signal.s-cloud i { animation-delay: -2s; }
+@keyframes lp-signal {
+  50% { box-shadow: 0 0 0 9px color-mix(in oklab, var(--sig) 6%, transparent), 0 0 26px color-mix(in oklab, var(--sig) 80%, transparent); }
+}
 
 .lp-radar-core {
-  z-index: 3; display: grid; justify-items: center; align-content: center; gap: 8px;
-  width: 36%; aspect-ratio: 1; padding: 12px;
+  position: absolute; top: 50%; left: 50%; z-index: 4; translate: -50% -50%;
+  display: grid; justify-items: center; align-content: center; gap: 6px;
+  width: 34%; aspect-ratio: 1; padding: 12px;
   border: 1px solid var(--ds-border-strong); border-radius: 50%;
-  background: radial-gradient(circle at 50% 30%, var(--ds-surface-2), var(--ds-surface) 70%);
-  box-shadow: 0 0 0 10px var(--ds-primary-soft), var(--ds-shadow);
+  background: radial-gradient(circle at 50% 28%, var(--ds-surface-2), var(--ds-surface) 72%);
+  box-shadow: 0 0 0 8px color-mix(in oklab, var(--ds-saffron) 6%, transparent),
+              0 0 0 18px color-mix(in oklab, var(--ds-green) 4%, transparent), var(--ds-shadow);
   text-align: center;
 }
-.lp-radar-core img { width: 40px; height: 40px; }
-.lp-radar-core strong { max-width: 15ch; color: var(--ds-text); font-size: clamp(.8125rem, 1.25vw, .9375rem); font-weight: 650; letter-spacing: -.015em; line-height: 1.25; }
-.lp-radar-core span { color: var(--ds-text-3); font-family: var(--ds-font-mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
-
-.lp-radar-tag {
-  position: absolute; z-index: 4; display: flex; align-items: center; gap: 10px;
-  padding: 9px 12px 9px 10px;
-  border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius);
-  background: var(--ds-glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  box-shadow: var(--ds-shadow);
-  animation: lp-float 6s ease-in-out infinite;
+.lp-radar-core img { width: 36px; height: 36px; }
+.lp-radar-core strong {
+  max-width: 14ch; color: var(--ds-text);
+  font-family: 'Instrument Serif', Georgia, serif; font-size: clamp(1rem, 1.6vw, 1.2rem); font-style: italic; font-weight: 400; line-height: 1.15;
 }
-.lp-radar-tag strong { display: block; color: var(--ds-text); font-size: var(--ds-text-xs); font-weight: 600; }
-.lp-radar-tag small { display: block; color: var(--ds-text-3); font-size: 11px; }
-.lp-tag-idx { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; background: var(--ds-accent-soft); color: var(--ds-accent); font-family: var(--ds-font-mono); font-size: 11px; font-weight: 600; }
-.lp-radar-tag.t-dns { top: 7%; left: 4%; }
-.lp-radar-tag.t-web { top: 40%; right: 3%; animation-delay: -2s; }
-.lp-radar-tag.t-web .lp-tag-idx { background: var(--ds-primary-soft); color: var(--ds-primary); }
-.lp-radar-tag.t-cloud { bottom: 7%; left: 8%; animation-delay: -4s; }
-.lp-radar-tag.t-cloud .lp-tag-idx { background: var(--ds-info-soft); color: var(--ds-info); }
-@keyframes lp-float { 50% { translate: 0 -5px; } }
+.lp-radar-core span { color: var(--ds-text-3); font-family: var(--ds-font-mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; }
+
+/* Legend: the three things a scan maps, numbered like the signals. */
+.lp-radar-legend {
+  position: relative; z-index: 2;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
+  margin: 0; padding: 14px 18px 18px; list-style: none;
+  border-top: 1px solid var(--ds-divider);
+}
+.lp-radar-legend li { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.lp-radar-legend strong { display: block; color: var(--ds-text); font-size: var(--ds-text-xs); font-weight: 600; }
+.lp-radar-legend small { display: block; overflow: hidden; color: var(--ds-text-3); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.lp-tag-idx {
+  display: grid; flex: 0 0 auto; place-items: center; width: 26px; height: 26px; border-radius: 8px;
+  background: color-mix(in oklab, var(--sig) 14%, transparent); color: var(--sig);
+  font-family: var(--ds-font-mono); font-size: 11px; font-weight: 600;
+}
 
 .lp-float {
   position: absolute; z-index: 5;
   border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius-lg);
   background: var(--ds-surface); box-shadow: var(--ds-shadow-lg), var(--ds-card-highlight);
 }
-.lp-float-finding { right: -18px; bottom: -2px; display: flex; align-items: center; gap: 12px; max-width: 300px; padding: 12px 14px; }
-.lp-float-finding strong { display: block; color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 600; }
+.lp-float-finding { left: 14px; bottom: 14px; display: grid; justify-items: start; gap: 6px; max-width: 170px; padding: 10px 12px; }
+.lp-float-finding strong { display: block; color: var(--ds-text); font-size: var(--ds-text-xs); font-weight: 600; white-space: nowrap; }
 .lp-float-finding div span { display: block; margin-top: 2px; color: var(--ds-text-3); font-size: 11px; }
-.lp-float-score { top: -4px; right: 28px; display: grid; gap: 4px; width: 168px; padding: 12px 14px; }
+.lp-float-score { top: 14px; right: 14px; display: grid; gap: 4px; width: 140px; padding: 10px 12px; }
 .lp-float-label { color: var(--ds-text-3); font-size: 11px; font-weight: 500; }
 .lp-float-value { color: var(--ds-text); font-size: var(--ds-text-2xl); font-weight: 700; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
 .lp-float-value small { margin-left: 2px; color: var(--ds-text-3); font-size: var(--ds-text-sm); font-weight: 500; }
@@ -464,7 +481,10 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
 
 /* ── Responsive ────────────────────────────────────────────────────────── */
 @media (max-width: 1120px) {
-  .lp-float-finding { right: 0; }
+}
+@media (min-width: 1025px) and (max-width: 1240px) {
+  .lp-radar-face { width: 58%; }
+  .lp-float-finding { display: none; }
 }
 @media (max-width: 1024px) {
   .lp-hero-inner { grid-template-columns: 1fr; }
@@ -499,7 +519,6 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
   .landing-page .ds-brand img { width: 30px; height: 30px; }
   .lp-nav-inner { gap: var(--ds-space-3); }
   .lp-auth-area > .ds-btn { padding: 0 12px; }
-  .lp-console-foot span:last-child { display: none; }
   .nav-user-pill { padding-right: 4px; }
   .nav-user-name { display: none; }
   .lp-hero-title { font-size: clamp(2.25rem, 10.5vw, 2.75rem); }
@@ -507,19 +526,16 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
   .lp-scan-row { flex-direction: column; }
   .lp-scan-btn { width: 100%; }
   .lp-trust { flex-direction: column; align-items: center; gap: 8px; }
-  .lp-radar { min-height: 0; aspect-ratio: 1 / 1.05; }
-  .lp-radar-tag { padding: 6px 8px; gap: 7px; }
-  .lp-radar-tag small { display: none; }
-  .lp-tag-idx { width: 22px; height: 22px; font-size: 10px; }
-  .lp-radar-tag.t-dns { top: 4%; left: 3%; }
-  .lp-radar-tag.t-web { top: 46%; right: 2%; }
-  .lp-radar-tag.t-cloud { bottom: 4%; left: 3%; }
+  .lp-radar-legend { grid-template-columns: 1fr; gap: 8px; }
+  .lp-radar-face { width: min(88%, 360px); }
+  .lp-radar { padding-top: 92px; }
+  .lp-float-finding { display: none; }
+  .lp-float-score { width: 132px; padding: 10px 12px; }
+  .lp-float-value { font-size: var(--ds-text-xl); }
+  .lp-signal b { display: none; }
   .lp-radar-core { width: 44%; gap: 4px; }
   .lp-radar-core img { width: 28px; height: 28px; }
   .lp-radar-core span { display: none; }
-  .lp-float-score { top: -8px; right: 8px; width: 132px; padding: 10px 12px; }
-  .lp-float-value { font-size: var(--ds-text-xl); }
-  .lp-float-finding { position: relative; right: auto; bottom: auto; margin: 12px 0 0; max-width: none; }
   .lp-products, .lp-features, .lp-steps { grid-template-columns: 1fr; }
   .lp-feature { padding: var(--ds-space-6); }
   .lp-section-head { margin-bottom: var(--ds-space-8); }
@@ -540,5 +556,5 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
 @media (prefers-reduced-motion: reduce) {
   html:has(.landing-page) { scroll-behavior: auto; }
   .lp-reveal-ready [data-reveal] { opacity: 1; transform: none; }
-  .lp-radar-ring, .lp-radar-sweep, .lp-radar-blip, .lp-radar-tag, .lp-console-live i, .fifi-pulse { animation: none !important; }
+  .lp-radar-sweep, .lp-dial-spokes, .lp-dial-ticks, .lp-dial-major, .lp-signal i, .lp-console-live i, .fifi-pulse { animation: none !important; }
 }
