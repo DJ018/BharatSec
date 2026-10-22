@@ -1,5 +1,5 @@
 """
-BharatSec — Configuration
+BharatSec: Configuration
 """
 import os
 from pathlib import Path
@@ -51,7 +51,7 @@ try:
 except OSError:
     pass  # read-only filesystem: data lives in DATABASE_URL instead
 
-# ── API Keys (optional — set in environment variables) ────────────────────────
+# ── API Keys (optional, set in environment variables) ────────────────────────
 # Trimmed so a key pasted with stray spaces or quotes still works.
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip().strip("\"'")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip().strip("\"'")

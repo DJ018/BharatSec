@@ -1,5 +1,5 @@
 """
-BharatSec — OSINT Engine
+BharatSec: OSINT Engine
 Performs authorized reconnaissance: DNS, WHOIS, subdomains, technology detection
 """
 import asyncio

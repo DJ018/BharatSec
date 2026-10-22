@@ -1,5 +1,5 @@
 """
-BharatSec — AI Engine
+BharatSec: AI Engine
 Rule-based threat analysis + optional Gemini/OpenAI integration
 """
 import json
@@ -36,7 +36,7 @@ FINDING_TEMPLATES = {
     "missing_csp": {
         "ai_analysis": (
             "No Content Security Policy (CSP) header is present. CSP is the primary defense "
-            "against Cross-Site Scripting (XSS) attacks — one of the most common and dangerous "
+            "against Cross-Site Scripting (XSS) attacks, one of the most common and dangerous "
             "web vulnerabilities. Without a CSP, an attacker who injects malicious scripts "
             "into the page has no browser-enforced restrictions on what they can do."
         ),
@@ -47,7 +47,7 @@ FINDING_TEMPLATES = {
     "missing_x_frame": {
         "ai_analysis": (
             "The X-Frame-Options header is absent. This means your site can be embedded in an "
-            "iframe on a malicious website — a technique used in clickjacking attacks. An "
+            "iframe on a malicious website, a technique used in clickjacking attacks. An "
             "attacker could overlay invisible UI elements on top of your site to trick users "
             "into performing unintended actions (like clicking hidden buttons or submitting forms)."
         ),
@@ -58,7 +58,7 @@ FINDING_TEMPLATES = {
     "missing_x_content_type": {
         "ai_analysis": (
             "The X-Content-Type-Options header is missing. Without it, browsers may 'sniff' "
-            "the content type of a response and treat a file differently than intended — for "
+            "the content type of a response and treat a file differently than intended, for "
             "example, loading a text file as JavaScript. This can enable MIME-type confusion attacks."
         ),
         "fix": "Add header: X-Content-Type-Options: nosniff",
@@ -78,7 +78,7 @@ FINDING_TEMPLATES = {
     },
     "ssl_expired": {
         "ai_analysis": (
-            "Your SSL certificate has expired. This is a critical security issue — all modern "
+            "Your SSL certificate has expired. This is a critical security issue. All modern "
             "browsers will block access to your site and show a red security warning. Additionally, "
             "all HTTPS traffic is now potentially vulnerable to interception."
         ),
@@ -111,7 +111,7 @@ FINDING_TEMPLATES = {
         "ai_analysis": (
             "No SPF (Sender Policy Framework) record exists for this domain. SPF authorizes "
             "which mail servers are permitted to send email on behalf of your domain. Without "
-            "it, anyone can send emails that appear to come from your domain — a critical "
+            "it, anyone can send emails that appear to come from your domain, a critical "
             "enabler of phishing and business email compromise (BEC) attacks."
         ),
         "fix": "Add a TXT DNS record: v=spf1 include:_spf.google.com ~all (adjust for your mail provider)",
@@ -144,7 +144,7 @@ FINDING_TEMPLATES = {
         "ai_analysis": (
             "The domain registration is expiring soon. If the domain lapses and is registered "
             "by a malicious actor, they could redirect all traffic, issue fraudulent certificates, "
-            "send phishing emails from your domain, and take over email accounts — all while "
+            "send phishing emails from your domain, and take over email accounts, all while "
             "appearing to be the legitimate owner."
         ),
         "fix": "Renew your domain registration immediately. Enable auto-renewal and ensure billing details are current.",
@@ -248,7 +248,7 @@ COPILOT_PATTERNS = [
         lambda s: (
             "Start with these 3 actions today:\n"
             + "\n".join([
-                f"{i+1}. [{getattr(f.severity, 'value', f.severity)}] {f.title} — Effort: {f.effort}"
+                f"{i+1}. [{getattr(f.severity, 'value', f.severity)}] {f.title} | Effort: {f.effort}"
                 for i, f in enumerate(s.top_priorities[:3])
             ])
             if s.top_priorities else
@@ -574,7 +574,7 @@ def ai_status() -> Dict[str, Any]:
     }
 
 
-SYSTEM_PROMPT = """You are **BharatSec AI**, the expert assistant of BharatSec — an India-built cyber risk intelligence platform (domain scanner, SOC, Threat Intel, Cloud posture, Risk quantification).
+SYSTEM_PROMPT = """You are **BharatSec AI**, the expert assistant of BharatSec, an India-built cyber risk intelligence platform (domain scanner, SOC, Threat Intel, Cloud posture, Risk quantification).
 
 Today's date is {today}.
 
@@ -592,6 +592,7 @@ You are a broad, senior-level expert. Answer any reasonable question, including:
 - Use clean Markdown: short paragraphs, **bold** for key terms, bullet or numbered lists for steps, `###` headings only for long answers, fenced code blocks with a language tag for code, and tables when comparing options.
 - Be practical: give concrete steps, commands, configurations or examples. For security fixes, explain the risk and the fix.
 - Be honest: if you are unsure, or a fact may have changed after your training data (prices, office-holders, laws, versions), say so and suggest where to verify. Never invent sources, statistics, CVE numbers or quotes. You cannot browse the internet or access systems unless context is provided here.
+- Punctuation: never use em dashes. Use commas, colons, full stops or parentheses instead.
 - Language: reply in the user's language. If they write in Hindi or Hinglish, answer in the same style; otherwise use English.
 
 ## Safety
@@ -651,7 +652,7 @@ async def general_ai_respond(message: str, context: Optional[str] = None, histor
             answer, provider = await llm.complete(
                 providers, system, messages, temperature=0.5, max_tokens=AI_MAX_OUTPUT_TOKENS, timeout=COPILOT_TIMEOUT,
             )
-            return {"content": answer, "source": provider.name, "model": provider.model}
+            return {"content": _plain_dashes(answer), "source": provider.name, "model": provider.model}
         except llm.ProviderError as exc:
             logger.warning("General AI providers unavailable; using offline knowledge (%s)", exc)
     return {"content": _general_knowledge_response(cleaned), "source": "rules"}
@@ -666,10 +667,18 @@ async def copilot_respond(message: str, scan: "ScanResult", history: Optional[Li
             answer, provider = await llm.complete(
                 providers, system, messages, temperature=0.3, max_tokens=AI_MAX_OUTPUT_TOKENS, timeout=COPILOT_TIMEOUT,
             )
-            return {"content": answer, "source": provider.name, "model": provider.model}
+            return {"content": _plain_dashes(answer), "source": provider.name, "model": provider.model}
         except llm.ProviderError as exc:
             logger.warning("Copilot providers unavailable; using rule-based response (%s)", exc)
     return {"content": _copilot_rules(message, scan), "source": "rules"}
+
+
+_EM_DASH = re.compile(r"\s*" + chr(0x2014) + r"\s*")  # chr(0x2014) is the em dash
+
+
+def _plain_dashes(text: str) -> str:
+    """BharatSec's house style has no em dashes; models sometimes add them anyway."""
+    return _EM_DASH.sub(", ", text)
 
 
 async def _stream_with_fallback(system: str, messages: List[llm.Message], temperature: float,
@@ -686,7 +695,7 @@ async def _stream_with_fallback(system: str, messages: List[llm.Message], temper
                     started = True
                     yield {"type": "meta", "source": value.name, "model": value.model}
                 else:
-                    yield {"type": "delta", "text": value}
+                    yield {"type": "delta", "text": _plain_dashes(value)}
         except llm.ProviderError as exc:
             if started:
                 yield {"type": "error", "message": "The answer was interrupted. Please try again."}

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Domain Scanner — BharatSec</title>
-  <meta name="description" content="BharatSec domain scan dashboard — attack surface, risk score, AI threat insights and prioritized remediation." />
+  <title>Domain Scanner | BharatSec</title>
+  <meta name="description" content="BharatSec domain scan dashboard: attack surface, risk score, AI threat insights and prioritized remediation." />
   <link rel="icon" type="image/svg+xml" href="assets/images/brand/bharatsec-mark.svg" />
   <script src="assets/js/theme.js"></script>
   <link rel="stylesheet" href="assets/css/design-system.css" />
@@ -109,7 +109,7 @@
         <span class="scan-target-label">Target</span>
         <span class="risk-pill risk-pill--pending" id="sidebar-risk-badge"><span class="risk-pill-dot" aria-hidden="true"></span><span id="sidebar-risk-text">Scanning</span></span>
       </div>
-      <div class="scan-target-domain ds-mono" id="sidebar-domain">—</div>
+      <div class="scan-target-domain ds-mono" id="sidebar-domain">…</div>
     </div>
     <a class="ds-suite-item ds-account-link" href="account.html"><span class="ds-nav-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></span>Account &amp; team</a>
     <div class="ds-user">
@@ -134,7 +134,7 @@
       <span class="crumb-muted">Domain scanner</span><span class="ds-breadcrumb-sep crumb-muted">/</span>
       <strong id="topbar-domain" class="ds-mono">Scanning...</strong>
       <span class="ds-status ds-status--warn scan-state" id="status-dot">Scanning</span>
-      <span class="scan-time ds-mono" id="scan-time">—</span>
+      <span class="scan-time ds-mono" id="scan-time">…</span>
     </div>
     <div class="ds-topbar-actions">
       <div class="ds-tabs view-toggle" role="group" aria-label="Dashboard view">
@@ -184,17 +184,17 @@
                 <div class="gauge-container">
                   <canvas id="score-gauge" width="196" height="196" aria-label="Security score gauge" role="img"></canvas>
                   <div class="gauge-center">
-                    <div class="gauge-score" id="gauge-score-num">—</div>
+                    <div class="gauge-score" id="gauge-score-num">…</div>
                     <div class="gauge-max">/ 100</div>
                   </div>
                 </div>
                 <div class="gauge-level ds-badge ds-badge--dot" id="gauge-level">Analyzing</div>
               </div>
               <div class="severity-chips" id="severity-chips">
-                <div class="sev-chip critical"><div class="label"><span class="sev-dot"></span>Critical</div><div class="count" id="chip-critical">—</div></div>
-                <div class="sev-chip high"><div class="label"><span class="sev-dot"></span>High</div><div class="count" id="chip-high">—</div></div>
-                <div class="sev-chip medium"><div class="label"><span class="sev-dot"></span>Medium</div><div class="count" id="chip-medium">—</div></div>
-                <div class="sev-chip low"><div class="label"><span class="sev-dot"></span>Low</div><div class="count" id="chip-low">—</div></div>
+                <div class="sev-chip critical"><div class="label"><span class="sev-dot"></span>Critical</div><div class="count" id="chip-critical">…</div></div>
+                <div class="sev-chip high"><div class="label"><span class="sev-dot"></span>High</div><div class="count" id="chip-high">…</div></div>
+                <div class="sev-chip medium"><div class="label"><span class="sev-dot"></span>Medium</div><div class="count" id="chip-medium">…</div></div>
+                <div class="sev-chip low"><div class="label"><span class="sev-dot"></span>Low</div><div class="count" id="chip-low">…</div></div>
               </div>
             </div>
           </article>
@@ -210,27 +210,27 @@
               <div class="cat-bar-row">
                 <span class="cat-bar-label">Attack surface</span>
                 <div class="cat-bar-track"><div class="cat-bar-fill" id="bar-attack" data-score="0"></div></div>
-                <span class="cat-bar-value" id="val-attack">—</span>
+                <span class="cat-bar-value" id="val-attack">…</span>
               </div>
               <div class="cat-bar-row">
                 <span class="cat-bar-label">Web security</span>
                 <div class="cat-bar-track"><div class="cat-bar-fill" id="bar-web" data-score="0"></div></div>
-                <span class="cat-bar-value" id="val-web">—</span>
+                <span class="cat-bar-value" id="val-web">…</span>
               </div>
               <div class="cat-bar-row">
                 <span class="cat-bar-label">Identity exposure</span>
                 <div class="cat-bar-track"><div class="cat-bar-fill" id="bar-identity" data-score="0"></div></div>
-                <span class="cat-bar-value" id="val-identity">—</span>
+                <span class="cat-bar-value" id="val-identity">…</span>
               </div>
               <div class="cat-bar-row">
                 <span class="cat-bar-label">Configuration</span>
                 <div class="cat-bar-track"><div class="cat-bar-fill" id="bar-config" data-score="0"></div></div>
-                <span class="cat-bar-value" id="val-config">—</span>
+                <span class="cat-bar-value" id="val-config">…</span>
               </div>
               <div class="cat-bar-row">
                 <span class="cat-bar-label">Credential risk</span>
                 <div class="cat-bar-track"><div class="cat-bar-fill" id="bar-cred" data-score="0"></div></div>
-                <span class="cat-bar-value" id="val-cred">—</span>
+                <span class="cat-bar-value" id="val-cred">…</span>
               </div>
               <div class="cat-legend" aria-hidden="true">
                 <span><i class="lg critical"></i>&lt; 35</span><span><i class="lg low-score"></i>35–54</span><span><i class="lg medium"></i>55–74</span><span><i class="lg good"></i>75+</span>
@@ -255,7 +255,7 @@
               <span class="quick-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>SSL certificate</span>
               <button class="ds-btn ds-btn--ghost ds-btn--sm" type="button" onclick="setView('ssl')">Details</button>
             </div>
-            <div id="ssl-quick"><div class="quick-value">—</div></div>
+            <div id="ssl-quick"><div class="quick-value">…</div></div>
           </article>
           <article class="ds-card quick-card">
             <div class="quick-head">
@@ -269,7 +269,7 @@
               <span class="quick-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/><path d="M12 8v4M5 16v-2a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/></svg>Subdomains found</span>
               <button class="ds-btn ds-btn--ghost ds-btn--sm" type="button" onclick="setView('subdomains')">Details</button>
             </div>
-            <div id="subs-quick"><div class="quick-value">—</div></div>
+            <div id="subs-quick"><div class="quick-value">…</div></div>
           </article>
         </div>
       </section>
@@ -379,7 +379,7 @@
         <article class="ds-card exec-hero">
           <div class="ds-eyebrow">BharatSec security score</div>
           <div class="exec-score-row">
-            <div class="exec-score-num" id="exec-score">—</div>
+            <div class="exec-score-num" id="exec-score">…</div>
             <div class="exec-score-max">/ 100</div>
           </div>
           <div class="exec-score-label ds-badge ds-badge--dot" id="exec-level">Analyzing</div>

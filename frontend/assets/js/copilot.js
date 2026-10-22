@@ -1,5 +1,5 @@
 /* ============================================================
-   BharatSec — Security Copilot Chat
+   BharatSec: Security Copilot Chat
    Dashboard AI assistant panel
    ============================================================ */
 

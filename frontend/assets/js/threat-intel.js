@@ -77,7 +77,7 @@
       status.textContent = feed.status === 'not_synced' ? 'Not synced' : feed.status === 'ok' ? 'Operational' : 'Feed error';
       status.title = feed.detail;
       const count = byId(`feed-${feed.key}-count`);
-      if (count) count.textContent = feed.status === 'not_synced' ? '—' : Number(feed.fetched_count || 0).toLocaleString();
+      if (count) count.textContent = feed.status === 'not_synced' ? 'N/A' : Number(feed.fetched_count || 0).toLocaleString();
       const meta = byId(`feed-${feed.key}-meta`);
       if (meta) {
         meta.textContent = feed.checked_at ? `Checked ${timeAgo(feed.checked_at)}` : 'Never synced';
@@ -93,7 +93,7 @@
     health.lastChild.textContent = label;
     rail.className = `feed-health ${errors ? 'error' : ready ? 'online' : ''}`;
     byId('rail-feed-state').textContent = label;
-    byId('feed-mitre-count').textContent = state.techniques.length ? state.techniques.length.toLocaleString() : '—';
+    byId('feed-mitre-count').textContent = state.techniques.length ? state.techniques.length.toLocaleString() : 'N/A';
     if (state.overview.last_feed_sync) byId('sync-time').textContent = `Synced ${timeAgo(state.overview.last_feed_sync)}`;
     else byId('sync-time').textContent = 'Waiting for first feed sync';
   }

@@ -1,5 +1,5 @@
 /* BharatSec Account page: change password, and (admins) manage team members.
-   Member data is rendered with textContent / DOM APIs only — never innerHTML. */
+   Member data is rendered with textContent / DOM APIs only, never innerHTML. */
 (async () => {
   'use strict';
 
@@ -35,7 +35,7 @@
   function formatWhen(iso) {
     if (!iso) return 'Never';
     const date = new Date(iso);
-    if (Number.isNaN(date.getTime())) return '—';
+    if (Number.isNaN(date.getTime())) return 'N/A';
     const minutes = Math.round((Date.now() - date.getTime()) / 60000);
     if (minutes < 1) return 'Just now';
     if (minutes < 60) return `${minutes} min ago`;
@@ -136,7 +136,7 @@
     byId('strength-text').textContent = !value
       ? 'At least 12 characters. A passphrase of a few words works well.'
       : value.length < 12 ? `${12 - value.length} more character${value.length === 11 ? '' : 's'} needed.`
-        : ['', 'Acceptable — longer is stronger.', 'Good password.', 'Strong password.'][level];
+        : ['', 'Acceptable. Longer is stronger.', 'Good password.', 'Strong password.'][level];
   });
 
   byId('password-form').addEventListener('submit', async (event) => {

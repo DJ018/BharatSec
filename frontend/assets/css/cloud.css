@@ -1,4 +1,4 @@
-/* BharatSec Cloud — page styles on top of design-system.css.
+/* BharatSec Cloud: page styles on top of design-system.css.
    Every colour comes from --ds-* tokens so dark and light both work. */
 
 html { scroll-behavior: smooth; }

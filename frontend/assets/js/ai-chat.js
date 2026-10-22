@@ -1,4 +1,4 @@
-/* BharatSec AI — shared chat helpers (landing assistant + dashboard Copilot).
+/* BharatSec AI: shared chat helpers (landing assistant + dashboard Copilot).
    - BharatSecAI.renderMarkdown(text): safe Markdown → DocumentFragment. Model output is NEVER assigned to
      innerHTML; every node is created with DOM APIs, and links are limited to http(s)/mailto.
    - BharatSecAI.stream(url, body, handlers): POST and read server-sent events (meta / delta / error / done).

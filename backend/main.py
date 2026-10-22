@@ -1,5 +1,5 @@
 """
-BharatSec — FastAPI Entry Point
+BharatSec: FastAPI Entry Point
 """
 import sys
 import asyncio

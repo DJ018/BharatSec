@@ -1,5 +1,5 @@
 """
-BharatSec — Risk Engine
+BharatSec: Risk Engine
 Calculates BharatSec Risk Score and generates prioritized findings
 """
 import uuid

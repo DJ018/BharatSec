@@ -404,7 +404,7 @@ code, kbd, pre, .ds-mono { font-family: var(--ds-font-mono); }
 :root[data-theme="light"] .ds-theme-toggle .ds-icon-moon { display: none; }
 
 /* ==========================================================================
-   App shell — shared by Dashboard, SOC, Threat Intel, Cloud, Risk
+   App shell, shared by Dashboard, SOC, Threat Intel, Cloud, Risk
    <body class="ds-app">
      <aside class="ds-sidebar"> brand · product · nav · suite · footer </aside>
      <div class="ds-scrim"></div>

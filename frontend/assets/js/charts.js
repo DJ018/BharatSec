@@ -1,5 +1,5 @@
 /* ============================================================
-   BharatSec — Chart.js Configurations
+   BharatSec: Chart.js Configurations
    Colours come from design tokens (bsTheme.token) so the gauge
    follows the active theme; it re-renders on bharatsec:themechange.
    ============================================================ */

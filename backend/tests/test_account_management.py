@@ -70,7 +70,7 @@ class AccountManagementTests(unittest.TestCase):
 
         second = self._add_member("deputy", role="admin")
         deputy, _ = self._client("deputy", second["temporary_password"])
-        # With two admins, one may demote the other — but never the final remaining admin.
+        # With two admins, one may demote the other, but never the final remaining admin.
         self.assertEqual(deputy.patch(f"/api/auth/users/{me['id']}", json={"role": "analyst"}).status_code, 200)
         self.assertEqual(self.admin.get("/api/auth/users").status_code, 403)  # owner is now an analyst
         self.assertEqual(deputy.delete(f"/api/auth/users/{second['user']['id']}").status_code, 409)

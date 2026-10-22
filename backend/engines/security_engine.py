@@ -1,5 +1,5 @@
 """
-BharatSec — Security Engine
+BharatSec: Security Engine
 SSL/TLS certificate and protocol analysis
 """
 import ssl
@@ -102,10 +102,10 @@ def get_ssl_info(domain: str, port: int = 443) -> SSLInfo:
         info.vulnerabilities.append("HTTPS not available on port 443")
     except socket.gaierror:
         info.valid = False
-        info.vulnerabilities.append("DNS resolution failed — domain may not exist or is unreachable")
+        info.vulnerabilities.append("DNS resolution failed; the domain may not exist or is unreachable")
     except socket.timeout:
         info.valid = False
-        info.vulnerabilities.append("SSL connection timed out — server may be slow or blocking")
+        info.vulnerabilities.append("SSL connection timed out; the server may be slow or blocking")
     except OSError as e:
         info.valid = False
         info.vulnerabilities.append(f"Network error: {str(e)[:100]}")

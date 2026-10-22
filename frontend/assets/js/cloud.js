@@ -82,7 +82,7 @@
       badge.className = `provider-badge ds-badge${total ? ' ds-badge--success' : ''}`;
       badge.title = `Provider credentials are checked when a scan runs. ${provider.credential_chain}`;
     }
-    byId('metric-providers').textContent = state.providers.length || '—';
+    byId('metric-providers').textContent = state.providers.length || 'N/A';
   }
 
   function scanPayload(scan) {
@@ -118,7 +118,7 @@
       const providerId = PROVIDER_IDS.includes(scan.provider) ? scan.provider : 'unknown';
       const detail = scan.status === 'complete'
         ? `${findingCount} finding${findingCount === 1 ? '' : 's'}`
-        : scan.status === 'running' ? 'Assessment in progress…' : (scan.error || `${summary.resources_scanned || '—'} resources`);
+        : scan.status === 'running' ? 'Assessment in progress…' : (scan.error || `${summary.resources_scanned || 'N/A'} resources`);
       const action = scan.status === 'complete'
         ? `<button class="history-action ds-btn ds-btn--ghost ds-btn--sm" type="button" data-open-scan="${escapeHtml(scan.scan_id)}">View findings ${ICONS.arrow}</button>`
         : scan.status === 'error'
@@ -195,8 +195,8 @@
     const findings = getFilteredFindings();
     const hasComplete = scan?.status === 'complete';
     const allFindings = selectedFindings();
-    byId('metric-findings').textContent = hasComplete ? allFindings.length : '—';
-    byId('metric-critical').textContent = hasComplete ? allFindings.filter((item) => item.severity === 'CRITICAL').length : '—';
+    byId('metric-findings').textContent = hasComplete ? allFindings.length : 'N/A';
+    byId('metric-critical').textContent = hasComplete ? allFindings.filter((item) => item.severity === 'CRITICAL').length : 'N/A';
     byId('metric-severity-context').textContent = hasComplete
       ? `${allFindings.filter((item) => ['CRITICAL', 'HIGH'].includes(item.severity)).length} critical / high findings`
       : 'From the latest completed scan';

@@ -1,5 +1,5 @@
 /* ============================================================
-   BharatSec — Landing Page JavaScript
+   BharatSec: Landing Page JavaScript
    ============================================================ */
 
 // ── Navbar: glass on scroll + mobile menu ─────────────────────

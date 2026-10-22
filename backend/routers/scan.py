@@ -1,5 +1,5 @@
 """
-BharatSec — API Router: Scan
+BharatSec: API Router: Scan
 Scan lifecycle: create (start), execute (run), status, results.
 
 Scans are persisted (engines/scan_store) and executed inside their own request, so the flow works
@@ -187,7 +187,7 @@ async def run_scan(scan_id: str, domain: str):
         scan.status = ScanStatus.COMPLETE
         scan.progress = 100
         scan.completed_at = datetime.now(timezone.utc).isoformat()
-        logger.info(f"[{scan_id}] Scan complete for {domain} — score: {scan.score.overall}/100")
+        logger.info(f"[{scan_id}] Scan complete for {domain} | score: {scan.score.overall}/100")
 
     except Exception as e:
         scan.status = ScanStatus.ERROR

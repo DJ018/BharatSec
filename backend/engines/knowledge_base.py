@@ -10,14 +10,14 @@ KNOWLEDGE: List[Tuple[Tuple[str, ...], str]] = [
     # ── Cybersecurity fundamentals ───────────────────────────────────────────
     (("cia triad", "confidentiality", "integrity", "availability"),
      "**The CIA triad** is the foundation of information security:\n\n"
-     "- **Confidentiality** — only authorised people can read data (encryption, access control).\n"
-     "- **Integrity** — data is not altered without detection (hashing, signatures, change control).\n"
-     "- **Availability** — systems stay usable when needed (redundancy, backups, DDoS protection)."),
+     "- **Confidentiality**: only authorised people can read data (encryption, access control).\n"
+     "- **Integrity**: data is not altered without detection (hashing, signatures, change control).\n"
+     "- **Availability**: systems stay usable when needed (redundancy, backups, DDoS protection)."),
     (("ddos", "denial of service", "dos attack"),
      "**DDoS (Distributed Denial of Service)** floods a service with traffic from many machines (often a botnet) until real users cannot reach it.\n\n"
      "**Defences:** a CDN/anti-DDoS provider, rate limiting, autoscaling, upstream ISP scrubbing, and a tested incident runbook."),
     (("social engineering", "pretexting", "vishing", "smishing"),
-     "**Social engineering** manipulates people rather than systems — fake calls (vishing), SMS (smishing), urgent emails or impersonation.\n\n"
+     "**Social engineering** manipulates people rather than systems: fake calls (vishing), SMS (smishing), urgent emails or impersonation.\n\n"
      "**Defences:** verify requests through a second channel, never share OTPs, use phishing-resistant MFA, and train staff with realistic simulations."),
     (("password", "passwords", "password manager", "passkey", "passkeys"),
      "**Strong authentication basics:**\n\n"
@@ -36,11 +36,11 @@ KNOWLEDGE: List[Tuple[Tuple[str, ...], str]] = [
      "Typical tiers: **L1** triage alerts, **L2** investigates, **L3** hunts threats and handles complex incidents. BharatSec SOC helps you monitor domains, triage alerts and track incidents."),
     (("incident response", "ir plan", "breach response"),
      "**Incident response** follows a repeatable cycle (NIST SP 800-61):\n\n"
-     "1. **Prepare** — runbooks, contacts, logging, backups.\n"
-     "2. **Detect & analyse** — confirm scope and impact.\n"
-     "3. **Contain** — isolate affected systems and accounts.\n"
-     "4. **Eradicate & recover** — remove the cause, restore safely.\n"
-     "5. **Lessons learned** — fix root causes.\n\n"
+     "1. **Prepare**: runbooks, contacts, logging, backups.\n"
+     "2. **Detect & analyse**: confirm scope and impact.\n"
+     "3. **Contain**: isolate affected systems and accounts.\n"
+     "4. **Eradicate & recover**: remove the cause, restore safely.\n"
+     "5. **Lessons learned**: fix root causes.\n\n"
      "In India, report qualifying incidents to **CERT-In within 6 hours**."),
     (("vulnerability", "cve", "cvss", "patch", "patching"),
      "A **vulnerability** is a weakness attackers can exploit. Public ones get a **CVE ID** and a **CVSS** severity score (0–10).\n\n"
@@ -59,15 +59,15 @@ KNOWLEDGE: List[Tuple[Tuple[str, ...], str]] = [
      "**Fix:** `SameSite` cookies, anti-CSRF tokens, and checking the `Origin` header on state-changing requests."),
     (("dmarc", "spf", "dkim", "email security", "email spoofing"),
      "**Email authentication** stops attackers sending mail as your domain:\n\n"
-     "- **SPF** — lists servers allowed to send for you.\n"
-     "- **DKIM** — cryptographically signs your messages.\n"
-     "- **DMARC** — tells receivers what to do when SPF/DKIM fail (`p=quarantine` or `p=reject`) and sends you reports.\n\n"
+     "- **SPF**: lists servers allowed to send for you.\n"
+     "- **DKIM**: cryptographically signs your messages.\n"
+     "- **DMARC**: tells receivers what to do when SPF/DKIM fail (`p=quarantine` or `p=reject`) and sends you reports.\n\n"
      "Start with `p=none`, review reports, then move to `p=reject`."),
     (("hsts", "security headers", "content security policy", "csp"),
      "**Key HTTP security headers:**\n\n"
-     "- `Strict-Transport-Security` — forces HTTPS.\n"
-     "- `Content-Security-Policy` — limits where scripts can load from (strong XSS defence).\n"
-     "- `X-Frame-Options` / `frame-ancestors` — blocks clickjacking.\n"
+     "- `Strict-Transport-Security`: forces HTTPS.\n"
+     "- `Content-Security-Policy`: limits where scripts can load from (strong XSS defence).\n"
+     "- `X-Frame-Options` / `frame-ancestors`: blocks clickjacking.\n"
      "- `X-Content-Type-Options: nosniff` and `Referrer-Policy`.\n\n"
      "Run a BharatSec scan to see which ones your site is missing."),
     (("cloud security", "s3 bucket", "iam", "misconfiguration"),
@@ -82,10 +82,10 @@ KNOWLEDGE: List[Tuple[Tuple[str, ...], str]] = [
      "**Defences:** vendor security reviews, an **SBOM**, dependency scanning, pinned and verified packages, and least-privilege integrations."),
     (("iso 27001", "soc 2", "compliance", "nist csf", "pci dss"),
      "**Common security frameworks:**\n\n"
-     "- **ISO/IEC 27001** — certifiable information-security management system.\n"
-     "- **SOC 2** — US attestation on security/availability/confidentiality controls.\n"
-     "- **NIST CSF 2.0** — Govern, Identify, Protect, Detect, Respond, Recover.\n"
-     "- **PCI DSS** — required if you handle card payments."),
+     "- **ISO/IEC 27001**: certifiable information-security management system.\n"
+     "- **SOC 2**: US attestation on security/availability/confidentiality controls.\n"
+     "- **NIST CSF 2.0**: Govern, Identify, Protect, Detect, Respond, Recover.\n"
+     "- **PCI DSS**: required if you handle card payments."),
     # ── India: law, regulation, ecosystem ────────────────────────────────────
     (("cert-in", "certin", "cert in"),
      "**CERT-In** (Indian Computer Emergency Response Team) is India's national agency for cyber incidents under MeitY.\n\n"
@@ -98,9 +98,9 @@ KNOWLEDGE: List[Tuple[Tuple[str, ...], str]] = [
      "The DPDP Rules (notified in 2025) phase in the detailed obligations."),
     (("it act", "information technology act", "section 66", "section 43"),
      "The **Information Technology Act, 2000** is India's core cyber law. Key sections:\n\n"
-     "- **43 / 43A** — compensation for unauthorised access and for failing to protect sensitive data.\n"
-     "- **66** — computer-related offences; **66C** identity theft; **66D** impersonation fraud.\n"
-     "- **70** — protected (critical) systems.\n\n"
+     "- **43 / 43A**: compensation for unauthorised access and for failing to protect sensitive data.\n"
+     "- **66**: computer-related offences; **66C** identity theft; **66D** impersonation fraud.\n"
+     "- **70**: protected (critical) systems.\n\n"
      "Report cybercrime at **cybercrime.gov.in** or call **1930**."),
     (("cyber crime", "cybercrime", "1930", "report fraud", "online fraud"),
      "**If you face online fraud in India:**\n\n"
@@ -116,7 +116,7 @@ KNOWLEDGE: List[Tuple[Tuple[str, ...], str]] = [
      "- **Machine learning** learns patterns from data instead of hand-written rules.\n"
      "- **Deep learning** uses large neural networks (vision, speech, language).\n"
      "- **Generative AI** creates text, images, code and audio.\n\n"
-     "In security, AI helps with anomaly detection, phishing classification and alert triage — and attackers also use it for convincing phishing and deepfakes."),
+     "In security, AI helps with anomaly detection, phishing classification and alert triage, and attackers also use it for convincing phishing and deepfakes."),
     (("llm", "large language model", "chatgpt", "gemini", "claude", "gpt"),
      "A **large language model (LLM)** is a neural network trained on huge amounts of text to predict the next token, which lets it answer questions, write and summarise.\n\n"
      "Popular families: OpenAI GPT, Google Gemini, Anthropic Claude, Meta Llama. LLMs can be wrong with confidence, so verify important facts."),
@@ -130,7 +130,7 @@ KNOWLEDGE: List[Tuple[Tuple[str, ...], str]] = [
      "**RAG (Retrieval-Augmented Generation)** lets an LLM answer from your own documents: text is split into chunks, converted to **embeddings**, stored in a **vector database**, and the most relevant chunks are added to the prompt at question time. It reduces hallucinations and keeps answers current."),
     # ── Business ─────────────────────────────────────────────────────────────
     (("startup", "start a business", "business plan", "entrepreneur"),
-     "**Starting a business — a practical path:**\n\n"
+     "**Starting a business: a practical path**\n\n"
      "1. Validate a real problem with 20+ customer conversations.\n"
      "2. Build the smallest product that solves it (MVP).\n"
      "3. Find one repeatable acquisition channel.\n"
@@ -142,9 +142,9 @@ KNOWLEDGE: List[Tuple[Tuple[str, ...], str]] = [
      "**Go-to-market basics:** define the ideal customer profile, the core message (problem → outcome), and 1–2 channels you can win (SEO/content, partnerships, outbound, communities). Measure conversion at each funnel step and double down on what works."),
     (("cac", "ltv", "unit economics", "burn rate", "runway"),
      "**Unit economics:**\n\n"
-     "- **CAC** — cost to acquire one customer.\n"
-     "- **LTV** — gross profit a customer brings over their lifetime. Aim for **LTV:CAC ≥ 3:1**.\n"
-     "- **Burn rate** — net cash spent per month; **runway** = cash ÷ burn (keep 12–18 months)."),
+     "- **CAC**: cost to acquire one customer.\n"
+     "- **LTV**: gross profit a customer brings over their lifetime. Aim for **LTV:CAC ≥ 3:1**.\n"
+     "- **Burn rate**: net cash spent per month; **runway** = cash ÷ burn (keep 12–18 months)."),
     (("cyber insurance", "risk quantification", "fair model", "annualized loss"),
      "**Cyber risk quantification** expresses security risk in money: *annualised loss expectancy = likelihood per year × impact per event*. The **FAIR** model is the most used method. BharatSec Risk turns scan findings into loss scenarios you can present to leadership and insurers."),
     # ── Technology & careers ─────────────────────────────────────────────────

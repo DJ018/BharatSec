@@ -1,5 +1,5 @@
 /* ============================================================
-   BharatSec — Dashboard Controller
+   BharatSec: Dashboard Controller
    Handles real-domain scan lifecycle, UI rendering, view switching
    ============================================================ */
 
@@ -104,7 +104,7 @@ async function launchScan(domain) {
     scanId = data.scan_id;
 
     if (data.status === 'complete') {
-      updateProgress(100, 'Scan complete — rendering results...');
+      updateProgress(100, 'Scan complete. Rendering results...');
       await sleep(400);
       await fetchAndRender(scanId);
     } else {
@@ -139,7 +139,7 @@ const PROGRESS_MSGS = {
   60:  'Inspecting SSL/TLS certificate...',
   80:  'Enumerating subdomains...',
   90:  'AI is analyzing all findings...',
-  100: 'Scan complete — rendering dashboard...',
+  100: 'Scan complete. Rendering dashboard...',
 };
 
 function pollStatus(id, domain) {
@@ -195,7 +195,7 @@ function pollStatus(id, domain) {
 
       if (data.status === 'complete') {
         clearInterval(pollTimer);
-        updateProgress(100, 'Scan complete — rendering dashboard...');
+        updateProgress(100, 'Scan complete. Rendering dashboard...');
         await sleep(400);
         await fetchAndRender(id);
       } else if (data.status === 'error') {
@@ -316,17 +316,17 @@ function normaliseBackendResponse(raw) {
     },
     ssl: {
       valid:          ssl.valid          !== undefined ? ssl.valid : false,
-      issuer:         ssl.issuer         || '—',
+      issuer:         ssl.issuer         || 'N/A',
       subject:        ssl.subject        || raw.domain,
-      expires:        ssl.expires        || '—',
+      expires:        ssl.expires        || 'N/A',
       days_remaining: ssl.days_remaining || 0,
-      protocol:       ssl.protocol       || '—',
+      protocol:       ssl.protocol       || 'N/A',
       grade:          ssl.grade          || 'N/A',
       vulnerabilities:ssl.vulnerabilities|| [],
     },
     web: {
       status_code:     web.status_code     || 0,
-      server:          web.server          || '—',
+      server:          web.server          || 'N/A',
       technologies:    web.technologies    || [],
       https_redirect:  web.https_redirect  || false,
       response_time_ms:web.response_time_ms|| 0,
@@ -337,9 +337,9 @@ function normaliseBackendResponse(raw) {
       }
     },
     whois: {
-      registrar:       whois.registrar        || '—',
-      creation_date:   whois.creation_date    || '—',
-      expiration_date: whois.expiration_date  || '—',
+      registrar:       whois.registrar        || 'N/A',
+      creation_date:   whois.creation_date    || 'N/A',
+      expiration_date: whois.expiration_date  || 'N/A',
       days_until_expiry:whois.days_until_expiry||0,
       name_servers:    whois.name_servers     || [],
       privacy_protected:whois.privacy_protected||false,
@@ -478,7 +478,7 @@ function buildDemoData(domain) {
         title:'Missing Header: Strict-Transport-Security',
         description:'HSTS header not present. Enables SSL-stripping attacks on public networks.',
         evidence:"Header 'Strict-Transport-Security' absent from HTTP response",
-        ai_analysis:'Without HSTS, a man-in-the-middle attacker on the same network can intercept traffic before the HTTPS redirect happens — downgrading the connection to plaintext.',
+        ai_analysis:'Without HSTS, a man-in-the-middle attacker on the same network can intercept traffic before the HTTPS redirect happens, downgrading the connection to plaintext.',
         fix:'Add header: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload',
         effort:'Low', impact:'High' },
       { id:'f5', category:'Security Headers', severity:'HIGH',
@@ -490,7 +490,7 @@ function buildDemoData(domain) {
         effort:'Medium', impact:'High' },
       { id:'f6', category:'Security Headers', severity:'HIGH',
         title:'Missing Header: X-Frame-Options',
-        description:'Site can be embedded in iframes — clickjacking risk.',
+        description:'Site can be embedded in iframes, which creates a clickjacking risk.',
         evidence:"Header 'X-Frame-Options' absent",
         ai_analysis:'Clickjacking lets attackers overlay invisible iframes on your site, tricking users into clicking hidden malicious buttons.',
         fix:'Add header: X-Frame-Options: DENY',
@@ -512,7 +512,7 @@ function buildDemoData(domain) {
       { id:'f9', category:'Configuration', severity:'MEDIUM',
         title:'WHOIS Privacy Not Enabled',
         description:'Domain registrant details are publicly visible in WHOIS records.',
-        evidence:'Registrar: IANA — no privacy protection detected',
+        evidence:'Registrar: IANA, no privacy protection detected',
         ai_analysis:'Exposed WHOIS data enables targeted spear-phishing attacks using registrant name, email, and phone.',
         fix:'Enable WHOIS privacy/proxy with your domain registrar. Usually free.',
         effort:'Low', impact:'Medium' },
@@ -535,7 +535,7 @@ function buildDemoData(domain) {
           { node:'Admin Access',      type:'impact',   label:'Full system compromise' },
         ]},
     ],
-    ai_summary: `${domain} has a BharatSec Score of 56/100 — HIGH RISK. The most critical issues are the exposed admin and staging subdomains, and the complete absence of DMARC, leaving the domain open to email spoofing attacks. Five HTTP security headers are missing, creating XSS and clickjacking exposure points. Fixing the 3 critical findings alone would improve the score by approximately 15-20 points.`
+    ai_summary: `${domain} has a BharatSec Score of 56/100, which is HIGH RISK. The most critical issues are the exposed admin and staging subdomains, and the complete absence of DMARC, leaving the domain open to email spoofing attacks. Five HTTP security headers are missing, creating XSS and clickjacking exposure points. Fixing the 3 critical findings alone would improve the score by approximately 15-20 points.`
   };
 }
 
@@ -543,7 +543,7 @@ function buildDemoData(domain) {
 
 function renderAll(data) {
   const t = new Date(data.completed_at);
-  const timeStr = isNaN(t) ? '—' : t.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  const timeStr = isNaN(t) ? 'N/A' : t.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
 
   setEl('topbar-domain',  data.domain);
   setEl('sidebar-domain', data.domain);
@@ -618,7 +618,7 @@ function renderQuickStats(data) {
     const days  = num(ssl.days_remaining);
     sslEl.innerHTML = `
       <div class="quick-value tone-${gradeTone(grade)}">${esc(grade)}</div>
-      <div class="quick-meta">${statusPill(ssl.valid, 'Valid', 'Invalid')}<span class="ds-mono">${esc(ssl.protocol||'—')}</span></div>
+      <div class="quick-meta">${statusPill(ssl.valid, 'Valid', 'Invalid')}<span class="ds-mono">${esc(ssl.protocol||'N/A')}</span></div>
       <div class="quick-sub${days < 30 ? ' tone-critical' : ''}">Expires in ${days} days</div>`;
   }
 
@@ -802,9 +802,9 @@ function renderDNS(dns, whois) {
     const days = num(whois.days_until_expiry);
     whoisEl.innerHTML = `
       <dl class="kv-list">
-        <div class="kv-row"><dt>Registrar</dt><dd class="ds-mono">${esc(whois.registrar||'—')}</dd></div>
-        <div class="kv-row"><dt>Created</dt><dd class="ds-mono">${esc(whois.creation_date||'—')}</dd></div>
-        <div class="kv-row"><dt>Expires</dt><dd class="ds-mono${days<90?' tone-high':''}">${esc(whois.expiration_date||'—')} <span class="kv-sub">(${days}d)</span></dd></div>
+        <div class="kv-row"><dt>Registrar</dt><dd class="ds-mono">${esc(whois.registrar||'N/A')}</dd></div>
+        <div class="kv-row"><dt>Created</dt><dd class="ds-mono">${esc(whois.creation_date||'N/A')}</dd></div>
+        <div class="kv-row"><dt>Expires</dt><dd class="ds-mono${days<90?' tone-high':''}">${esc(whois.expiration_date||'N/A')} <span class="kv-sub">(${days}d)</span></dd></div>
         <div class="kv-row"><dt>WHOIS privacy</dt><dd>${statusPill(whois.privacy_protected, 'Enabled', 'Disabled', 'medium')}</dd></div>
       </dl>`;
   }
@@ -841,9 +841,9 @@ function renderSSL(ssl) {
   el.innerHTML = `
     <div class="info-grid ssl-grid">
       <div class="info-tile"><div class="info-tile-label">Grade</div><div class="info-tile-value is-xl tone-${gradeTone(ssl.grade)}">${esc(ssl.grade||'N/A')}</div></div>
-      <div class="info-tile"><div class="info-tile-label">Protocol</div><div class="info-tile-value ds-mono">${esc(ssl.protocol||'—')}</div><div class="info-tile-sub">${protoNote}</div></div>
-      <div class="info-tile"><div class="info-tile-label">Issuer</div><div class="info-tile-value is-sm">${esc(ssl.issuer)||'—'}</div></div>
-      <div class="info-tile"><div class="info-tile-label">Days remaining</div><div class="info-tile-value tone-${daysTone}">${days}</div><div class="info-tile-sub">Expires <span class="ds-mono">${esc(ssl.expires||'—')}</span></div></div>
+      <div class="info-tile"><div class="info-tile-label">Protocol</div><div class="info-tile-value ds-mono">${esc(ssl.protocol||'N/A')}</div><div class="info-tile-sub">${protoNote}</div></div>
+      <div class="info-tile"><div class="info-tile-label">Issuer</div><div class="info-tile-value is-sm">${esc(ssl.issuer)||'N/A'}</div></div>
+      <div class="info-tile"><div class="info-tile-label">Days remaining</div><div class="info-tile-value tone-${daysTone}">${days}</div><div class="info-tile-sub">Expires <span class="ds-mono">${esc(ssl.expires||'N/A')}</span></div></div>
     </div>
     <div class="check-list">
       <div class="check-row"><span class="check-icon ${ssl.valid?'is-pass':'is-fail'}">${icon(ssl.valid?'check':'x')}</span><span class="check-label">Certificate valid</span><span class="check-status ${ssl.valid?'pass':'fail'}">${ssl.valid?'Valid':'Invalid'}</span></div>
@@ -909,12 +909,12 @@ function renderSubdomains(subs) {
     <tbody>${subs.map(s=>{
       const label = String(s.subdomain || '').toLowerCase().split('.')[0];
       const isSensitive = ['dev','test','staging','admin','old','backup','db','database'].includes(label);
-      const risk = !s.alive ? '<span class="cell-muted">—</span>'
+      const risk = !s.alive ? '<span class="cell-muted">…</span>'
         : isSensitive ? '<span class="ds-badge ds-badge--dot ds-badge--high">HIGH</span>'
         : '<span class="ds-badge ds-badge--dot ds-badge--info">INFO</span>';
       return `<tr class="${s.alive ? 'is-alive' : 'is-inactive'}">
         <td class="ds-mono sub-name">${esc(s.subdomain)}</td>
-        <td class="ds-mono">${esc(s.ip||'—')}</td>
+        <td class="ds-mono">${esc(s.ip||'N/A')}</td>
         <td>${s.alive?`<span class="sub-status is-up">HTTP ${num(s.status_code)||200}</span>`:'<span class="sub-status">Inactive</span>'}</td>
         <td>${risk}</td>
       </tr>`;}).join('')}

@@ -1,5 +1,5 @@
 """
-BharatSec — API Router: AI
+BharatSec: API Router: AI
 General assistant chat, scan-grounded Copilot (plain and streaming), finding analysis.
 """
 import json

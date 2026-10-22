@@ -105,9 +105,9 @@
       <tr class="${asset.enabled ? '' : 'is-paused'}">
         <td><div class="asset-identity"><strong>${escapeHtml(asset.name)}</strong><span>${escapeHtml(asset.domain)}</span></div></td>
         <td>${statusMarkup(asset.enabled ? asset.status : 'unknown')}${asset.enabled ? '' : '<span class="paused-tag">Paused</span>'}</td>
-        <td class="mono num ${httpClass(asset.http_status)}">${escapeHtml(asset.http_status ?? '—')}</td>
-        <td class="mono num">${asset.response_time_ms == null ? '—' : `${Math.round(asset.response_time_ms)} ms`}</td>
-        ${compact ? '' : `<td class="mono num ${tlsClass}">${tls == null ? '—' : `${escapeHtml(tls)}d`}</td>`}
+        <td class="mono num ${httpClass(asset.http_status)}">${escapeHtml(asset.http_status ?? 'N/A')}</td>
+        <td class="mono num">${asset.response_time_ms == null ? 'N/A' : `${Math.round(asset.response_time_ms)} ms`}</td>
+        ${compact ? '' : `<td class="mono num ${tlsClass}">${tls == null ? 'N/A' : `${escapeHtml(tls)}d`}</td>`}
         <td class="mono when" title="${escapeHtml(dateTime(asset.last_checked_at))}">${escapeHtml(ago(asset.last_checked_at))}</td>
         <td><div class="table-actions">
           <button class="row-action" type="button" data-asset-action="check" data-id="${asset.id}" title="Check now">${icon('refresh')}<span>Check</span></button>

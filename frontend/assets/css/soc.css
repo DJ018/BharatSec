@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BharatSec SOC — page layer on top of design-system.css (tokens only)
+   BharatSec SOC: page layer on top of design-system.css (tokens only)
    ========================================================================== */
 
 .soc-page .mono, .soc-page code { font-family: var(--ds-font-mono); }

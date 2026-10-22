@@ -45,7 +45,7 @@
   }
 
   function compactINR(value) {
-    if (!Number.isFinite(value) || value < 0) return '—';
+    if (!Number.isFinite(value) || value < 0) return 'N/A';
     if (value >= 10000000) return `₹${(value / 10000000).toLocaleString('en-IN', { maximumFractionDigits: 1 })} Cr`;
     if (value >= 100000) return `₹${(value / 100000).toLocaleString('en-IN', { maximumFractionDigits: 1 })} L`;
     if (value >= 1000) return `₹${(value / 1000).toLocaleString('en-IN', { maximumFractionDigits: 0 })} K`;

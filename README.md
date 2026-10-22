@@ -3,7 +3,7 @@
 
 > **"Know Your Exposure. Understand Your Risk. Protect Your Digital World."**
 
-BharatSec is a full-stack cybersecurity intelligence platform that continuously evaluates a domain's security posture — discovering attack surfaces, analyzing vulnerabilities, calculating an AI-powered risk score, and delivering prioritized remediation guidance.
+BharatSec is a full-stack cybersecurity intelligence platform that continuously evaluates a domain's security posture: discovering attack surfaces, analyzing vulnerabilities, calculating an AI-powered risk score, and delivering prioritized remediation guidance.
 
 ---
 

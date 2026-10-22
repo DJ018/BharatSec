@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BharatSec Threat Intel — page layer on top of design-system.css (tokens only)
+   BharatSec Threat Intel: page layer on top of design-system.css (tokens only)
    ========================================================================== */
 
 .intel-page .mono, .intel-page code, .intel-page pre { font-family: var(--ds-font-mono); }
