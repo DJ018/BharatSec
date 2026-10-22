@@ -15,3 +15,4 @@ backend/data/*.db-wal
 
 # LinkedIn post screenshots (kept locally, not part of the site)
 linkedin/
+outreach/
