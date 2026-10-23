@@ -20,7 +20,7 @@ import os
 
 import auth as auth_service
 from config import AUTH_COOKIE_SECURE, BHARATSEC_HOST, CORS_ORIGINS, IS_LOOPBACK_HOST, IS_SERVERLESS
-from engines import cloud_engine, scan_store, soc_engine, threat_intel_engine
+from engines import cloud_engine, scan_store, soc_engine, threat_intel_engine, vector_knowledge
 from routers import auth as auth_router, cloud, scan, ai, soc, threat_intel
 
 PROTECTED_PAGES = {
@@ -247,7 +247,13 @@ async def cron_tick(request: Request):
         await threat_intel_engine.sync_feeds()
         await threat_intel_engine.sync_breach_watches()
         feeds_synced = True
-    return {"status": "ok", "assets_checked": len(due_assets), "feeds_synced": feeds_synced}
+    knowledge = None
+    if vector_knowledge.configured() and auth_service.claim_interval("knowledge-sync", vector_knowledge.SYNC_INTERVAL_SECONDS):
+        try:
+            knowledge = await vector_knowledge.sync()
+        except Exception as exc:  # Atlas being down must not break SOC checks and feed syncs
+            knowledge = {"status": "error", "detail": str(exc)[:200]}
+    return {"status": "ok", "assets_checked": len(due_assets), "feeds_synced": feeds_synced, "knowledge": knowledge}
 
 
 if __name__ == "__main__":

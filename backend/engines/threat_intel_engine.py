@@ -579,6 +579,30 @@ def get_overview() -> dict[str, Any]:
     }
 
 
+def recent_kev_entries(limit: int = 300) -> list[dict[str, Any]]:
+    """Newest CISA KEV entries (CVE, name, vendor/product, date added) for BharatSec AI's knowledge base."""
+    with _db() as connection:
+        rows = connection.execute(
+            "SELECT ioc, title, tags_json, first_seen_at FROM ti_indicators WHERE source = ? "
+            "ORDER BY first_seen_at DESC LIMIT ?",
+            (FEEDS["cisa_kev"]["name"], limit),
+        ).fetchall()
+    entries = []
+    for row in rows:
+        try:
+            tags = [str(tag) for tag in json.loads(row["tags_json"] or "[]")]
+        except ValueError:
+            tags = []
+        entries.append({
+            "cve": row["ioc"],
+            "name": row["title"],
+            "products": [tag for tag in tags if tag != "ransomware"],
+            "ransomware": "ransomware" in tags,
+            "date_added": row["first_seen_at"] or "",
+        })
+    return entries
+
+
 def list_breach_watches() -> list[dict[str, Any]]:
     with _db() as connection:
         rows = connection.execute("SELECT * FROM ti_breach_watches ORDER BY domain").fetchall()

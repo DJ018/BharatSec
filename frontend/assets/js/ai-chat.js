@@ -2,7 +2,8 @@
    - BharatSecAI.renderMarkdown(text): safe Markdown → DocumentFragment. Model output is NEVER assigned to
      innerHTML; every node is created with DOM APIs, and links are limited to http(s)/mailto.
    - BharatSecAI.stream(url, body, handlers): POST and read server-sent events (meta / delta / error / done).
-   - BharatSecAI.status(): { mode: 'online' | 'offline', providers: [...] }. */
+   - BharatSecAI.status(): { mode: 'online' | 'offline', providers: [...] }.
+   - BharatSecAI.referencesNode(json): the "Sources" line for answers that used the knowledge base, or null. */
 (function () {
   'use strict';
 
@@ -244,5 +245,27 @@
     return 'BharatSec AI';
   }
 
-  window.BharatSecAI = { renderMarkdown, stream, status, sourceLabel };
+  // Notes the answer cites as [1], [2] (retrieved from the MongoDB Atlas knowledge base).
+  function referencesNode(json) {
+    let refs = [];
+    try { refs = JSON.parse(json || '[]'); } catch { refs = []; }
+    if (!Array.isArray(refs) || !refs.length) return null;
+    const wrap = el('div', 'ds-ai-refs');
+    wrap.appendChild(el('span', 'ds-ai-refs-label', 'Sources'));
+    refs.slice(0, 6).forEach((ref) => {
+      const label = `[${ref.n}] ${ref.title || 'Reference'}`;
+      if (ref.url && SAFE_URL.test(ref.url)) {
+        const a = el('a', 'ds-ai-ref', label);
+        a.href = ref.url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer nofollow';
+        wrap.appendChild(a);
+      } else {
+        wrap.appendChild(el('span', 'ds-ai-ref', label));
+      }
+    });
+    return wrap;
+  }
+
+  window.BharatSecAI = { renderMarkdown, stream, status, sourceLabel, referencesNode };
 })();

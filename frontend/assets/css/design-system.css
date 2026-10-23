@@ -398,6 +398,10 @@ code, kbd, pre, .ds-mono { font-family: var(--ds-font-mono); }
 .ds-ai-source { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; color: var(--ds-text-3); font-size: 11px; font-weight: 500; }
 .ds-ai-source::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ds-primary); }
 .ds-ai-source.is-offline::before { background: var(--ds-medium); }
+.ds-ai-refs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; font-size: 11px; }
+.ds-ai-refs-label { color: var(--ds-text-3); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.ds-ai-ref { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 2px 8px; border: 1px solid var(--ds-border); border-radius: 999px; color: var(--ds-text-2); text-decoration: none; }
+a.ds-ai-ref:hover { border-color: var(--ds-primary); color: var(--ds-primary); }
 
 /* ── Status dot (live / connecting / error) ────────────────────────────── */
 .ds-status { display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px; border: 1px solid var(--ds-border); border-radius: var(--ds-radius-pill); color: var(--ds-text-2); font-size: var(--ds-text-xs); font-weight: 500; }

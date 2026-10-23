@@ -2,6 +2,7 @@
 BharatSec: API Router: AI
 General assistant chat, scan-grounded Copilot (plain and streaming), finding analysis.
 """
+import asyncio
 import json
 from typing import Any, AsyncIterator, Dict, List
 
@@ -20,7 +21,7 @@ from engines.ai_engine import (
     get_ai_analysis,
 )
 from models.scan_models import AIAnalyzeRequest, CopilotRequest, CopilotTurn
-from engines import scan_store
+from engines import scan_store, vector_knowledge
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
@@ -77,6 +78,7 @@ async def general_chat(request: GeneralChatRequest, http_request: Request):
         "content": response["content"],
         "source": response["source"],
         "model": response.get("model"),
+        "references": response.get("references", []),
     }
 
 
@@ -98,6 +100,7 @@ async def copilot_chat(request: CopilotRequest, http_request: Request):
         "content": response["content"],
         "source": response["source"],
         "model": response.get("model"),
+        "references": response.get("references", []),
         "scan_id": request.scan_id,
     }
 
@@ -108,6 +111,34 @@ async def copilot_chat_stream(request: CopilotRequest, http_request: Request):
     scan = _scan_or_404(request.scan_id)
     _enforce_rate_limit(http_request)
     return _sse(copilot_stream(request.message, scan, request.history))
+
+
+def _require_admin(request: Request) -> None:
+    user = getattr(request.state, "user", None)
+    if not user:
+        raise HTTPException(401, "Sign in to continue.")
+    if user.get("role") != "admin":
+        raise HTTPException(403, "Only administrators can manage the AI knowledge base.")
+
+
+@router.get("/knowledge")
+async def knowledge_status(request: Request):
+    """Admin view of the MongoDB Atlas knowledge base: notes stored, embedding model and index state."""
+    _require_admin(request)
+    try:
+        return await asyncio.to_thread(vector_knowledge.status)
+    except Exception as exc:
+        raise HTTPException(502, f"MongoDB Atlas is not reachable: {str(exc)[:200]}") from exc
+
+
+@router.post("/knowledge/sync")
+async def knowledge_sync(request: Request):
+    """Admin: embed new or changed notes now instead of waiting for the scheduled sync."""
+    _require_admin(request)
+    try:
+        return await vector_knowledge.sync(time_budget=50.0)
+    except Exception as exc:
+        raise HTTPException(502, f"Knowledge sync failed: {str(exc)[:200]}") from exc
 
 
 @router.post("/analyze")

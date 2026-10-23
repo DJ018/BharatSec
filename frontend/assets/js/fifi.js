@@ -162,6 +162,7 @@ async function fifSendMsg() {
         bubble = appendFifiStreamingBubble();
         bubble.dataset.source = meta.source || '';
         bubble.dataset.model = meta.model || '';
+        bubble.dataset.refs = JSON.stringify(meta.references || []);
       },
       onDelta(text) {
         partial = text;
@@ -248,6 +249,8 @@ function renderFifiAnswer(bubble, text, streaming) {
     const source = document.createElement('div');
     source.className = `ds-ai-source${bubble.dataset.source === 'rules' ? ' is-offline' : ''}`;
     source.textContent = window.BharatSecAI.sourceLabel(bubble.dataset.source, bubble.dataset.model);
+    const refs = window.BharatSecAI.referencesNode?.(bubble.dataset.refs);
+    if (refs) nodes.push(refs);
     nodes.push(source);
   }
   bubble.replaceChildren(...nodes);

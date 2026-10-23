@@ -197,7 +197,7 @@ class StreamingTests(unittest.TestCase):
         with patch.object(ai_engine, "GEMINI_API_KEY", "g"), patch.object(ai_engine, "OPENAI_API_KEY", ""), \
              patch.object(llm.httpx, "AsyncClient", return_value=client):
             events = self._collect(ai_engine.general_ai_stream("What is zero trust?"))
-        self.assertEqual(events[0], {"type": "meta", "source": "gemini", "model": ai_engine.GEMINI_MODEL})
+        self.assertEqual(events[0], {"type": "meta", "source": "gemini", "model": ai_engine.GEMINI_MODEL, "references": []})
         self.assertEqual("".join(e["text"] for e in events if e["type"] == "delta"), "Zero trust.")
         self.assertEqual(events[-1], {"type": "done"})
 

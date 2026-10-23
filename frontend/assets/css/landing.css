@@ -346,6 +346,29 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
   background: var(--ds-brand-text-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lp-stat dt { color: var(--ds-text-2); font-size: var(--ds-text-sm); font-weight: 500; }
 
+/* ── Supported by ──────────────────────────────────────────────────────── */
+/* Partner logos stay unaltered and smaller than BharatSec's own mark (partner trademark rules). */
+.lp-backers { position: relative; z-index: 1; padding: 0 0 clamp(64px, 9vw, 112px); text-align: center; }
+.lp-backers-eyebrow { margin: 0 0 var(--ds-space-5); color: var(--ds-text-3); font-size: var(--ds-text-xs); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+.lp-backers-list { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--ds-space-4); margin: 0; padding: 0; list-style: none; }
+.lp-backer {
+  display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px;
+  border: 1px solid var(--ds-border); border-radius: 999px; background: var(--ds-surface);
+}
+.lp-backer-logo { display: block; width: auto; height: 28px; }
+.lp-backer-logo--light { display: none; }
+:root[data-theme="light"] .lp-backer-logo--dark { display: none; }
+:root[data-theme="light"] .lp-backer-logo--light { display: block; }
+.lp-backer-program { padding-left: 10px; border-left: 1px solid var(--ds-border-strong); color: var(--ds-text-2); font-size: var(--ds-text-sm); font-weight: 600; white-space: nowrap; }
+.lp-backers-made {
+  display: inline-flex; align-items: center; gap: 10px; margin: var(--ds-space-6) 0 0;
+  color: var(--ds-text-2); font-size: var(--ds-text-sm); font-weight: 500;
+}
+.lp-backers-made::before {
+  content: ''; width: 28px; height: 3px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--ds-saffron) 33%, var(--bh-ivory) 33% 66%, var(--ds-green) 66%);
+}
+
 /* ── CTA ───────────────────────────────────────────────────────────────── */
 .lp-cta-section { padding-top: 0; }
 .lp-cta {

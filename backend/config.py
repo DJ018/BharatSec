@@ -66,6 +66,13 @@ AI_MAX_OUTPUT_TOKENS = _env_number("AI_MAX_OUTPUT_TOKENS", 2048, minimum=256, ma
 # Requests per user per minute across all AI endpoints (protects provider quota and cost).
 AI_RATE_LIMIT_PER_MINUTE = _env_number("AI_RATE_LIMIT_PER_MINUTE", 20, minimum=1, maximum=1000, cast=int)
 
+# ── AI knowledge base (MongoDB Atlas Vector Search, optional) ────────────────
+# The MongoDB Atlas integration for Vercel sets MONGODB_URI. Notes are embedded with Voyage AI when a
+# VOYAGE_API_KEY (an Atlas model API key) is present, otherwise with the Gemini key above.
+MONGODB_URI = os.getenv("MONGODB_URI", "").strip().strip("\"'")
+MONGODB_DB = os.getenv("MONGODB_DB", "bharatsec").strip() or "bharatsec"
+VOYAGE_API_KEY = os.getenv("VOYAGE_API_KEY", "").strip().strip("\"'")
+
 # ── Authentication and deployment ────────────────────────────────────────────
 BHARATSEC_HOST = os.getenv("BHARATSEC_HOST", "127.0.0.1").strip()
 # A serverless deployment is always public, whatever BHARATSEC_HOST says.

@@ -188,6 +188,7 @@ async function sendMessage() {
       onMeta(meta) {
         removeTyping(typingId);
         bubble = appendStreamingMessage(meta.source, meta.model);
+        bubble.dataset.refs = JSON.stringify(meta.references || []);
       },
       onDelta(text) {
         partial = text;
@@ -303,6 +304,8 @@ function renderAnswer(bubble, text, streaming) {
     const label = document.createElement('div');
     label.className = `ds-ai-source${bubble.dataset.source === 'rules' ? ' is-offline' : ''}`;
     label.textContent = window.BharatSecAI.sourceLabel(bubble.dataset.source, bubble.dataset.model);
+    const refs = window.BharatSecAI.referencesNode?.(bubble.dataset.refs);
+    if (refs) nodes.push(refs);
     nodes.push(label);
   }
   bubble.replaceChildren(...nodes);
