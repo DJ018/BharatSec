@@ -56,15 +56,26 @@ class ProviderLayerTests(unittest.TestCase):
         self.assertEqual(result["source"], "openai")
         self.assertEqual([c[0] for c in client.calls], ["gemini", "gemini", "openai"])
 
-    def test_overloaded_gemini_model_falls_back_to_backup_model(self):
-        client = FakeClient({"gemini": [(503, {}), (503, {}), (200, GEMINI_OK)], "openai": []})
+    def test_overloaded_gemini_model_switches_to_backup_model_without_retrying(self):
+        client = FakeClient({"gemini": [(503, {}), (200, GEMINI_OK)], "openai": []})
         g, o = self._patch_keys(openai="")
         with g, o, patch.object(llm.httpx, "AsyncClient", return_value=client), patch.object(llm, "RETRY_DELAY_SECONDS", 0):
             result = _run(ai_engine.general_ai_respond("Who wrote Godan?"))
         self.assertEqual(result["source"], "gemini")
         self.assertEqual(result["model"], ai_engine.GEMINI_FALLBACK_MODELS[0])
-        self.assertIn(f"/{ai_engine.GEMINI_MODEL}:", client.calls[1][1])
-        self.assertIn(f"/{ai_engine.GEMINI_FALLBACK_MODELS[0]}:", client.calls[2][1])
+        self.assertIn(f"/{ai_engine.GEMINI_MODEL}:", client.calls[0][1])
+        self.assertIn(f"/{ai_engine.GEMINI_FALLBACK_MODELS[0]}:", client.calls[1][1])
+        # A model with a backup gets a short wait; the last model keeps the full timeout and one retry.
+        self.assertEqual(client.calls[0][2]["timeout"].read, llm.SWITCH_TIMEOUT_SECONDS)
+
+    def test_last_backup_model_is_retried_once(self):
+        backups = len(ai_engine.GEMINI_FALLBACK_MODELS)
+        client = FakeClient({"gemini": [(503, {})] * (backups + 1) + [(200, GEMINI_OK)], "openai": []})
+        g, o = self._patch_keys(openai="")
+        with g, o, patch.object(llm.httpx, "AsyncClient", return_value=client), patch.object(llm, "RETRY_DELAY_SECONDS", 0):
+            result = _run(ai_engine.general_ai_respond("Who wrote Godan?"))
+        self.assertEqual(result["model"], ai_engine.GEMINI_FALLBACK_MODELS[-1])
+        self.assertEqual(len(client.calls), backups + 2)
 
     def test_rejected_key_does_not_try_backup_models(self):
         client = FakeClient({"gemini": [(403, {})], "openai": []})

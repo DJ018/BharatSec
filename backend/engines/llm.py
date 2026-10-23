@@ -3,6 +3,8 @@
 Supports Google Gemini and OpenAI chat models with:
 - automatic failover: providers are tried in order until one answers;
 - one retry per provider on rate limits, upstream errors and timeouts;
+- fast switching: a model with a backup gets one short attempt, so an overloaded free-tier model
+  does not keep the user waiting before the backup answers;
 - streaming (server-sent events) for token-by-token answers.
 API keys travel only in request headers, never in URLs, so they cannot leak into access logs.
 """
@@ -20,6 +22,8 @@ GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
 RETRY_DELAY_SECONDS = 0.8
+# A model that has a backup gets one attempt and this long to start answering before the backup is tried.
+SWITCH_TIMEOUT_SECONDS = 15.0
 
 
 @dataclass(frozen=True)
@@ -37,6 +41,13 @@ def _model_gone(exc: Exception) -> bool:
 
 def _candidates(provider: Provider) -> List[Provider]:
     return [provider] + [replace(provider, model=model, fallback_models=()) for model in provider.fallback_models]
+
+
+def _attempt_plan(candidates: List[Provider], index: int, timeout: float) -> Tuple[Tuple[int, ...], httpx.Timeout]:
+    """(attempts, timeout) for one candidate: short and single when a backup model follows, full otherwise."""
+    if index < len(candidates) - 1:
+        return (1,), _timeout(min(timeout, SWITCH_TIMEOUT_SECONDS))
+    return (1, 2), _timeout(timeout)
 
 
 def _try_next_model(exc: Exception | None) -> bool:
@@ -103,12 +114,13 @@ def _retryable(exc: Exception) -> bool:
 # ── Single-shot completion ───────────────────────────────────────────────────
 
 async def _complete_once(client: httpx.AsyncClient, provider: Provider, system: str, messages: Sequence[Message],
-                         temperature: float, max_tokens: int) -> str:
+                         temperature: float, max_tokens: int, timeout: httpx.Timeout) -> str:
     if provider.name == "gemini":
         response = await client.post(
             f"{GEMINI_BASE}/{provider.model}:generateContent",
             headers={"x-goog-api-key": provider.api_key},
             json=_gemini_payload(system, messages, temperature, max_tokens, provider.model),
+            timeout=timeout,
         )
         response.raise_for_status()
         return _gemini_text(response.json()).strip()
@@ -116,6 +128,7 @@ async def _complete_once(client: httpx.AsyncClient, provider: Provider, system: 
         OPENAI_URL,
         headers={"Authorization": f"Bearer {provider.api_key}"},
         json=_openai_payload(system, messages, temperature, max_tokens, provider.model, stream=False),
+        timeout=timeout,
     )
     response.raise_for_status()
     return (response.json()["choices"][0]["message"]["content"] or "").strip()
@@ -141,10 +154,13 @@ async def complete(providers: Sequence[Provider], system: str, messages: Sequenc
     last_error: Exception | None = None
     async with httpx.AsyncClient(timeout=_timeout(timeout)) as client:
         for configured in providers:
-            for provider in _candidates(configured):
-                for attempt in (1, 2):
+            candidates = _candidates(configured)
+            for index, provider in enumerate(candidates):
+                attempts, request_timeout = _attempt_plan(candidates, index, timeout)
+                for attempt in attempts:
                     try:
-                        answer = await _complete_once(client, provider, system, messages, temperature, max_tokens)
+                        answer = await _complete_once(client, provider, system, messages, temperature, max_tokens,
+                                                      request_timeout)
                         if answer:
                             return answer, provider
                         last_error = ValueError("empty answer")
@@ -153,7 +169,7 @@ async def complete(providers: Sequence[Provider], system: str, messages: Sequenc
                         last_error = exc
                         logger.warning("%s %s request failed (attempt %s): %s",
                                        provider.name, provider.model, attempt, _describe(exc))
-                        if attempt == 1 and _retryable(exc):
+                        if attempt < attempts[-1] and _retryable(exc):
                             await asyncio.sleep(RETRY_DELAY_SECONDS)
                             continue
                         break
@@ -171,7 +187,7 @@ async def _sse_data(response: httpx.Response) -> AsyncIterator[str]:
 
 
 async def _stream_once(client: httpx.AsyncClient, provider: Provider, system: str, messages: Sequence[Message],
-                       temperature: float, max_tokens: int) -> AsyncIterator[str]:
+                       temperature: float, max_tokens: int, timeout: httpx.Timeout) -> AsyncIterator[str]:
     if provider.name == "gemini":
         request = client.stream(
             "POST",
@@ -179,6 +195,7 @@ async def _stream_once(client: httpx.AsyncClient, provider: Provider, system: st
             params={"alt": "sse"},
             headers={"x-goog-api-key": provider.api_key},
             json=_gemini_payload(system, messages, temperature, max_tokens, provider.model),
+            timeout=timeout,
         )
     else:
         request = client.stream(
@@ -186,6 +203,7 @@ async def _stream_once(client: httpx.AsyncClient, provider: Provider, system: st
             OPENAI_URL,
             headers={"Authorization": f"Bearer {provider.api_key}"},
             json=_openai_payload(system, messages, temperature, max_tokens, provider.model, stream=True),
+            timeout=timeout,
         )
     async with request as response:
         if response.status_code >= 400:
@@ -215,11 +233,14 @@ async def stream(providers: Sequence[Provider], system: str, messages: Sequence[
     last_error: Exception | None = None
     async with httpx.AsyncClient(timeout=_timeout(timeout)) as client:
         for configured in providers:
-            for provider in _candidates(configured):
-                for attempt in (1, 2):
+            candidates = _candidates(configured)
+            for index, provider in enumerate(candidates):
+                attempts, request_timeout = _attempt_plan(candidates, index, timeout)
+                for attempt in attempts:
                     started = False
                     try:
-                        async for chunk in _stream_once(client, provider, system, messages, temperature, max_tokens):
+                        async for chunk in _stream_once(client, provider, system, messages, temperature, max_tokens,
+                                                        request_timeout):
                             if not started:
                                 started = True
                                 yield "provider", provider
@@ -234,7 +255,7 @@ async def stream(providers: Sequence[Provider], system: str, messages: Sequence[
                         last_error = exc
                         logger.warning("%s %s stream failed (attempt %s): %s",
                                        provider.name, provider.model, attempt, _describe(exc))
-                        if attempt == 1 and _retryable(exc):
+                        if attempt < attempts[-1] and _retryable(exc):
                             await asyncio.sleep(RETRY_DELAY_SECONDS)
                             continue
                         break
