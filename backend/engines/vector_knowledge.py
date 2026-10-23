@@ -215,7 +215,7 @@ async def sync(time_budget: float = 25.0) -> Dict[str, Any]:
             break
         batch = stale[start:start + EMBED_BATCH]
         try:
-            vectors = await embed([_embedding_text(note) for note in batch], "document")
+            vectors = await _embed_with_quota_wait(batch, started, time_budget)
         except (EmbeddingError, httpx.HTTPError) as exc:
             detail = str(exc)
             logger.warning("Knowledge sync paused: %s", exc)
@@ -244,6 +244,21 @@ async def sync(time_budget: float = 25.0) -> Dict[str, Any]:
         "index": index,
         "detail": detail,
     }
+
+
+QUOTA_WAIT_SECONDS = 62  # free embedding tiers limit requests per minute
+
+
+async def _embed_with_quota_wait(batch: List[Dict[str, str]], started: float, time_budget: float) -> List[List[float]]:
+    """Embed a batch; on a per-minute quota error, wait for the next minute once if the budget allows."""
+    texts = [_embedding_text(note) for note in batch]
+    try:
+        return await embed(texts, "document")
+    except EmbeddingError as exc:
+        if not exc.retry_later or time.monotonic() - started + QUOTA_WAIT_SECONDS > time_budget:
+            raise
+    await asyncio.sleep(QUOTA_WAIT_SECONDS)
+    return await embed(texts, "document")
 
 
 def _replace_all(collection, documents: List[Dict[str, Any]]) -> None:

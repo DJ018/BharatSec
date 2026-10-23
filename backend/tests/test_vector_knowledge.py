@@ -125,6 +125,24 @@ class KnowledgeSyncTests(unittest.TestCase):
         self.assertEqual(result["remaining"], 5)
         self.assertIn("429", result["detail"])
 
+    def test_quota_error_waits_for_the_next_minute_when_the_budget_allows(self):
+        notes = [_note(str(number)) for number in range(vector_knowledge.EMBED_BATCH * 2)]
+        replies = [None, vector_knowledge.EmbeddingError("HTTP 429", retry_later=True), None]
+
+        async def embed(texts, kind):
+            reply = replies.pop(0)
+            if isinstance(reply, Exception):
+                raise reply
+            return [[0.3] * vector_knowledge.DIMENSIONS for _ in texts]
+
+        with patch.object(vector_knowledge, "collect_notes", return_value=notes), \
+             patch.object(vector_knowledge, "embed", embed), \
+             patch.object(vector_knowledge, "QUOTA_WAIT_SECONDS", 0):
+            result = asyncio.run(vector_knowledge.sync(time_budget=150.0))
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["embedded"], len(notes))
+        self.assertEqual(result["remaining"], 0)
+
     def test_retrieve_searches_only_this_models_vectors_and_drops_weak_matches(self):
         self.collection.results = [
             {"title": "CERT-In Directions", "text": "Report within 6 hours.", "source": "CERT-In", "url": "https://www.cert-in.org.in", "score": 0.84},

@@ -254,7 +254,7 @@ async def cron_tick(request: Request):
                      "embedding_key_set": vector_knowledge.embedder() is not None}
     elif auth_service.claim_interval("knowledge-sync", vector_knowledge.SYNC_INTERVAL_SECONDS):
         try:
-            knowledge = await vector_knowledge.sync()
+            knowledge = await vector_knowledge.sync(time_budget=150.0)  # leaves room in the 300 s function limit
         except Exception as exc:  # Atlas being down must not break SOC checks and feed syncs
             knowledge = {"status": "error", "detail": str(exc)[:200]}
     return {"status": "ok", "assets_checked": len(due_assets), "feeds_synced": feeds_synced, "knowledge": knowledge}
