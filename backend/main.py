@@ -248,7 +248,11 @@ async def cron_tick(request: Request):
         await threat_intel_engine.sync_breach_watches()
         feeds_synced = True
     knowledge = None
-    if vector_knowledge.configured() and auth_service.claim_interval("knowledge-sync", vector_knowledge.SYNC_INTERVAL_SECONDS):
+    if not vector_knowledge.configured():
+        # Yes/no only, so an admin can see which setting is missing without signing in.
+        knowledge = {"status": "off", "mongodb_uri_set": bool(vector_knowledge.MONGODB_URI),
+                     "embedding_key_set": vector_knowledge.embedder() is not None}
+    elif auth_service.claim_interval("knowledge-sync", vector_knowledge.SYNC_INTERVAL_SECONDS):
         try:
             knowledge = await vector_knowledge.sync()
         except Exception as exc:  # Atlas being down must not break SOC checks and feed syncs
