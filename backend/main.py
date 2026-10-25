@@ -15,10 +15,11 @@ if str(BACKEND_DIR) not in sys.path:
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
 import os
 
 import auth as auth_service
+import seo
 from config import AUTH_COOKIE_SECURE, BHARATSEC_HOST, CORS_ORIGINS, IS_LOOPBACK_HOST, IS_SERVERLESS
 from engines import cloud_engine, scan_store, soc_engine, threat_intel_engine, vector_knowledge
 from routers import auth as auth_router, cloud, scan, ai, soc, threat_intel
@@ -116,7 +117,8 @@ async def enforce_authentication_and_security_headers(request, call_next):
     path = request.url.path
     is_auth_route = path.startswith("/api/auth/")
     is_public_route = (
-        path in {"/", "/index.html", "/login", "/login.html", "/api/health", "/api/cron/tick"}
+        path in {"/", "/index.html", "/login", "/login.html", "/api/health", "/api/cron/tick",
+                 "/robots.txt", "/sitemap.xml", f"/{seo.INDEXNOW_KEY}.txt"}
         or path.startswith("/assets/")
         or path.startswith("/favicon")
     )
@@ -178,6 +180,18 @@ if FRONTEND_DIR.exists():
     async def serve_favicon():
         # Pages declare the SVG mark as their icon; some browsers still ask for /favicon.ico.
         return FileResponse(str(FRONTEND_DIR / "assets" / "images" / "brand" / "bharatsec-mark.svg"), media_type="image/svg+xml")
+
+    @app.get("/robots.txt", include_in_schema=False)
+    async def serve_robots():
+        return PlainTextResponse(seo.robots_txt())
+
+    @app.get("/sitemap.xml", include_in_schema=False)
+    async def serve_sitemap():
+        return Response(seo.sitemap_xml(), media_type="application/xml")
+
+    @app.get(f"/{seo.INDEXNOW_KEY}.txt", include_in_schema=False)
+    async def serve_indexnow_key():
+        return PlainTextResponse(seo.INDEXNOW_KEY)
 
     @app.get("/index.html", include_in_schema=False)
     async def serve_index_html():
@@ -257,7 +271,11 @@ async def cron_tick(request: Request):
             knowledge = await vector_knowledge.sync(time_budget=150.0)  # leaves room in the 300 s function limit
         except Exception as exc:  # Atlas being down must not break SOC checks and feed syncs
             knowledge = {"status": "error", "detail": str(exc)[:200]}
-    return {"status": "ok", "assets_checked": len(due_assets), "feeds_synced": feeds_synced, "knowledge": knowledge}
+    indexnow = None
+    if IS_SERVERLESS and auth_service.claim_change("indexnow", seo.public_pages_fingerprint()):
+        indexnow = await seo.ping_indexnow()  # once per change to the public pages
+    return {"status": "ok", "assets_checked": len(due_assets), "feeds_synced": feeds_synced, "knowledge": knowledge,
+            "indexnow": indexnow}
 
 
 if __name__ == "__main__":

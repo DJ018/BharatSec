@@ -189,6 +189,21 @@ def claim_interval(job: str, interval_seconds: float) -> bool:
     return True
 
 
+def claim_change(job: str, fingerprint: str) -> bool:
+    """True once for each new `fingerprint` across all instances; used to run a job only when something changed."""
+    key = f"change:{job}"
+    with _database() as connection:
+        database.schema_lock(connection, key)
+        row = connection.execute("SELECT value FROM app_settings WHERE key = ?", (key,)).fetchone()
+        if row is not None and row["value"] == fingerprint:
+            return False
+        connection.execute(
+            "INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (key, fingerprint),
+        )
+    return True
+
+
 def _sign_session_token(random_token: str) -> str:
     signature = hmac.new(
         _session_secret().encode("utf-8"),

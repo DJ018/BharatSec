@@ -1,0 +1,48 @@
+<!doctype html>
+<!-- Source for bharatsec-og.png (1200x630 share image). Re-render with headless Chrome after editing:
+     chrome --headless=new --hide-scrollbars --window-size=1200,630 --screenshot=bharatsec-og.png og-source.html -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>BharatSec share image</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Instrument+Serif:ital@0;1&family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; }
+  body { position: relative; overflow: hidden; font-family: 'Inter', sans-serif; color: #eef4f0;
+    background: radial-gradient(55% 70% at 12% 0%, rgba(244,162,97,.22), transparent 60%),
+                radial-gradient(60% 75% at 100% 100%, rgba(126,224,161,.22), transparent 62%), #07110c; }
+  .chakra { position: absolute; right: -150px; top: -150px; width: 560px; height: 560px; opacity: .10; }
+  .chakra circle, .chakra line { fill: none; stroke: #f3e7cf; }
+  main { position: absolute; left: 80px; top: 72px; right: 80px; }
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .brand img { width: 64px; height: 64px; }
+  .brand b { font-size: 40px; font-weight: 800; letter-spacing: -.03em; }
+  .brand b span { background: linear-gradient(90deg, #f4a261, #c9c77e 50%, #7ee0a1); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  h1 { margin-top: 56px; font-size: 64px; font-weight: 800; letter-spacing: -.035em; line-height: 1.05; }
+  h1 em { font-family: 'Instrument Serif', serif; font-weight: 400; font-style: italic; font-size: 1.1em;
+    background: linear-gradient(90deg, #f4a261, #f3e7cf 45%, #7ee0a1); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  p { margin-top: 26px; font-size: 25px; font-weight: 500; color: #b9c8bf; }
+  .foot { position: absolute; left: 80px; right: 80px; bottom: 54px; display: flex; justify-content: space-between; align-items: center; font-size: 22px; font-weight: 600; }
+  .foot .hi { font-family: 'Tiro Devanagari Hindi', serif; font-weight: 400; font-size: 28px;
+    background: linear-gradient(90deg, #f4a261, #f3e7cf 55%, #7ee0a1); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .stripe { position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: linear-gradient(90deg, #f4a261 0 33.3%, #f3e7cf 33.3% 66.6%, #7ee0a1 66.6%); }
+</style>
+</head>
+<body>
+  <svg class="chakra" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92" stroke-width="4" /><circle cx="100" cy="100" r="14" stroke-width="4" /><g id="s" stroke-width="2"></g></svg>
+  <main>
+    <div class="brand"><img src="../brand/bharatsec-mark.svg" alt="" /><b>Bharat<span>Sec</span></b></div>
+    <h1>See your exposure.<br /><em>Strengthen your security.</em></h1>
+    <p>Free passive domain scan · prioritised fixes · CERT-In &amp; DPDP guidance</p>
+  </main>
+  <div class="foot"><span>bharatsec.vercel.app</span><span><span class="hi">भारत</span> &nbsp;Built in India</span></div>
+  <div class="stripe"></div>
+  <script>
+    const g = document.getElementById('s');
+    for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      l.setAttribute('x1', 100 + 14 * Math.cos(a)); l.setAttribute('y1', 100 + 14 * Math.sin(a));
+      l.setAttribute('x2', 100 + 92 * Math.cos(a)); l.setAttribute('y2', 100 + 92 * Math.sin(a)); g.appendChild(l); }
+  </script>
+</body>
+</html>
