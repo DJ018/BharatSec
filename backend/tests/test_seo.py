@@ -43,6 +43,11 @@ class CrawlerFilesTests(unittest.TestCase):
         locs = [el.text for el in root.findall("s:url/s:loc", ns)]
         self.assertEqual(locs, [f"{seo.SITE_URL}/"])
 
+    def test_google_search_console_verification_file(self):
+        response = self.client.get(f"/{seo.GOOGLE_VERIFICATION_FILE}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.text, f"google-site-verification: {seo.GOOGLE_VERIFICATION_FILE}")
+
     def test_indexnow_key_file_proves_ownership(self):
         response = self.client.get(f"/{seo.INDEXNOW_KEY}.txt")
         self.assertEqual(response.status_code, 200)

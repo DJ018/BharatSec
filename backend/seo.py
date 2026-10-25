@@ -20,6 +20,9 @@ SITE_URL = (os.getenv("BHARATSEC_SITE_URL") or "https://bharatsec.vercel.app").s
 INDEXNOW_KEY = "87ec72de68e002f74f3dffc2e747237f"
 INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow"
 
+# Google Search Console ownership file (URL-prefix property https://bharatsec.vercel.app/). Keep it: removing it unverifies.
+GOOGLE_VERIFICATION_FILE = "google8541ef115d903cf0.html"
+
 # (path, change frequency, priority) for pages anyone can open.
 PUBLIC_PAGES: List[Tuple[str, str, str]] = [("/", "weekly", "1.0")]
 

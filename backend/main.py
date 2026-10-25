@@ -118,7 +118,7 @@ async def enforce_authentication_and_security_headers(request, call_next):
     is_auth_route = path.startswith("/api/auth/")
     is_public_route = (
         path in {"/", "/index.html", "/login", "/login.html", "/api/health", "/api/cron/tick",
-                 "/robots.txt", "/sitemap.xml", f"/{seo.INDEXNOW_KEY}.txt"}
+                 "/robots.txt", "/sitemap.xml", f"/{seo.INDEXNOW_KEY}.txt", f"/{seo.GOOGLE_VERIFICATION_FILE}"}
         or path.startswith("/assets/")
         or path.startswith("/favicon")
     )
@@ -188,6 +188,10 @@ if FRONTEND_DIR.exists():
     @app.get("/sitemap.xml", include_in_schema=False)
     async def serve_sitemap():
         return Response(seo.sitemap_xml(), media_type="application/xml")
+
+    @app.get(f"/{seo.GOOGLE_VERIFICATION_FILE}", include_in_schema=False)
+    async def serve_google_verification():
+        return PlainTextResponse(f"google-site-verification: {seo.GOOGLE_VERIFICATION_FILE}", media_type="text/html")
 
     @app.get(f"/{seo.INDEXNOW_KEY}.txt", include_in_schema=False)
     async def serve_indexnow_key():
