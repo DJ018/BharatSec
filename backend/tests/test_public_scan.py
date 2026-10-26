@@ -96,5 +96,36 @@ class PublicScanTests(unittest.TestCase):
         self.assertEqual(sample.json()["status"], "complete")
 
 
+class ScoreHistoryTests(unittest.TestCase):
+    def _saved(self, scan_id, domain, score, completed_at):
+        from models.scan_models import ScanResult
+        scan = ScanResult(scan_id=scan_id, domain=domain, status=ScanStatus.COMPLETE, progress=100,
+                          started_at=completed_at, completed_at=completed_at)
+        scan.score.overall = score
+        scan_store.save(scan)
+
+    def test_history_is_oldest_first_and_excludes_free_scans(self):
+        domain = "history-check.example"
+        self._saved("scan_hist_1", domain, 62, "2026-10-01T10:00:00+00:00")
+        self._saved("scan_hist_2", domain, 81, "2026-10-20T10:00:00+00:00")
+        self._saved("pub_hist_3", domain, 10, "2026-10-25T10:00:00+00:00")
+        self._saved("scan_other", "other.example", 50, "2026-10-21T10:00:00+00:00")
+        client = authenticated_client()
+        try:
+            history = client.get("/api/scan/history", params={"domain": domain}).json()
+            bad = client.get("/api/scan/history", params={"domain": "not a domain"})
+        finally:
+            client.close()
+        self.assertEqual([(h["scan_id"], h["score"]) for h in history], [("scan_hist_1", 62), ("scan_hist_2", 81)])
+        self.assertEqual(bad.status_code, 422)
+
+    def test_history_requires_sign_in(self):
+        client = TestClient(main.app)
+        try:
+            self.assertEqual(client.get("/api/scan/history", params={"domain": "example.com"}).status_code, 401)
+        finally:
+            client.close()
+
+
 if __name__ == "__main__":
     unittest.main()

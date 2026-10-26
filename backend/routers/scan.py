@@ -260,6 +260,12 @@ async def execute_scan(scan_id: str):
     return await _run_once(scan_id)
 
 
+@router.get("/history")
+async def get_score_history(domain: str):
+    """Score over time for one domain (completed scans, oldest first)."""
+    return await asyncio.to_thread(scan_store.score_history, _validate_domain(domain))
+
+
 @router.get("/recent")
 async def get_recent_scans():
     return await asyncio.to_thread(scan_store.recent_completed, 20)

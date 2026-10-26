@@ -118,6 +118,15 @@
 .gauge-level { margin-top: -14px; }
 
 .severity-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.score-history { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 12px; border: 1px solid var(--ds-border); border-radius: var(--ds-radius-md, 10px); background: var(--ds-surface-2); }
+.score-history[hidden] { display: none; }
+.score-history-label { color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+.score-history-label strong { color: var(--ds-text); font-variant-numeric: tabular-nums; }
+.score-history-label .is-up { color: var(--ds-low); font-weight: 600; }
+.score-history-label .is-down { color: var(--ds-critical); font-weight: 600; }
+.score-history-spark { width: 160px; height: 32px; overflow: visible; }
+.score-history-spark polyline { fill: none; stroke: var(--ds-primary); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .sev-chip { padding: 12px 14px; border: 1px solid var(--ds-border); border-radius: var(--ds-radius); background: var(--ds-bg-raised); }
 .sev-chip .label { display: flex; align-items: center; gap: 7px; color: var(--ds-text-2); font-size: var(--ds-text-xs); font-weight: 500; }
 .sev-chip .count { margin-top: 4px; color: var(--ds-text); font-size: var(--ds-text-2xl); font-weight: 650; letter-spacing: -.03em; line-height: 1.1; font-variant-numeric: tabular-nums; }
@@ -414,7 +423,7 @@
   .quick-grid, .two-col, .exec-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 640px) {
-  .scan-state, .tab-suffix, .btn-new-scan { display: none; }
+  .scan-state, .tab-suffix, .btn-new-scan, #btn-pdf-report span { display: none; }
   .ds-topbar { gap: 8px; }
   .ds-topbar-actions { gap: 6px; }
   .view-toggle .ds-tab { padding: 0 10px; font-size: var(--ds-text-xs); }

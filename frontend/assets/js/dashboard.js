@@ -61,6 +61,17 @@ function statusPill(ok, okLabel, badLabel, badTone = 'critical') {
 
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
+
+  // ?scan=scan_… opens a finished scan (from a report or history) instead of starting a new one.
+  const existing = (params.get('scan') || '').trim();
+  if (/^scan_[a-z0-9]+$/.test(existing)) {
+    scanId = existing;
+    showOverlay(true);
+    updateProgress(100, 'Loading saved scan...');
+    fetchAndRender(existing);
+    return;
+  }
+
   let domain = (params.get('domain') || '').trim().toLowerCase()
     .replace(/^https?:\/\//, '').split('/')[0];
 
@@ -587,6 +598,56 @@ function renderAll(data) {
 
   setEl('findings-count',       data.findings.length);
   setEl('findings-total-badge', `${data.findings.length} findings`);
+
+  const pdf = document.getElementById('btn-pdf-report');
+  if (pdf && data.scan_id) {
+    pdf.href = `${API}/report?scan=${encodeURIComponent(data.scan_id)}`;
+    pdf.hidden = false;
+  }
+  renderScoreHistory(data.domain);
+}
+
+// ── Score history ─────────────────────────────────────────────
+
+async function renderScoreHistory(domain) {
+  const box = document.getElementById('score-history');
+  if (!box || !domain) return;
+  let history = [];
+  try {
+    const response = await fetch(`${API}/api/scan/history?domain=${encodeURIComponent(domain)}`, { credentials: 'same-origin' });
+    if (response.ok) history = await response.json();
+  } catch (_) { return; }
+  if (!Array.isArray(history) || history.length < 2) { box.hidden = true; return; }
+
+  const first = history[0], last = history[history.length - 1];
+  const delta = last.score - first.score;
+  const since = new Date(first.completed_at);
+  const sinceText = isNaN(since) ? '' : ` since ${since.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
+
+  const label = document.createElement('div');
+  label.className = 'score-history-label';
+  const strong = document.createElement('strong');
+  strong.textContent = `${first.score} → ${last.score}`;
+  const change = document.createElement('span');
+  change.className = delta > 0 ? 'is-up' : delta < 0 ? 'is-down' : '';
+  change.textContent = delta === 0 ? `no change${sinceText}` : `${delta > 0 ? '+' : ''}${delta}${sinceText}`;
+  label.append('Score history ', strong, ' ', change);
+
+  // Sparkline: 0-100 mapped to the box height.
+  const width = 220, height = 40, step = width / (history.length - 1);
+  const points = history.map((h, i) => `${(i * step).toFixed(1)},${(height - (h.score / 100) * height).toFixed(1)}`).join(' ');
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('class', 'score-history-spark');
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', `Score over ${history.length} scans: ${history.map((h) => h.score).join(', ')}`);
+  const line = document.createElementNS(svgNS, 'polyline');
+  line.setAttribute('points', points);
+  svg.appendChild(line);
+
+  box.replaceChildren(label, svg);
+  box.hidden = false;
 }
 
 // ── Score & gauge ─────────────────────────────────────────────

@@ -82,6 +82,21 @@ def recent_completed(limit: int = 20) -> List[ScanResult]:
     return [ScanResult.model_validate_json(row["payload"]) for row in rows]
 
 
+def score_history(domain: str, limit: int = 20) -> List[dict]:
+    """Completed team scans of one domain, oldest first, for the score trend."""
+    with _db() as connection:
+        rows = connection.execute(
+            f"SELECT scan_id, completed_at, payload FROM scans WHERE domain = ? AND status = ? AND {_NOT_PUBLIC} "
+            "ORDER BY completed_at DESC LIMIT ?",
+            (domain, ScanStatus.COMPLETE.value, limit),
+        ).fetchall()
+    history = []
+    for row in reversed(rows):
+        scan = ScanResult.model_validate_json(row["payload"])
+        history.append({"scan_id": row["scan_id"], "completed_at": row["completed_at"], "score": scan.score.overall})
+    return history
+
+
 def list_summaries(limit: int = 100) -> List[dict]:
     with _db() as connection:
         rows = connection.execute(

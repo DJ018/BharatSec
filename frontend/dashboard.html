@@ -147,6 +147,10 @@
         <button class="ds-tab toggle-btn active" type="button" onclick="switchMode('analyst')" id="mode-analyst">Analyst<span class="tab-suffix"> view</span></button>
         <button class="ds-tab toggle-btn" type="button" onclick="switchMode('executive')" id="mode-executive">Executive<span class="tab-suffix"> view</span></button>
       </div>
+      <a class="ds-btn ds-btn--secondary" id="btn-pdf-report" href="#" target="_blank" rel="noopener" hidden title="Open a printable report and save it as PDF">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 18v-6M9 15l3 3 3-3"/></svg>
+        <span>PDF report</span>
+      </a>
       <a class="ds-btn ds-btn--primary btn-new-scan" href="index.html">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         <span>New scan</span>
@@ -201,6 +205,8 @@
                 <div class="sev-chip high"><div class="label"><span class="sev-dot"></span>High</div><div class="count" id="chip-high">…</div></div>
                 <div class="sev-chip medium"><div class="label"><span class="sev-dot"></span>Medium</div><div class="count" id="chip-medium">…</div></div>
                 <div class="sev-chip low"><div class="label"><span class="sev-dot"></span>Low</div><div class="count" id="chip-low">…</div></div>
+              </div>
+              <div class="score-history" id="score-history" hidden>
               </div>
             </div>
           </article>
