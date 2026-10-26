@@ -1,0 +1,14 @@
+Copyright (c) 2026 Devesh Jain. All rights reserved.
+
+BharatSec (https://bharatsec.vercel.app), including its source code, design,
+text, graphics and brand, is the property of Devesh Jain.
+
+The source code is published so that people can read and review it. No
+licence is granted to copy, modify, distribute, sublicense, host or sell this
+software or any part of it, or to use the BharatSec name or logos, without
+prior written permission from the copyright holder.
+
+Third-party components keep their own licences (see the packages listed in
+requirements.txt and the libraries loaded by the frontend).
+
+Permission requests: deveshjain718@gmail.com

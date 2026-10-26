@@ -41,7 +41,25 @@ class CrawlerFilesTests(unittest.TestCase):
         root = ET.fromstring(response.text)
         ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
         locs = [el.text for el in root.findall("s:url/s:loc", ns)]
-        self.assertEqual(locs, [f"{seo.SITE_URL}/"])
+        self.assertEqual(locs[0], f"{seo.SITE_URL}/")
+        for page in ("about", "pricing", "security", "contact", "privacy", "terms"):
+            self.assertIn(f"{seo.SITE_URL}/{page}", locs)
+
+    def test_trust_pages_are_public_and_canonical(self):
+        for page in seo.INFO_PAGES:
+            for path in (f"/{page}", f"/{page}.html"):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200, path)
+                self.assertIn(f'<link rel="canonical" href="{seo.SITE_URL}/{page}" />', response.text)
+                self.assertNotIn("noindex", response.text)
+                self.assertNotIn(chr(0x2014), response.text)  # house style
+
+    def test_security_txt_follows_rfc_9116(self):
+        for path in ("/.well-known/security.txt", "/security.txt"):
+            body = self.client.get(path).text
+            self.assertIn("Contact: mailto:", body)
+            self.assertRegex(body, r"Expires: \d{4}-\d{2}-\d{2}T")
+            self.assertIn(f"Policy: {seo.SITE_URL}/security", body)
 
     def test_google_search_console_verification_file(self):
         response = self.client.get(f"/{seo.GOOGLE_VERIFICATION_FILE}")
@@ -117,7 +135,8 @@ class IndexNowPingTests(unittest.TestCase):
         self.assertEqual(sent["url"], seo.INDEXNOW_ENDPOINT)
         self.assertEqual(sent["json"]["key"], seo.INDEXNOW_KEY)
         self.assertEqual(sent["json"]["host"], seo.SITE_URL.split("://")[1])
-        self.assertEqual(sent["json"]["urlList"], [f"{seo.SITE_URL}/"])
+        self.assertEqual(sent["json"]["urlList"], [f"{seo.SITE_URL}{path}" for path, _, _ in seo.PUBLIC_PAGES])
+        self.assertEqual(sent["json"]["urlList"][0], f"{seo.SITE_URL}/")
 
 
 class PageMetaTests(unittest.TestCase):

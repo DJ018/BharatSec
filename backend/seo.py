@@ -24,11 +24,34 @@ INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow"
 GOOGLE_VERIFICATION_FILE = "google8541ef115d903cf0.html"
 
 # (path, change frequency, priority) for pages anyone can open.
-PUBLIC_PAGES: List[Tuple[str, str, str]] = [("/", "weekly", "1.0")]
+PUBLIC_PAGES: List[Tuple[str, str, str]] = [
+    ("/", "weekly", "1.0"),
+    ("/about", "monthly", "0.6"),
+    ("/pricing", "monthly", "0.6"),
+    ("/security", "monthly", "0.5"),
+    ("/contact", "yearly", "0.4"),
+    ("/privacy", "yearly", "0.3"),
+    ("/terms", "yearly", "0.3"),
+]
+
+# Company and trust pages served at /<name> and /<name>.html.
+INFO_PAGES = ["about", "pricing", "security", "contact", "privacy", "terms"]
 
 PRIVATE_PATHS = ["/api/", "/dashboard", "/soc", "/threat-intel", "/risk", "/cloud", "/account"]
 
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
+
+
+def security_txt() -> str:
+    """RFC 9116 contact file for vulnerability reports."""
+    return "\n".join([
+        "Contact: mailto:deveshjain718@gmail.com",
+        "Expires: 2027-10-26T00:00:00.000Z",
+        "Preferred-Languages: en, hi",
+        f"Canonical: {SITE_URL}/.well-known/security.txt",
+        f"Policy: {SITE_URL}/security",
+        "",
+    ])
 
 
 def robots_txt() -> str:

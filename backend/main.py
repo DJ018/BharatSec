@@ -118,7 +118,9 @@ async def enforce_authentication_and_security_headers(request, call_next):
     is_auth_route = path.startswith("/api/auth/")
     is_public_route = (
         path in {"/", "/index.html", "/login", "/login.html", "/api/health", "/api/cron/tick",
-                 "/robots.txt", "/sitemap.xml", f"/{seo.INDEXNOW_KEY}.txt", f"/{seo.GOOGLE_VERIFICATION_FILE}"}
+                 "/robots.txt", "/sitemap.xml", f"/{seo.INDEXNOW_KEY}.txt", f"/{seo.GOOGLE_VERIFICATION_FILE}",
+                 "/.well-known/security.txt", "/security.txt"}
+        or path.removesuffix(".html").lstrip("/") in seo.INFO_PAGES
         or path.startswith("/assets/")
         or path.startswith("/favicon")
     )
@@ -184,6 +186,20 @@ if FRONTEND_DIR.exists():
     @app.get("/robots.txt", include_in_schema=False)
     async def serve_robots():
         return PlainTextResponse(seo.robots_txt())
+
+    @app.get("/.well-known/security.txt", include_in_schema=False)
+    @app.get("/security.txt", include_in_schema=False)
+    async def serve_security_txt():
+        return PlainTextResponse(seo.security_txt())
+
+    def _info_page(name: str):
+        async def serve():
+            return FileResponse(str(FRONTEND_DIR / f"{name}.html"))
+        return serve
+
+    for _name in seo.INFO_PAGES:
+        app.get(f"/{_name}", include_in_schema=False)(_info_page(_name))
+        app.get(f"/{_name}.html", include_in_schema=False)(_info_page(_name))
 
     @app.get("/sitemap.xml", include_in_schema=False)
     async def serve_sitemap():
