@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="assets/css/account.css" />
   <script src="assets/js/auth.js"></script>
   <script src="assets/js/social-login.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k" crossorigin="anonymous" defer></script>
   <link rel="stylesheet" href="assets/css/fx.css" />
   <script src="https://cdn.jsdelivr.net/npm/motion@11.18.2/dist/motion.js" integrity="sha384-lFfU+kVPBF9H3h8c1O+KQNuTRX7dilL8RZiy/kxQiYulHvYCHv4z+eba37GD2qTC" crossorigin="anonymous" defer></script>
   <script src="assets/js/shader-bg.js" defer></script>
@@ -110,6 +111,40 @@
           <p class="ac-message" id="password-message" role="status" aria-live="polite"></p>
           <div class="ac-actions"><button class="ds-btn ds-btn--primary" type="submit" id="password-submit">Update password</button></div>
         </form>
+      </section>
+
+      <section class="ds-card ac-section" id="two-factor" aria-labelledby="two-factor-title">
+        <div class="ds-card-header">
+          <div><h2 class="ds-card-title" id="two-factor-title">Two-factor sign-in</h2><p class="ds-card-subtitle" id="two-factor-subtitle">Ask for a code from your phone as well as your password. Strongly recommended for admins.</p></div>
+          <span class="ds-badge" id="two-factor-badge">Off</span>
+        </div>
+        <div class="ds-card-body ac-form">
+          <div id="tf-off">
+            <button class="ds-btn ds-btn--primary" type="button" id="tf-start">Turn on two-factor sign-in</button>
+          </div>
+          <div id="tf-setup" hidden>
+            <ol class="ac-steps">
+              <li>Install an authenticator app (Google Authenticator, Microsoft Authenticator, Authy or 1Password).</li>
+              <li>Scan this QR code with the app, or enter the setup key by hand.</li>
+              <li>Type the 6-digit code the app shows.</li>
+            </ol>
+            <div class="ac-qr"><img id="tf-qr" alt="QR code for your authenticator app" width="200" height="200" /></div>
+            <div class="ac-secret"><code id="tf-secret"></code><button class="ds-btn ds-btn--secondary ds-btn--sm" type="button" id="tf-secret-copy">Copy key</button></div>
+            <label class="ac-field"><span class="ds-label">Code from the app</span><input class="ds-input" id="tf-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" /></label>
+            <div class="ac-actions"><button class="ds-btn ds-btn--ghost" type="button" id="tf-cancel">Cancel</button><button class="ds-btn ds-btn--primary" type="button" id="tf-confirm">Turn on</button></div>
+          </div>
+          <div id="tf-recovery" hidden>
+            <p class="ac-hint"><strong>Save these recovery codes somewhere safe.</strong> Each one works once if you lose your phone. They are shown only now.</p>
+            <ul class="ac-codes" id="tf-codes"></ul>
+            <div class="ac-actions"><button class="ds-btn ds-btn--secondary" type="button" id="tf-codes-copy">Copy codes</button><button class="ds-btn ds-btn--primary" type="button" id="tf-done">I've saved them</button></div>
+          </div>
+          <div id="tf-on" hidden>
+            <p class="ac-hint">Two-factor sign-in is on. To turn it off, enter a code from your app or a recovery code.</p>
+            <label class="ac-field"><span class="ds-label">Code</span><input class="ds-input" id="tf-off-code" autocomplete="one-time-code" maxlength="20" /></label>
+            <div class="ac-actions"><button class="ds-btn ds-btn--secondary" type="button" id="tf-disable">Turn off</button></div>
+          </div>
+          <p class="ac-message" id="tf-message" role="status" aria-live="polite"></p>
+        </div>
       </section>
 
       <section class="ds-card ac-section" id="team" aria-labelledby="team-title" hidden>

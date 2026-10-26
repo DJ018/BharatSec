@@ -44,9 +44,10 @@ def login(request: auth_service.LoginRequest, response: Response, http_request: 
     auth_service.check_rate_limit("login-ip", client_ip, limit=50, window_seconds=900)
     auth_service.check_rate_limit("login-account", login_key, limit=10, window_seconds=900)
     try:
-        user = auth_service.create_session(request.username, request.password, request.remember, response)
+        user = auth_service.create_session(request.username, request.password, request.remember, response, request.code)
     except HTTPException as exc:
-        if exc.status_code == 401:
+        # A correct password that still needs its second factor is not a failed attempt.
+        if exc.status_code == 401 and exc.detail != auth_service.TWO_FACTOR_REQUIRED:
             auth_service.record_rate_limited_attempt("login-ip", client_ip, window_seconds=900)
             auth_service.record_rate_limited_attempt("login-account", login_key, window_seconds=900)
         raise
@@ -222,6 +223,14 @@ async def oauth_callback(provider: str, request: Request):
         return _oauth_failure(str(exc.detail), linking)
 
     destination = _safe_return(state.get("r"))
+    if not linking and row["totp_enabled"]:
+        # The provider proved who this is; the authenticator code is still required before a session starts.
+        pending = RedirectResponse(f"/login.html?twofactor=1&return={quote(destination, safe='')}", status_code=303)
+        pending.delete_cookie(oauth.STATE_COOKIE, path="/api/auth/oauth")
+        pending.set_cookie(auth_service.PENDING_2FA_COOKIE, auth_service.pack_pending_two_factor(row["id"], True),
+                           max_age=auth_service.PENDING_2FA_SECONDS, httponly=True, secure=auth_service.SESSION_COOKIE_SECURE,
+                           samesite="lax", path="/api/auth")
+        return pending
     # The session cookie is SameSite=Strict, so it is not sent on a redirect chain that began at the provider.
     # This page finishes the sign-in with a same-site navigation instead.
     target = html.escape(destination, quote=True)
@@ -234,6 +243,55 @@ async def oauth_callback(provider: str, request: Request):
     if not linking:
         auth_service.start_session(row, True, response)
     return response
+
+
+# ── Two-factor sign-in ────────────────────────────────────────────────────────
+
+@router.post("/2fa/setup")
+def two_factor_setup(request: Request):
+    """Start set-up: a new secret and otpauth:// link for the authenticator app (not active yet)."""
+    user = _signed_in(request)
+    return auth_service.start_two_factor_setup(user["id"])
+
+
+@router.post("/2fa/enable")
+def two_factor_enable(body: auth_service.TwoFactorCode, request: Request):
+    """Confirm with a code from the app; returns one-time recovery codes, shown only now."""
+    user = _signed_in(request)
+    auth_service.check_rate_limit("2fa", str(user["id"]), limit=10, window_seconds=900)
+    try:
+        codes = auth_service.confirm_two_factor(user["id"], body.code)
+    except HTTPException:
+        auth_service.record_rate_limited_attempt("2fa", str(user["id"]), window_seconds=900)
+        raise
+    return {"enabled": True, "recovery_codes": codes}
+
+
+@router.post("/2fa/disable")
+def two_factor_disable(body: auth_service.TwoFactorCode, request: Request):
+    user = _signed_in(request)
+    auth_service.check_rate_limit("2fa", str(user["id"]), limit=10, window_seconds=900)
+    try:
+        auth_service.disable_two_factor(user["id"], body.code)
+    except HTTPException:
+        auth_service.record_rate_limited_attempt("2fa", str(user["id"]), window_seconds=900)
+        raise
+    return {"enabled": False}
+
+
+@router.post("/2fa/complete")
+def two_factor_complete(body: auth_service.TwoFactorCode, request: Request, response: Response):
+    """Finish a Google/GitHub/Microsoft/Facebook sign-in for an account that has 2FA on."""
+    pending = auth_service.unpack_pending_two_factor(request.cookies.get(auth_service.PENDING_2FA_COOKIE))
+    if pending is None:
+        raise HTTPException(401, "Your sign-in expired. Please sign in again.")
+    user_id, remember = pending
+    auth_service.check_rate_limit("2fa", str(user_id), limit=10, window_seconds=900)
+    if not auth_service.verify_second_factor(user_id, body.code):
+        auth_service.record_rate_limited_attempt("2fa", str(user_id), window_seconds=900)
+        raise HTTPException(401, "That code is not valid. Check your authenticator app and try again.")
+    response.delete_cookie(auth_service.PENDING_2FA_COOKIE, path="/api/auth")
+    return {"user": auth_service.start_session(auth_service.user_row(user_id), remember, response)}
 
 
 @router.get("/identities")

@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="assets/css/design-system.css" />
   <link rel="stylesheet" href="assets/css/landing.css" />
   <link rel="stylesheet" href="assets/css/pages.css" />
+  <link rel="stylesheet" href="assets/css/status.css" />
 </head>
 <body class="landing-page">
 <a class="lp-skip" href="#main">Skip to content</a>
@@ -61,11 +62,19 @@
           <li><strong>Encryption in transit:</strong> HTTPS everywhere with HSTS.</li>
           <li><strong>Passwords:</strong> never stored in plain text; salted PBKDF2-SHA256 hashes only.</li>
           <li><strong>Sessions:</strong> signed, HttpOnly, Secure and SameSite cookies, with rate limiting on sign-in.</li>
+          <li><strong>Two-factor sign-in:</strong> every account can require a code from an authenticator app, with one-time recovery codes.</li>
           <li><strong>Browser hardening:</strong> a strict Content Security Policy, frame blocking, and Permissions and Referrer policies.</li>
           <li><strong>Safe scanning:</strong> scans are passive and read public information only. Guards block scans of private and internal network addresses.</li>
           <li><strong>Least privilege:</strong> cloud checks use read-only audit permissions.</li>
           <li><strong>Testing:</strong> an automated test suite runs against every change.</li>
         </ul>
+
+        <h2>We scan ourselves every day</h2>
+        <p>Every morning BharatSec runs its own passive scan on this website, the same scan you can run for free. Here is the latest result:</p>
+      </div>
+      <div class="st-self" id="st-self"><p class="st-empty">Loading the latest self-scan…</p></div>
+      <div class="pg-prose">
+        <p>Live health of every part of the platform is on our <a href="/status">status page</a>.</p>
 
         <h2>Report a vulnerability</h2>
         <p>If you believe you have found a security issue in BharatSec, email <a href="mailto:deveshjain718@gmail.com?subject=Security%20report">deveshjain718@gmail.com</a> with the subject <strong>Security report</strong>. Please include:</p>
@@ -137,6 +146,7 @@
         <h4>Trust</h4>
         <ul>
           <li><a href="/security">Security</a></li>
+          <li><a href="/status">System status</a></li>
           <li><a href="/privacy">Privacy policy</a></li>
           <li><a href="/terms">Terms of service</a></li>
         </ul>
@@ -149,5 +159,6 @@
   </div>
 </footer>
 <script src="assets/js/pages.js"></script>
+<script src="assets/js/status.js"></script>
 </body>
 </html>

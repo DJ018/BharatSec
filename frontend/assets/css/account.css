@@ -78,3 +78,10 @@
 .ac-optional { margin-left: 4px; color: var(--ds-text-3); font-weight: 400; text-transform: none; letter-spacing: 0; }
 .ac-member-providers { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }
 .ac-member-providers .social-icon { width: 13px; height: 13px; }
+
+/* Two-factor sign-in */
+.ac-steps { margin: 0 0 12px; padding-left: 1.2em; color: var(--ds-text-2); font-size: var(--ds-text-sm); line-height: 1.7; }
+.ac-qr { display: inline-grid; place-items: center; margin-bottom: 12px; padding: 10px; border-radius: var(--ds-radius); background: #fff; }
+.ac-qr img { display: block; image-rendering: pixelated; }
+.ac-codes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; padding: 0; list-style: none; }
+.ac-codes li { padding: 8px 10px; border: 1px dashed var(--ds-border-strong); border-radius: var(--ds-radius); background: var(--ds-bg-raised); font-family: var(--ds-font-mono, ui-monospace, monospace); text-align: center; letter-spacing: .06em; }

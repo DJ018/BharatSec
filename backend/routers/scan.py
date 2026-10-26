@@ -35,6 +35,7 @@ public_router = APIRouter(prefix="/api/public/scan", tags=["public-scan"])
 PUBLIC_PREFIX = scan_store.PUBLIC_PREFIX
 PUBLIC_SCANS_PER_VISITOR = 3      # per hour
 PUBLIC_SCANS_TOTAL = 60           # per hour, across everyone, to protect the service
+SELF_SCAN_TIMEOUT_SECONDS = 120
 
 
 # ── Domain validation ─────────────────────────────────────────────────────────
@@ -300,6 +301,15 @@ def _load_public(scan_id: str) -> ScanResult:
     if not scan_id.startswith(PUBLIC_PREFIX):
         raise HTTPException(404, "Scan not found")
     return _load(scan_id)
+
+
+async def run_self_scan(domain: str, prefix: str) -> dict:
+    """Scan BharatSec's own website from the daily schedule; the report is public, like a free scan."""
+    started = await _create_scan(ScanRequest(domain=domain, authorized=True), prefix)
+    try:
+        return await asyncio.wait_for(_run_once(started["scan_id"]), timeout=SELF_SCAN_TIMEOUT_SECONDS)
+    except asyncio.TimeoutError:
+        return {"scan_id": started["scan_id"], "status": "timeout"}
 
 
 @public_router.post("/start")

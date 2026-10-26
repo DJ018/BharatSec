@@ -29,6 +29,7 @@ PUBLIC_PAGES: List[Tuple[str, str, str]] = [
     ("/about", "monthly", "0.6"),
     ("/pricing", "monthly", "0.6"),
     ("/security", "monthly", "0.5"),
+    ("/status", "daily", "0.4"),
     ("/contact", "yearly", "0.4"),
     ("/privacy", "yearly", "0.3"),
     ("/terms", "yearly", "0.3"),
@@ -42,7 +43,7 @@ PUBLIC_PAGES: List[Tuple[str, str, str]] = [
 # Company and trust pages served at /<name> and /<name>.html.
 INFO_PAGES = ["about", "pricing", "security", "contact", "privacy", "terms",
               "ssl-checker", "email-security-checker", "security-headers-checker",
-              "cert-in-6-hour-rule", "dpdp-act-guide"]
+              "cert-in-6-hour-rule", "dpdp-act-guide", "status"]
 # Every static page served at /<name>; the report page is dynamic and noindex, so it stays out of the sitemap.
 SERVED_PAGES = INFO_PAGES + ["report"]
 

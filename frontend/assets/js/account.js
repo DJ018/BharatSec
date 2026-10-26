@@ -329,6 +329,92 @@
     }
   });
 
+  // ── Two-factor sign-in ───────────────────────────────────────
+  function showTwoFactor(state) {
+    ['tf-off', 'tf-setup', 'tf-recovery', 'tf-on'].forEach((id) => { byId(id).hidden = id !== `tf-${state}`; });
+    const on = state === 'on' || state === 'recovery';
+    const badge = byId('two-factor-badge');
+    badge.textContent = on ? 'On' : 'Off';
+    badge.className = `ds-badge ${on ? 'ds-badge--success' : ''}`;
+  }
+
+  byId('tf-start').addEventListener('click', async () => {
+    const message = byId('tf-message');
+    showMessage(message, '');
+    try {
+      const data = await api('/2fa/setup', { method: 'POST' });
+      byId('tf-secret').textContent = data.secret.replace(/(.{4})/g, '$1 ').trim();
+      const qr = window.qrcode ? window.qrcode(0, 'M') : null;
+      if (qr) {
+        qr.addData(data.otpauth_uri);
+        qr.make();
+        byId('tf-qr').src = qr.createDataURL(5, 2);
+        byId('tf-qr').parentElement.hidden = false;
+      } else {
+        byId('tf-qr').parentElement.hidden = true;  // the setup key still works
+      }
+      byId('tf-code').value = '';
+      showTwoFactor('setup');
+      byId('tf-code').focus();
+    } catch (error) {
+      showMessage(message, error.message, 'error');
+    }
+  });
+
+  byId('tf-secret-copy').addEventListener('click', () => {
+    navigator.clipboard?.writeText(byId('tf-secret').textContent.replace(/\s/g, '')).then(
+      () => showMessage(byId('tf-message'), 'Setup key copied.', 'success'),
+      () => showMessage(byId('tf-message'), 'Copy the key by selecting it.', 'error'),
+    );
+  });
+
+  byId('tf-cancel').addEventListener('click', () => { showTwoFactor('off'); showMessage(byId('tf-message'), ''); });
+
+  byId('tf-confirm').addEventListener('click', async () => {
+    const message = byId('tf-message');
+    const button = byId('tf-confirm');
+    button.disabled = true;
+    try {
+      const data = await api('/2fa/enable', { method: 'POST', body: JSON.stringify({ code: byId('tf-code').value.trim() }) });
+      const list = byId('tf-codes');
+      list.replaceChildren(...data.recovery_codes.map((code) => el('li', null, code)));
+      showTwoFactor('recovery');
+      showMessage(message, 'Two-factor sign-in is on.', 'success');
+      me.two_factor = true;
+    } catch (error) {
+      showMessage(message, error.message, 'error');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  byId('tf-codes-copy').addEventListener('click', () => {
+    const text = [...byId('tf-codes').children].map((li) => li.textContent).join('\n');
+    navigator.clipboard?.writeText(text).then(
+      () => showMessage(byId('tf-message'), 'Recovery codes copied. Store them in a password manager.', 'success'),
+      () => showMessage(byId('tf-message'), 'Copy the codes by selecting them.', 'error'),
+    );
+  });
+
+  byId('tf-done').addEventListener('click', () => {
+    byId('tf-codes').replaceChildren();  // don't leave them on screen
+    showTwoFactor('on');
+    showMessage(byId('tf-message'), '');
+  });
+
+  byId('tf-disable').addEventListener('click', async () => {
+    const message = byId('tf-message');
+    try {
+      await api('/2fa/disable', { method: 'POST', body: JSON.stringify({ code: byId('tf-off-code').value.trim() }) });
+      byId('tf-off-code').value = '';
+      showTwoFactor('off');
+      showMessage(message, 'Two-factor sign-in is off.', 'success');
+      me.two_factor = false;
+    } catch (error) {
+      showMessage(message, error.message, 'error');
+    }
+  });
+
   // ── Boot ─────────────────────────────────────────────────────
   await bsAuthReady;
   if (!window.bsIsLoggedIn()) {
@@ -337,6 +423,7 @@
   }
   me = window.bsGetSession();
   renderProfile(me);
+  showTwoFactor(me.two_factor ? 'on' : 'off');
   loadConnections();
   // A failed connect comes back as ?oauth_error=…; show it, then tidy the address bar.
   const params = new URLSearchParams(window.location.search);

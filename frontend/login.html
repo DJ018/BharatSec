@@ -160,6 +160,16 @@
               </div>
             </div>
 
+            <div class="form-group" id="l-code-group" hidden>
+              <label class="ds-label" for="l-code">Authentication code</label>
+              <div class="form-input-wrap">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
+                <input type="text" id="l-code" class="ds-input form-input" placeholder="6-digit code or a recovery code"
+                  autocomplete="one-time-code" inputmode="numeric" maxlength="20" spellcheck="false" />
+              </div>
+              <p class="form-hint">Open your authenticator app, or use one of your recovery codes.</p>
+            </div>
+
             <div class="form-row">
               <label class="ds-check remember-me">
                 <input type="checkbox" id="l-remember" />
@@ -301,6 +311,39 @@
       window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
     })();
 
+    /* ── Second factor after Google/GitHub/Microsoft/Facebook ───────────── */
+    // The provider already proved who you are; ?twofactor=1 asks only for the authenticator code.
+    const twoFactorPending = new URLSearchParams(window.location.search).get('twofactor') === '1';
+    if (twoFactorPending) {
+      ['l-username', 'l-password'].forEach((id) => {
+        const input = document.getElementById(id);
+        input.required = false;
+        input.closest('.form-group').hidden = true;
+      });
+      document.querySelector('#login-form .form-row').hidden = true;
+      document.getElementById('l-code-group').hidden = false;
+      const social = document.getElementById('auth-social');
+      if (social) social.hidden = true;
+      document.getElementById('auth-title').textContent = 'One more step';
+      document.getElementById('auth-sub').textContent = 'Enter the code from your authenticator app to finish signing in.';
+    }
+
+    async function completeProviderTwoFactor(code) {
+      try {
+        const response = await fetch('/api/auth/2fa/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ code }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) return { success: false, error: typeof data.detail === 'string' ? data.detail : 'Sign in failed.' };
+        return { success: true, session: data.user };
+      } catch {
+        return { success: false, error: 'BharatSec could not reach the server. Check your connection and try again.' };
+      }
+    }
+
     /* ── Get return URL ──────────────────────────────────────────── */
     function getReturnUrl() {
       const p = new URLSearchParams(window.location.search);
@@ -372,6 +415,8 @@
       const username = document.getElementById('l-username').value.trim();
       const password = document.getElementById('l-password').value;
       const remember = document.getElementById('l-remember').checked;
+      const codeGroup = document.getElementById('l-code-group');
+      const code = codeGroup.hidden ? '' : document.getElementById('l-code').value.trim();
       const btn = document.getElementById('login-btn');
       const spinner = document.getElementById('login-spinner');
       const btnText = document.getElementById('login-btn-text');
@@ -382,11 +427,19 @@
       btnText.textContent = 'Authenticating…';
 
       try {
-        const result = await bsLogin(username, password, remember);
+        const result = twoFactorPending
+          ? await completeProviderTwoFactor(code)
+          : await bsLogin(username, password, remember, code);
         spinner.style.display = 'none';
         btn.disabled = false;
         btnText.textContent = 'Sign in to BharatSec';
 
+        if (!result.success && result.error === 'two_factor_required') {
+          codeGroup.hidden = false;
+          showSuccess('Password accepted. Now enter the code from your authenticator app.');
+          document.getElementById('l-code').focus();
+          return;
+        }
         if (!result.success) {
           showError(result.error);
           document.getElementById('l-password').classList.add('error');

@@ -21,8 +21,8 @@ import os
 import auth as auth_service
 import seo
 from config import AUTH_COOKIE_SECURE, BHARATSEC_HOST, CORS_ORIGINS, IS_LOOPBACK_HOST, IS_SERVERLESS
-from engines import cloud_engine, compliance_engine, scan_store, soc_engine, threat_intel_engine, vector_knowledge
-from routers import auth as auth_router, cloud, compliance, scan, ai, soc, threat_intel, tools
+from engines import cloud_engine, compliance_engine, scan_store, soc_engine, status_monitor, threat_intel_engine, vector_knowledge
+from routers import auth as auth_router, cloud, compliance, scan, ai, soc, status, threat_intel, tools
 
 PROTECTED_PAGES = {
     "/dashboard", "/dashboard.html",
@@ -110,6 +110,7 @@ app.include_router(auth_router.router)
 app.include_router(scan.router)
 app.include_router(scan.public_router)
 app.include_router(tools.router)
+app.include_router(status.router)
 app.include_router(ai.router)
 app.include_router(soc.router)
 app.include_router(threat_intel.router)
@@ -292,12 +293,20 @@ async def cron_tick(request: Request):
         await threat_intel_engine.sync_feeds()
         await threat_intel_engine.sync_breach_watches()
         feeds_synced = True
+    self_scan = None
+    if IS_SERVERLESS and auth_service.claim_interval("self-scan", status_monitor.SELF_SCAN_INTERVAL_SECONDS):
+        # BharatSec scans its own website daily and shows the result on the public status page.
+        try:
+            self_scan = await scan.run_self_scan(status_monitor.SELF_DOMAIN, status_monitor.SELF_SCAN_PREFIX)
+        except Exception as exc:
+            self_scan = {"status": "error", "detail": str(exc)[:200]}
     knowledge = None
     if not vector_knowledge.configured():
         # Yes/no only, so an admin can see which setting is missing without signing in.
         knowledge = {"status": "off", "mongodb_uri_set": bool(vector_knowledge.MONGODB_URI),
                      "embedding_key_set": vector_knowledge.embedder() is not None}
-    elif auth_service.claim_interval("knowledge-sync", vector_knowledge.SYNC_INTERVAL_SECONDS):
+    elif self_scan is None and auth_service.claim_interval("knowledge-sync", vector_knowledge.SYNC_INTERVAL_SECONDS):
+        # Skipped on the tick that ran the self-scan, to stay inside the function time limit.
         try:
             knowledge = await vector_knowledge.sync(time_budget=150.0)  # leaves room in the 300 s function limit
         except Exception as exc:  # Atlas being down must not break SOC checks and feed syncs
@@ -306,7 +315,7 @@ async def cron_tick(request: Request):
     if IS_SERVERLESS and auth_service.claim_change("indexnow", seo.public_pages_fingerprint()):
         indexnow = await seo.ping_indexnow()  # once per change to the public pages
     return {"status": "ok", "assets_checked": len(due_assets), "feeds_synced": feeds_synced, "knowledge": knowledge,
-            "indexnow": indexnow}
+            "indexnow": indexnow, "self_scan": self_scan}
 
 
 if __name__ == "__main__":

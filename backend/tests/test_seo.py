@@ -88,6 +88,7 @@ class IndexNowPingTests(unittest.TestCase):
              patch.object(threat_intel_engine, "sync_feeds", AsyncMock(return_value=[])), \
              patch.object(threat_intel_engine, "sync_breach_watches", AsyncMock()), \
              patch.object(vector_knowledge, "configured", return_value=False), \
+             patch.object(main.scan, "run_self_scan", AsyncMock(return_value={"status": "complete"})), \
              patch.object(seo, "ping_indexnow", ping):
             return self.client.get("/api/cron/tick").json()
 

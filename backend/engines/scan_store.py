@@ -97,6 +97,26 @@ def score_history(domain: str, limit: int = 20) -> List[dict]:
     return history
 
 
+def history_by_prefix(prefix: str, limit: int = 14) -> List[dict]:
+    """Recent scans whose ID starts with `prefix` (such as the daily self-scan), oldest first."""
+    with _db() as connection:
+        rows = connection.execute(
+            "SELECT scan_id, status, started_at, completed_at, payload FROM scans "
+            "WHERE substr(scan_id, 1, ?) = ? ORDER BY started_at DESC LIMIT ?",
+            (len(prefix), prefix, limit),
+        ).fetchall()
+    history = []
+    for row in reversed(rows):
+        scan = ScanResult.model_validate_json(row["payload"])
+        history.append({
+            "scan_id": row["scan_id"], "status": row["status"], "completed_at": row["completed_at"],
+            "score": scan.score.overall, "level": scan.score.level, "ssl_grade": scan.ssl.grade,
+            "headers_present": len(scan.web.headers.present),
+            "headers_checked": len(scan.web.headers.present) + len(scan.web.headers.missing),
+        })
+    return history
+
+
 def list_summaries(limit: int = 100) -> List[dict]:
     with _db() as connection:
         rows = connection.execute(

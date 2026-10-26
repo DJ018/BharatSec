@@ -57,8 +57,10 @@ async function bsRegister(username, password, displayName) {
   });
 }
 
-async function bsLogin(username, password, remember = false) {
-  return bsAuthRequest('login', { username: username.trim(), password, remember });
+async function bsLogin(username, password, remember = false, code = '') {
+  const payload = { username: username.trim(), password, remember };
+  if (code) payload.code = code;  // only once the server has asked for a second factor
+  return bsAuthRequest('login', payload);
 }
 
 function bsGetSession() {

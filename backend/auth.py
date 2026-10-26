@@ -1,12 +1,16 @@
 """Accounts, roles and revocable browser sessions (SQLite locally, Postgres in production)."""
+import base64
 import hashlib
 import hmac
+import json
 import logging
 import re
 import secrets
+import struct
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Any, Generator
+from urllib.parse import quote
 
 from fastapi import HTTPException, Request, Response
 from pydantic import BaseModel, Field
@@ -84,6 +88,15 @@ def init_db() -> None:
             connection.execute("ALTER TABLE users ADD COLUMN last_login_at TEXT")
         if "email" not in columns:
             connection.execute("ALTER TABLE users ADD COLUMN email TEXT")
+        # Two-factor sign-in (authenticator app codes).
+        if "totp_secret" not in columns:
+            connection.execute("ALTER TABLE users ADD COLUMN totp_secret TEXT NOT NULL DEFAULT ''")
+        if "totp_enabled" not in columns:
+            connection.execute("ALTER TABLE users ADD COLUMN totp_enabled INTEGER NOT NULL DEFAULT 0")
+        if "totp_recovery" not in columns:
+            connection.execute("ALTER TABLE users ADD COLUMN totp_recovery TEXT NOT NULL DEFAULT '[]'")
+        if "totp_last_step" not in columns:
+            connection.execute("ALTER TABLE users ADD COLUMN totp_last_step INTEGER NOT NULL DEFAULT 0")
         connection.executescript(
             """
             CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users(email);
@@ -189,6 +202,16 @@ def claim_interval(job: str, interval_seconds: float) -> bool:
     return True
 
 
+def job_last_run(job: str) -> float | None:
+    """When a job paced by claim_interval last ran (Unix time), or None if never."""
+    with _database() as connection:
+        row = connection.execute("SELECT value FROM app_settings WHERE key = ?", (f"job:{job}",)).fetchone()
+    try:
+        return float(row["value"]) if row else None
+    except ValueError:
+        return None
+
+
 def claim_change(job: str, fingerprint: str) -> bool:
     """True once for each new `fingerprint` across all instances; used to run a job only when something changed."""
     key = f"change:{job}"
@@ -235,6 +258,7 @@ def _user_payload(row: Any) -> dict[str, Any]:
         "email": row["email"],
         "has_password": bool(row["password_hash"]),
         "must_change_password": bool(row["must_change_password"]),
+        "two_factor": bool(row["totp_enabled"]),
     }
 
 
@@ -349,7 +373,10 @@ def create_account(username: str, password: str, display_name: str) -> dict[str,
     return _user_payload(row)
 
 
-def create_session(username: str, password: str, remember: bool, response: Response) -> dict[str, Any]:
+TWO_FACTOR_REQUIRED = "two_factor_required"
+
+
+def create_session(username: str, password: str, remember: bool, response: Response, code: str | None = None) -> dict[str, Any]:
     normalized = username.strip().lower()
     with _database() as connection:
         row = connection.execute("SELECT * FROM users WHERE username = ?", (normalized,)).fetchone()
@@ -359,7 +386,140 @@ def create_session(username: str, password: str, remember: bool, response: Respo
     password_valid = _verify_password(password, stored_hash)
     if row is None or not row["password_hash"] or not password_valid:
         raise HTTPException(401, "Incorrect username or password.")
+    if row["totp_enabled"]:
+        if not code:
+            raise HTTPException(401, TWO_FACTOR_REQUIRED)
+        if not verify_second_factor(row["id"], code):
+            raise HTTPException(401, "That code is not valid. Check your authenticator app and try again.")
     return start_session(row, remember, response)
+
+
+# ── Two-factor sign-in (RFC 6238 TOTP, 30-second steps, 6 digits) ─────────────
+
+TOTP_STEP = 30
+TOTP_DIGITS = 6
+RECOVERY_CODES = 8
+
+
+def totp_code(secret_b32: str, step: int) -> str:
+    key = base64.b32decode(secret_b32.upper() + "=" * (-len(secret_b32) % 8))
+    digest = hmac.new(key, struct.pack(">Q", step), hashlib.sha1).digest()
+    offset = digest[-1] & 0x0F
+    value = (struct.unpack(">I", digest[offset:offset + 4])[0] & 0x7FFFFFFF) % (10 ** TOTP_DIGITS)
+    return str(value).zfill(TOTP_DIGITS)
+
+
+def _current_step(now: float | None = None) -> int:
+    return int((now if now is not None else datetime.now(timezone.utc).timestamp()) // TOTP_STEP)
+
+
+def _matching_step(secret_b32: str, code: str, after_step: int) -> int | None:
+    """The step a code belongs to (allowing one step of clock drift), never one already used."""
+    clean = re.sub(r"\s", "", code or "")
+    if not re.fullmatch(r"\d{6}", clean):
+        return None
+    current = _current_step()
+    for step in (current - 1, current, current + 1):
+        if step > after_step and hmac.compare_digest(totp_code(secret_b32, step), clean):
+            return step
+    return None
+
+
+def _hash_recovery(code: str) -> str:
+    return hashlib.sha256(re.sub(r"[^a-z0-9]", "", code.lower()).encode()).hexdigest()
+
+
+def verify_second_factor(user_id: int, code: str) -> bool:
+    """Accept an authenticator code (each usable once) or an unused recovery code."""
+    with _database() as connection:
+        row = connection.execute("SELECT totp_secret, totp_enabled, totp_recovery, totp_last_step FROM users WHERE id = ?",
+                                 (user_id,)).fetchone()
+        if row is None or not row["totp_enabled"] or not row["totp_secret"]:
+            return False
+        step = _matching_step(row["totp_secret"], code, row["totp_last_step"])
+        if step is not None:
+            connection.execute("UPDATE users SET totp_last_step = ? WHERE id = ?", (step, user_id))
+            return True
+        hashes = json.loads(row["totp_recovery"] or "[]")
+        hashed = _hash_recovery(code or "")
+        if code and hashed in hashes:
+            hashes.remove(hashed)
+            connection.execute("UPDATE users SET totp_recovery = ? WHERE id = ?", (json.dumps(hashes), user_id))
+            return True
+    return False
+
+
+def start_two_factor_setup(user_id: int) -> dict[str, str]:
+    """Create a new secret (not active until confirmed) and the otpauth:// link for authenticator apps."""
+    secret = base64.b32encode(secrets.token_bytes(20)).decode().rstrip("=")
+    with _database() as connection:
+        row = connection.execute("SELECT username, totp_enabled FROM users WHERE id = ?", (user_id,)).fetchone()
+        if row is None:
+            raise HTTPException(404, "Account not found.")
+        if row["totp_enabled"]:
+            raise HTTPException(409, "Two-factor sign-in is already on.")
+        connection.execute("UPDATE users SET totp_secret = ?, totp_last_step = 0 WHERE id = ?", (secret, user_id))
+    label = quote(f"BharatSec:{row['username']}")
+    uri = f"otpauth://totp/{label}?secret={secret}&issuer=BharatSec&algorithm=SHA1&digits={TOTP_DIGITS}&period={TOTP_STEP}"
+    return {"secret": secret, "otpauth_uri": uri}
+
+
+def confirm_two_factor(user_id: int, code: str) -> list[str]:
+    """Turn 2FA on once the user proves their app works; returns recovery codes (shown once)."""
+    with _database() as connection:
+        row = connection.execute("SELECT totp_secret, totp_enabled FROM users WHERE id = ?", (user_id,)).fetchone()
+        if row is None or not row["totp_secret"]:
+            raise HTTPException(400, "Start the set-up again.")
+        if row["totp_enabled"]:
+            raise HTTPException(409, "Two-factor sign-in is already on.")
+        step = _matching_step(row["totp_secret"], code, 0)
+        if step is None:
+            raise HTTPException(400, "That code is not valid. Check the time on your phone and try again.")
+        codes = [f"{secrets.token_hex(2)}-{secrets.token_hex(2)}" for _ in range(RECOVERY_CODES)]
+        connection.execute(
+            "UPDATE users SET totp_enabled = 1, totp_last_step = ?, totp_recovery = ? WHERE id = ?",
+            (step, json.dumps([_hash_recovery(c) for c in codes]), user_id),
+        )
+    return codes
+
+
+def disable_two_factor(user_id: int, code: str) -> None:
+    if not verify_second_factor(user_id, code):
+        raise HTTPException(400, "That code is not valid.")
+    with _database() as connection:
+        connection.execute(
+            "UPDATE users SET totp_enabled = 0, totp_secret = '', totp_recovery = '[]', totp_last_step = 0 WHERE id = ?",
+            (user_id,),
+        )
+
+
+PENDING_2FA_COOKIE = "bs_2fa_pending"
+PENDING_2FA_SECONDS = 300
+
+
+def pack_pending_two_factor(user_id: int, remember: bool) -> str:
+    """Signed, short-lived proof that a provider sign-in succeeded and only the second factor is missing."""
+    expires = int(datetime.now(timezone.utc).timestamp()) + PENDING_2FA_SECONDS
+    body = f"{user_id}.{int(remember)}.{expires}"
+    signature = hmac.new(_session_secret().encode(), f"2fa:{body}".encode(), hashlib.sha256).hexdigest()
+    return f"{body}.{signature}"
+
+
+def unpack_pending_two_factor(value: str | None) -> tuple[int, bool] | None:
+    try:
+        user_id, remember, expires, signature = (value or "").split(".")
+        body = f"{user_id}.{remember}.{expires}"
+        expected = hmac.new(_session_secret().encode(), f"2fa:{body}".encode(), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(signature, expected) or int(expires) < datetime.now(timezone.utc).timestamp():
+            return None
+        return int(user_id), remember == "1"
+    except (ValueError, TypeError):
+        return None
+
+
+def user_row(user_id: int) -> Any:
+    with _database() as connection:
+        return connection.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
 
 
 def start_session(row: Any, remember: bool, response: Response) -> dict[str, Any]:
@@ -722,6 +882,11 @@ class LoginRequest(BaseModel):
     username: str = Field(..., min_length=1, max_length=32)
     password: str = Field(..., min_length=1, max_length=256)
     remember: bool = False
+    code: str | None = Field(None, max_length=20)
+
+
+class TwoFactorCode(BaseModel):
+    code: str = Field(..., min_length=6, max_length=20)
 
 
 def current_user(request: Request) -> dict[str, Any] | None:

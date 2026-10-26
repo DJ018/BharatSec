@@ -78,6 +78,7 @@ FOOTER = """<footer class="lp-footer">
         <h4>Trust</h4>
         <ul>
           <li><a href="/security">Security</a></li>
+          <li><a href="/status">System status</a></li>
           <li><a href="/privacy">Privacy policy</a></li>
           <li><a href="/terms">Terms of service</a></li>
         </ul>
@@ -290,11 +291,19 @@ PAGES["security"] = page(
           <li><strong>Encryption in transit:</strong> HTTPS everywhere with HSTS.</li>
           <li><strong>Passwords:</strong> never stored in plain text; salted PBKDF2-SHA256 hashes only.</li>
           <li><strong>Sessions:</strong> signed, HttpOnly, Secure and SameSite cookies, with rate limiting on sign-in.</li>
+          <li><strong>Two-factor sign-in:</strong> every account can require a code from an authenticator app, with one-time recovery codes.</li>
           <li><strong>Browser hardening:</strong> a strict Content Security Policy, frame blocking, and Permissions and Referrer policies.</li>
           <li><strong>Safe scanning:</strong> scans are passive and read public information only. Guards block scans of private and internal network addresses.</li>
           <li><strong>Least privilege:</strong> cloud checks use read-only audit permissions.</li>
           <li><strong>Testing:</strong> an automated test suite runs against every change.</li>
         </ul>
+
+        <h2>We scan ourselves every day</h2>
+        <p>Every morning BharatSec runs its own passive scan on this website, the same scan you can run for free. Here is the latest result:</p>
+      </div>
+      <div class="st-self" id="st-self"><p class="st-empty">Loading the latest self-scan…</p></div>
+      <div class="pg-prose">
+        <p>Live health of every part of the platform is on our <a href="/status">status page</a>.</p>
 
         <h2>Report a vulnerability</h2>
         <p>If you believe you have found a security issue in BharatSec, email <a href="mailto:{EMAIL}?subject=Security%20report">{EMAIL}</a> with the subject <strong>Security report</strong>. Please include:</p>
@@ -321,6 +330,8 @@ PAGES["security"] = page(
 
         <p class="pg-note">Machine-readable contact details: <a href="/.well-known/security.txt">/.well-known/security.txt</a></p>
       </div>""",
+    css=("status.css",),
+    js=("status.js",),
 )
 
 PAGES["privacy"] = page(
@@ -650,6 +661,33 @@ PAGES["dpdp-act-guide"] = page(
         </ol>
         <p class="pg-note">BharatSec's Compliance checklist tracks these steps for your team, and a free <a href="/#scan">domain scan</a> shows the security gaps attackers see first. This guide is general information, not legal advice.</p>
       </div>""",
+)
+
+PAGES["status"] = page(
+    "status",
+    "System status | BharatSec",
+    "Live status of BharatSec's website, database, scanner, AI and threat feeds, plus the daily security scan of our own site.",
+    "Status",
+    "BharatSec system status.",
+    "Live checks of every part of the platform, and the security score of our own website, scanned daily.",
+    f"""      <div class="st-wrap">
+        <div class="st-banner" id="st-banner" data-state="loading" role="status" aria-live="polite">
+          <span class="st-dot" aria-hidden="true"></span>
+          <div><h2 id="st-headline">Checking BharatSec…</h2><p id="st-checked">Live checks run when you open this page.</p></div>
+        </div>
+
+        <h2 class="st-h">Components</h2>
+        <ul class="st-list" id="st-components"></ul>
+
+        <h2 class="st-h">Our own security score</h2>
+        <p class="st-lead">Every morning BharatSec runs its own passive scan on this website, the same scan anyone can run for free. A security product should pass its own test.</p>
+        <div class="st-self" id="st-self"><p class="st-empty">Loading the latest self-scan…</p></div>
+        <ul class="st-history" id="st-history" aria-label="Daily self-scan scores, newest first" hidden></ul>
+
+        <p class="pg-note">Something not working? Email <a href="mailto:{EMAIL}?subject=Status">{EMAIL}</a>. To report a vulnerability, see our <a href="/security">security page</a>.</p>
+      </div>""",
+    css=("status.css",),
+    js=("status.js",),
 )
 
 PAGES["report"] = page(
