@@ -53,6 +53,8 @@ PERMISSIONS_POLICY = "camera=(), microphone=(), geolocation=(), payment=(), usb=
 CRON_SECRET = os.getenv("CRON_SECRET", "")
 CRON_MIN_INTERVAL_SECONDS = 60
 CRON_MAX_ASSET_CHECKS = 20
+# Identifies this deployment on Vercel, so the self-scan also re-runs after each release.
+RELEASE = os.getenv("VERCEL_GIT_COMMIT_SHA") or os.getenv("VERCEL_DEPLOYMENT_ID") or ""
 
 
 def init_databases() -> None:
@@ -294,8 +296,10 @@ async def cron_tick(request: Request):
         await threat_intel_engine.sync_breach_watches()
         feeds_synced = True
     self_scan = None
-    if IS_SERVERLESS and auth_service.claim_interval("self-scan", status_monitor.SELF_SCAN_INTERVAL_SECONDS):
-        # BharatSec scans its own website daily and shows the result on the public status page.
+    new_release = IS_SERVERLESS and bool(RELEASE) and auth_service.claim_change("self-scan-release", RELEASE)
+    due = IS_SERVERLESS and auth_service.claim_interval("self-scan", status_monitor.SELF_SCAN_INTERVAL_SECONDS)
+    if new_release or due:
+        # BharatSec scans its own website daily and after each release, and shows it on the status page.
         try:
             self_scan = await scan.run_self_scan(status_monitor.SELF_DOMAIN, status_monitor.SELF_SCAN_PREFIX)
         except Exception as exc:

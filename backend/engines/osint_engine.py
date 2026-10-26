@@ -224,8 +224,9 @@ async def _check_subdomain(
             return None
 
         response = await _probe_http(client, full)
-        # Under wildcard DNS every name resolves; only keep hosts that serve something different.
-        if wildcard and _same_response(response, wildcard_response):
+        # Under wildcard DNS every name resolves; only keep hosts that serve a real page of their own.
+        # Error pages don't count: hosting catch-alls (such as *.vercel.app) vary in size per name.
+        if wildcard and (response is None or response[0] >= 400 or _same_response(response, wildcard_response)):
             return None
         result = SubdomainResult(subdomain=full, ip=ip, alive=response is not None)
         if response is not None:

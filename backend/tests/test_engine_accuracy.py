@@ -97,6 +97,31 @@ class WildcardDnsTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(dns_result.wildcard_dns)
         self.assertEqual([s.subdomain for s in found], ["www.example.com"])
 
+    async def test_catch_all_error_pages_of_any_size_are_filtered(self):
+        from engines import osint_engine
+        from models.scan_models import DNSResults
+
+        class Answer:
+            address = "203.0.113.10"
+
+        class WildcardResolver:
+            timeout = lifetime = None
+            nameservers = []
+
+            async def resolve(self, name, rtype, **kwargs):
+                return [Answer()]
+
+        async def fake_probe(client, host):
+            # Like *.vercel.app: the random probe gets no answer, other names get 404 pages of varying size.
+            if host.startswith("bs-"):
+                return None
+            return (200, 41770) if host.startswith("www.") else (404, 900 + 40 * len(host))
+
+        dns_result = DNSResults()
+        with patch.object(osint_engine.dns.asyncresolver, "Resolver", WildcardResolver),              patch.object(osint_engine, "_probe_http", side_effect=fake_probe):
+            found = await osint_engine.enumerate_subdomains("example.com", dns_result)
+        self.assertEqual([s.subdomain for s in found], ["www.example.com"])
+
     def test_wildcard_finding_and_no_mail_domain_advice(self):
         scan = _scan(dns=DNSResults(has_spf=False, has_dmarc=False, wildcard_dns=True, mx_records=[]))
         findings = {f.id.rsplit("_", 1)[0]: f for f in risk_engine.generate_findings(scan)}

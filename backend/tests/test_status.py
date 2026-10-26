@@ -28,7 +28,7 @@ class StatusTests(unittest.TestCase):
         with scan_store._db() as connection:
             connection.execute("DELETE FROM scans WHERE substr(scan_id, 1, 9) = 'pub_self_'")
         with auth_service._database() as connection:
-            connection.execute("DELETE FROM app_settings WHERE key LIKE 'job:%'")
+            connection.execute("DELETE FROM app_settings WHERE key LIKE 'job:%' OR key = 'change:self-scan-release'")
         status_monitor._cache.update(at=0.0, payload=None)
         self.client = TestClient(main.app)  # signed out: the status page is public
         self.patches = [
@@ -80,6 +80,16 @@ class StatusTests(unittest.TestCase):
         self.assertEqual((latest["score"], latest["ssl_grade"], latest["headers_present"]), (82, "A", 2))
         report = self.client.get(f"/api/public/scan/{latest['scan_id']}/report")
         self.assertEqual(report.status_code, 200)  # the full report is public
+
+    def test_a_new_release_scans_again_before_the_day_is_up(self):
+        with patch.object(main, "IS_SERVERLESS", True),              patch.object(main.vector_knowledge, "configured", return_value=False),              patch.object(main.seo, "ping_indexnow", AsyncMock(return_value={"status": 202})):
+            with patch.object(main, "RELEASE", "release-1"):
+                self.assertIsNotNone(self.client.get("/api/cron/tick").json()["self_scan"])
+            with auth_service._database() as connection:
+                connection.execute("DELETE FROM app_settings WHERE key = 'job:cron-tick'")
+            with patch.object(main, "RELEASE", "release-2"):
+                self.assertIsNotNone(self.client.get("/api/cron/tick").json()["self_scan"])
+        self.assertEqual(len(status_monitor.self_scans()), 2)
 
     def test_local_ticks_do_not_scan(self):
         self.assertIsNone(self.client.get("/api/cron/tick").json()["self_scan"])
