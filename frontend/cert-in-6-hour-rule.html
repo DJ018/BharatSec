@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CERT-In 6-hour reporting rule explained | BharatSec</title>
+  <meta name="description" content="What the CERT-In Directions of April 2022 require: reporting cyber incidents within 6 hours, 180-day log retention, NTP sync and more, in plain language." />
+  <link rel="canonical" href="https://bharatsec.vercel.app/cert-in-6-hour-rule" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="BharatSec" />
+  <meta property="og:url" content="https://bharatsec.vercel.app/cert-in-6-hour-rule" />
+  <meta property="og:title" content="CERT-In 6-hour reporting rule explained | BharatSec" />
+  <meta property="og:description" content="What the CERT-In Directions of April 2022 require: reporting cyber incidents within 6 hours, 180-day log retention, NTP sync and more, in plain language." />
+  <meta property="og:image" content="https://bharatsec.vercel.app/assets/images/og/bharatsec-og.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="assets/images/brand/bharatsec-mark.svg" />
+  <script src="assets/js/theme.js"></script>
+  <link rel="stylesheet" href="assets/css/design-system.css" />
+  <link rel="stylesheet" href="assets/css/landing.css" />
+  <link rel="stylesheet" href="assets/css/pages.css" />
+</head>
+<body class="landing-page">
+<a class="lp-skip" href="#main">Skip to content</a>
+<header class="lp-nav" id="navbar">
+  <div class="lp-container lp-nav-inner">
+    <a class="ds-brand" href="/" aria-label="BharatSec home">
+      <img src="assets/images/brand/bharatsec-mark.svg" alt="" width="34" height="34" />
+      <span class="ds-brand-name">Bharat<span>Sec</span></span>
+    </a>
+    <nav class="lp-nav-links" id="lp-nav-links" aria-label="Primary">
+      <a href="/#products">Products</a>
+      <a href="/pricing">Pricing</a>
+      <a href="/about">About</a>
+      <a href="/security">Security</a>
+    </nav>
+    <div class="lp-nav-actions">
+      <button class="ds-theme-toggle" type="button" data-theme-toggle aria-label="Switch theme">
+        <svg class="ds-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a7 7 0 0 0 10.7 10.7Z"/></svg>
+        <svg class="ds-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <a href="/#scan" class="ds-btn ds-btn--primary">Scan for free</a>
+      <button class="ds-btn ds-btn--ghost ds-btn--icon lp-menu-btn" type="button" id="lp-menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="lp-nav-links">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<main id="main">
+  <section class="pg-hero">
+    <div class="lp-container">
+      <p class="pg-eyebrow">Guide</p>
+      <h1>The CERT-In 6-hour rule, explained.</h1>
+      <p>What Indian organisations must do under CERT-In's April 2022 directions, and a simple plan to be ready.</p>
+    </div>
+  </section>
+  <section class="pg-body">
+    <div class="lp-container">
+      <div class="pg-prose">
+        <h2>What the rule says</h2>
+        <p>On 28 April 2022, CERT-In (the Indian Computer Emergency Response Team) issued directions under Section 70B(6) of the Information Technology Act. They came into force in June 2022 and apply to service providers, intermediaries, data centres, companies and government bodies.</p>
+        <p>The headline requirement: <strong>report listed cyber incidents to CERT-In within 6 hours</strong> of noticing them or being told about them.</p>
+
+        <h2>Which incidents count</h2>
+        <p>The directions list incident types including:</p>
+        <ul>
+          <li>data breaches and data leaks;</li>
+          <li>ransomware and other malicious code;</li>
+          <li>unauthorised access to IT systems, data or social media accounts;</li>
+          <li>website defacement or malicious code inserted into a website;</li>
+          <li>phishing, identity theft and spoofing;</li>
+          <li>denial-of-service attacks;</li>
+          <li>attacks on servers, cloud systems, IoT devices, payment systems and critical infrastructure;</li>
+          <li>targeted scanning or probing of critical networks.</li>
+        </ul>
+
+        <h2>The other duties</h2>
+        <ul>
+          <li><strong>Logs:</strong> enable logs for all ICT systems and keep them for a rolling 180 days within India.</li>
+          <li><strong>Clocks:</strong> synchronise system clocks with NIC or NPL time servers, so logs line up.</li>
+          <li><strong>Point of contact:</strong> name a person to deal with CERT-In.</li>
+          <li><strong>Providers:</strong> VPN, cloud, VPS and data centre providers must keep subscriber details for 5 years.</li>
+        </ul>
+        <p>Not complying can be punished under Section 70B(7) with imprisonment of up to one year, a fine of up to ₹1 lakh, or both.</p>
+
+        <h2>How to report</h2>
+        <p>Email <strong>incident@cert-in.org.in</strong> or use the incident reporting form on cert-in.org.in. The first report can be short: what happened, when you noticed, what is affected and who to contact. Send details as your investigation continues.</p>
+
+        <h2>A one-page readiness plan</h2>
+        <ol>
+          <li>Name your CERT-In point of contact and a backup.</li>
+          <li>Write down who decides that an incident is reportable, and who sends the report.</li>
+          <li>Keep a short report template ready.</li>
+          <li>Turn on logging for servers, cloud accounts and admin consoles, with 180-day retention.</li>
+          <li>Point system clocks at NIC or NPL time servers.</li>
+          <li>Practise once: run a 30-minute tabletop exercise.</li>
+        </ol>
+        <p class="pg-note">BharatSec's free <a href="/#scan">domain scan</a> and SOC monitoring help you notice problems quickly, and the Compliance checklist tracks these steps for your team. This guide is general information, not legal advice; read the <a href="https://www.cert-in.org.in/Directions70B.jsp" rel="noopener">official directions</a> for the full text.</p>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="lp-footer">
+  <div class="lp-container">
+    <div class="lp-footer-grid">
+      <div class="lp-footer-brand">
+        <a class="ds-brand" href="/" aria-label="BharatSec home">
+          <img src="assets/images/brand/bharatsec-mark.svg" alt="" width="34" height="34" />
+          <span class="ds-brand-name">Bharat<span>Sec</span></span>
+        </a>
+        <p>AI-powered cyber risk intelligence.<br />Built for India, trusted worldwide.</p>
+      </div>
+      <div class="lp-footer-col">
+        <h4>Products</h4>
+        <ul>
+          <li><a href="/#scan">Domain scanner</a></li>
+          <li><a href="/soc">SOC</a></li>
+          <li><a href="/threat-intel">Threat Intel</a></li>
+          <li><a href="/cloud">Cloud</a></li>
+          <li><a href="/risk">Risk</a></li>
+        </ul>
+      </div>
+      <div class="lp-footer-col">
+        <h4>Free tools</h4>
+        <ul>
+          <li><a href="/ssl-checker">SSL checker</a></li>
+          <li><a href="/email-security-checker">SPF, DKIM, DMARC</a></li>
+          <li><a href="/security-headers-checker">Security headers</a></li>
+          <li><a href="/cert-in-6-hour-rule">CERT-In guide</a></li>
+          <li><a href="/dpdp-act-guide">DPDP Act guide</a></li>
+        </ul>
+      </div>
+      <div class="lp-footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="/pricing">Pricing</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+      <div class="lp-footer-col">
+        <h4>Trust</h4>
+        <ul>
+          <li><a href="/security">Security</a></li>
+          <li><a href="/privacy">Privacy policy</a></li>
+          <li><a href="/terms">Terms of service</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="lp-footer-bottom">
+      <span>© <span data-current-year>2026</span> BharatSec · Built in India</span>
+      <span>Passive reconnaissance only · Scan only authorized targets</span>
+    </div>
+  </div>
+</footer>
+<script src="assets/js/pages.js"></script>
+</body>
+</html>

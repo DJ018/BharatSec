@@ -1,0 +1,28 @@
+/* BharatSec free tools: SSL, email security and security headers checkers. */
+
+.tl-form { display: flex; flex-wrap: wrap; gap: var(--ds-space-3); max-width: 760px; padding: var(--ds-space-5); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-xl); background: var(--ds-surface); }
+.tl-form .ds-input { flex: 1 1 260px; min-height: 48px; font-size: 1rem; }
+.tl-form .ds-btn { min-height: 48px; }
+.tl-form small { flex-basis: 100%; color: var(--ds-text-3); font-size: var(--ds-text-xs); }
+.tl-result { max-width: 760px; margin-top: var(--ds-space-5); }
+.tl-result:empty { display: none; }
+.tl-error { padding: var(--ds-space-4) var(--ds-space-5); border: 1px solid var(--ds-critical); border-radius: var(--ds-radius-lg); color: var(--ds-critical); background: var(--ds-critical-soft); }
+.tl-card { padding: var(--ds-space-5); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-xl); background: var(--ds-surface); }
+.tl-card h2 { margin: 0 0 var(--ds-space-3); font-size: 1.15rem; }
+.tl-rows { display: grid; gap: 0; margin: 0; }
+.tl-row { display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 12px 0; border-top: 1px solid var(--ds-divider); }
+.tl-row:first-child { border-top: 0; }
+.tl-row b { color: var(--ds-text); font-size: var(--ds-text-sm); }
+.tl-row p { margin: 3px 0 0; color: var(--ds-text-2); font-size: var(--ds-text-sm); line-height: 1.55; word-break: break-word; }
+.tl-row code { padding: 2px 6px; border-radius: 6px; background: var(--ds-surface-2); font-size: .85em; }
+.tl-icon { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; margin-top: 1px; font-size: 13px; font-weight: 800; }
+.tl-icon.is-ok { background: var(--ds-low-soft); color: var(--ds-low); }
+.tl-icon.is-bad { background: var(--ds-critical-soft); color: var(--ds-critical); }
+.tl-icon.is-warn { background: var(--ds-medium-soft); color: var(--ds-medium); }
+.tl-advice { margin: var(--ds-space-4) 0 0; padding: var(--ds-space-4) var(--ds-space-5); border-left: 3px solid var(--ds-primary); border-radius: var(--ds-radius-lg); background: var(--ds-surface-2); }
+.tl-advice h3 { margin: 0 0 6px; font-size: .95rem; }
+.tl-advice ul { margin: 0; padding-left: 1.2em; color: var(--ds-text-2); font-size: var(--ds-text-sm); line-height: 1.6; }
+.tl-more { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ds-space-3); margin-top: var(--ds-space-4); color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+.tl-related { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); margin-top: var(--ds-space-8); }
+.tl-related a { padding: 8px 14px; border: 1px solid var(--ds-border); border-radius: 999px; color: var(--ds-text-2); font-size: var(--ds-text-sm); text-decoration: none; }
+.tl-related a:hover { border-color: var(--ds-primary); color: var(--ds-primary); }

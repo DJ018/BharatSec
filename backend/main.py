@@ -22,7 +22,7 @@ import auth as auth_service
 import seo
 from config import AUTH_COOKIE_SECURE, BHARATSEC_HOST, CORS_ORIGINS, IS_LOOPBACK_HOST, IS_SERVERLESS
 from engines import cloud_engine, compliance_engine, scan_store, soc_engine, threat_intel_engine, vector_knowledge
-from routers import auth as auth_router, cloud, compliance, scan, ai, soc, threat_intel
+from routers import auth as auth_router, cloud, compliance, scan, ai, soc, threat_intel, tools
 
 PROTECTED_PAGES = {
     "/dashboard", "/dashboard.html",
@@ -109,6 +109,7 @@ app.add_middleware(
 app.include_router(auth_router.router)
 app.include_router(scan.router)
 app.include_router(scan.public_router)
+app.include_router(tools.router)
 app.include_router(ai.router)
 app.include_router(soc.router)
 app.include_router(threat_intel.router)

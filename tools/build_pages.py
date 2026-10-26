@@ -57,6 +57,16 @@ FOOTER = """<footer class="lp-footer">
         </ul>
       </div>
       <div class="lp-footer-col">
+        <h4>Free tools</h4>
+        <ul>
+          <li><a href="/ssl-checker">SSL checker</a></li>
+          <li><a href="/email-security-checker">SPF, DKIM, DMARC</a></li>
+          <li><a href="/security-headers-checker">Security headers</a></li>
+          <li><a href="/cert-in-6-hour-rule">CERT-In guide</a></li>
+          <li><a href="/dpdp-act-guide">DPDP Act guide</a></li>
+        </ul>
+      </div>
+      <div class="lp-footer-col">
         <h4>Company</h4>
         <ul>
           <li><a href="/about">About</a></li>
@@ -445,6 +455,201 @@ PAGES["terms"] = page(
         <p class="pg-meta">Last updated: {UPDATED}</p>
       </div>""",
     meta_line=f"Last updated {UPDATED}",
+)
+
+def tool_page(slug, tool, title, description, heading, lead, button, explainer, faq):
+    related = "".join(
+        f'<a href="/{s}">{name}</a>' for s, name in [
+            ("ssl-checker", "SSL checker"), ("email-security-checker", "Email security checker"),
+            ("security-headers-checker", "Security headers checker"), ("cert-in-6-hour-rule", "CERT-In 6-hour rule"),
+            ("dpdp-act-guide", "DPDP Act guide")] if s != slug)
+    faq_html = "".join(f"<h3>{q}</h3><p>{a}</p>" for q, a in faq)
+    faq_json = ",".join(
+        '{"@type":"Question","name":"' + q.replace('"', "'") + '","acceptedAnswer":{"@type":"Answer","text":"'
+        + a.replace('"', "'").replace("<code>", "").replace("</code>", "") + '"}}' for q, a in faq)
+    body = f"""      <form class="tl-form" id="tool-form" data-tool="{tool}" novalidate>
+        <input class="ds-input" type="text" name="domain" placeholder="yourcompany.com" autocomplete="off" spellcheck="false" autocapitalize="off" inputmode="url" aria-label="Domain to check" required />
+        <button class="ds-btn ds-btn--brand" type="submit">{button}</button>
+        <small>Free and passive: we only read public information. Check only domains you own or are authorised to assess.</small>
+      </form>
+      <div class="tl-result" id="tool-result" aria-live="polite"></div>
+      <div class="pg-prose" style="margin-top: var(--ds-space-12)">
+{explainer}
+        <h2>Frequently asked questions</h2>
+        {faq_html}
+      </div>
+      <nav class="tl-related" aria-label="More free tools and guides">{related}</nav>
+      <script type="application/ld+json">{{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{faq_json}]}}</script>"""
+    return page(slug, title, description, "Free tool", heading, lead, body, css=("tools.css",), js=("tools.js",))
+
+
+PAGES["ssl-checker"] = tool_page(
+    "ssl-checker", "ssl",
+    "Free SSL Checker: certificate expiry and TLS grade | BharatSec",
+    "Check any website's SSL certificate: validity, issuer, days until expiry and TLS grade, with clear advice. Free, no sign-up.",
+    "Free SSL certificate checker",
+    "See whether a website's certificate is valid, when it expires and how strong its TLS setup is.",
+    "Check SSL",
+    """        <h2>What this checks</h2>
+        <ul>
+          <li><strong>Validity:</strong> whether browsers will trust the certificate.</li>
+          <li><strong>Expiry:</strong> how many days are left. An expired certificate puts a full-page warning in front of every visitor.</li>
+          <li><strong>TLS grade:</strong> whether old, weak protocol versions are still accepted.</li>
+        </ul>
+        <h2>How to fix common problems</h2>
+        <ul>
+          <li><strong>Expiring soon:</strong> renew now, and turn on automatic renewal (free with Let's Encrypt and most hosts).</li>
+          <li><strong>Low grade:</strong> allow only TLS 1.2 and TLS 1.3 in your web server, load balancer or CDN settings.</li>
+          <li><strong>Not valid:</strong> make sure the certificate covers the exact domain name and includes the full chain.</li>
+        </ul>""",
+    [("Is this check safe to run?", "Yes. It opens one normal HTTPS connection, the same as a browser visiting the site."),
+     ("How often should I check my certificate?", "Monthly, or set up BharatSec monitoring so you are warned before it expires."),
+     ("Why does TLS 1.0 or 1.1 matter?", "They are deprecated and have known weaknesses. Modern browsers and PCI DSS expect TLS 1.2 or newer.")],
+)
+
+PAGES["email-security-checker"] = tool_page(
+    "email-security-checker", "email",
+    "Free SPF, DKIM and DMARC Checker | BharatSec",
+    "Check a domain's email security: SPF, DKIM and DMARC records, DMARC policy and mail servers, with the exact records to add. Free.",
+    "Free SPF, DKIM and DMARC checker",
+    "Find out whether attackers could send email pretending to be your domain, and how to stop it.",
+    "Check email security",
+    """        <h2>Why email authentication matters</h2>
+        <p>Without SPF, DKIM and DMARC, anyone can send email that appears to come from your domain. That is how most invoice fraud and CEO impersonation scams start. Since 2024, Gmail and Yahoo also require these records from bulk senders, and mail without them is more likely to land in spam.</p>
+        <ul>
+          <li><strong>SPF</strong> lists the servers allowed to send mail for your domain.</li>
+          <li><strong>DKIM</strong> signs your messages so receivers can verify they weren't changed.</li>
+          <li><strong>DMARC</strong> tells receivers what to do when SPF and DKIM fail, and sends you reports.</li>
+        </ul>
+        <h2>A safe rollout</h2>
+        <ol>
+          <li>Publish SPF and turn on DKIM in your mail provider.</li>
+          <li>Add DMARC with <code>p=none</code> and a reporting address, and watch the reports for a few weeks.</li>
+          <li>Move to <code>p=quarantine</code>, then <code>p=reject</code> once legitimate mail passes.</li>
+        </ol>""",
+    [("Can DMARC break my email?", "Only if you jump straight to p=reject before every sender is covered by SPF or DKIM. Start with p=none and review reports first."),
+     ("Why is DKIM shown as not found when I have it?", "DKIM keys live under a selector name chosen by your provider. We check common selectors; yours may use a custom one."),
+     ("Do I need these if I only receive email?", "Yes. Attackers can still send email pretending to be you. A domain that sends no mail should publish v=spf1 -all and a DMARC p=reject record.")],
+)
+
+PAGES["security-headers-checker"] = tool_page(
+    "security-headers-checker", "headers",
+    "Free Security Headers Checker: HSTS, CSP and more | BharatSec",
+    "Check a website for HSTS, Content-Security-Policy, X-Frame-Options and other security headers, plus HTTPS redirects. Free, no sign-up.",
+    "Free security headers checker",
+    "See which browser security headers a website sends, and which ones it is missing.",
+    "Check headers",
+    """        <h2>Why headers matter</h2>
+        <p>Security headers are instructions your website sends to browsers. They switch on protections against attacks like cross-site scripting, clickjacking and HTTPS downgrades, and they cost nothing to add.</p>
+        <h2>Where to add them</h2>
+        <ul>
+          <li><strong>Nginx or Apache:</strong> in the site configuration (<code>add_header</code> or <code>Header set</code>).</li>
+          <li><strong>Vercel, Netlify, Cloudflare:</strong> in the project's headers settings or configuration file.</li>
+          <li><strong>Frameworks:</strong> middleware such as Helmet for Node.js, or your framework's security settings.</li>
+        </ul>
+        <p>Start with HSTS, X-Content-Type-Options and Referrer-Policy (safe for almost every site), then add a Content-Security-Policy carefully, testing it in report-only mode first.</p>""",
+    [("Will adding headers break my site?", "Most headers are safe. Content-Security-Policy can block scripts you rely on, so test it with Content-Security-Policy-Report-Only first."),
+     ("Is X-Frame-Options still needed with CSP?", "CSP's frame-ancestors directive replaces it in modern browsers, but sending both is harmless and helps older ones."),
+     ("Does this check send any attack traffic?", "No. It makes one ordinary request to the site, like a browser.")],
+)
+
+PAGES["cert-in-6-hour-rule"] = page(
+    "cert-in-6-hour-rule",
+    "CERT-In 6-hour reporting rule explained | BharatSec",
+    "What the CERT-In Directions of April 2022 require: reporting cyber incidents within 6 hours, 180-day log retention, NTP sync and more, in plain language.",
+    "Guide",
+    "The CERT-In 6-hour rule, explained.",
+    "What Indian organisations must do under CERT-In's April 2022 directions, and a simple plan to be ready.",
+    """      <div class="pg-prose">
+        <h2>What the rule says</h2>
+        <p>On 28 April 2022, CERT-In (the Indian Computer Emergency Response Team) issued directions under Section 70B(6) of the Information Technology Act. They came into force in June 2022 and apply to service providers, intermediaries, data centres, companies and government bodies.</p>
+        <p>The headline requirement: <strong>report listed cyber incidents to CERT-In within 6 hours</strong> of noticing them or being told about them.</p>
+
+        <h2>Which incidents count</h2>
+        <p>The directions list incident types including:</p>
+        <ul>
+          <li>data breaches and data leaks;</li>
+          <li>ransomware and other malicious code;</li>
+          <li>unauthorised access to IT systems, data or social media accounts;</li>
+          <li>website defacement or malicious code inserted into a website;</li>
+          <li>phishing, identity theft and spoofing;</li>
+          <li>denial-of-service attacks;</li>
+          <li>attacks on servers, cloud systems, IoT devices, payment systems and critical infrastructure;</li>
+          <li>targeted scanning or probing of critical networks.</li>
+        </ul>
+
+        <h2>The other duties</h2>
+        <ul>
+          <li><strong>Logs:</strong> enable logs for all ICT systems and keep them for a rolling 180 days within India.</li>
+          <li><strong>Clocks:</strong> synchronise system clocks with NIC or NPL time servers, so logs line up.</li>
+          <li><strong>Point of contact:</strong> name a person to deal with CERT-In.</li>
+          <li><strong>Providers:</strong> VPN, cloud, VPS and data centre providers must keep subscriber details for 5 years.</li>
+        </ul>
+        <p>Not complying can be punished under Section 70B(7) with imprisonment of up to one year, a fine of up to ₹1 lakh, or both.</p>
+
+        <h2>How to report</h2>
+        <p>Email <strong>incident@cert-in.org.in</strong> or use the incident reporting form on cert-in.org.in. The first report can be short: what happened, when you noticed, what is affected and who to contact. Send details as your investigation continues.</p>
+
+        <h2>A one-page readiness plan</h2>
+        <ol>
+          <li>Name your CERT-In point of contact and a backup.</li>
+          <li>Write down who decides that an incident is reportable, and who sends the report.</li>
+          <li>Keep a short report template ready.</li>
+          <li>Turn on logging for servers, cloud accounts and admin consoles, with 180-day retention.</li>
+          <li>Point system clocks at NIC or NPL time servers.</li>
+          <li>Practise once: run a 30-minute tabletop exercise.</li>
+        </ol>
+        <p class="pg-note">BharatSec's free <a href="/#scan">domain scan</a> and SOC monitoring help you notice problems quickly, and the Compliance checklist tracks these steps for your team. This guide is general information, not legal advice; read the <a href="https://www.cert-in.org.in/Directions70B.jsp" rel="noopener">official directions</a> for the full text.</p>
+      </div>""",
+)
+
+PAGES["dpdp-act-guide"] = page(
+    "dpdp-act-guide",
+    "DPDP Act 2023 for small businesses: a practical guide | BharatSec",
+    "What India's Digital Personal Data Protection Act and 2025 Rules mean for small businesses: consent, security, breach notification, penalties and a checklist.",
+    "Guide",
+    "The DPDP Act for small businesses.",
+    "A plain-language guide to India's Digital Personal Data Protection Act, 2023 and its 2025 Rules, with a practical checklist.",
+    """      <div class="pg-prose">
+        <h2>Does it apply to you?</h2>
+        <p>Almost certainly. The DPDP Act covers digital personal data of people in India: customer names, phone numbers, emails, addresses, employee records, even contact-form submissions. If your business stores any of this, you are a <strong>Data Fiduciary</strong> under the Act.</p>
+
+        <h2>Your main duties</h2>
+        <ul>
+          <li><strong>Notice and consent:</strong> tell people clearly what you collect and why, and get their consent (or rely on a listed legitimate use). Let them withdraw consent as easily as they gave it.</li>
+          <li><strong>Security:</strong> take reasonable security safeguards, such as encryption, access control, logging and backups.</li>
+          <li><strong>Breach notification:</strong> tell affected people and the Data Protection Board of India without delay if personal data is breached.</li>
+          <li><strong>Rights:</strong> let people access, correct and erase their data, and offer a way to raise grievances.</li>
+          <li><strong>Retention:</strong> delete data once its purpose is served, unless the law requires keeping it.</li>
+          <li><strong>Children:</strong> get verifiable parental consent for under-18s, and don't track them or target them with ads.</li>
+          <li><strong>Vendors:</strong> you remain responsible for data your processors (hosting, CRM, payroll) handle for you.</li>
+        </ul>
+
+        <h2>Timelines under the 2025 Rules</h2>
+        <p>The DPDP Rules were notified in November 2025 with a phased start. Most business obligations (notice, security safeguards, breach intimation, retention and erasure) apply about 18 months after notification. For a breach, the Rules expect a prompt notice to affected people and to the Board, followed by a detailed report to the Board within 72 hours. Check MeitY's latest notifications for exact dates.</p>
+
+        <h2>Penalties</h2>
+        <ul>
+          <li>Up to <strong>₹250 crore</strong> for failing to take reasonable security safeguards.</li>
+          <li>Up to <strong>₹200 crore</strong> for failing to notify a breach, or breaching duties towards children.</li>
+          <li>Up to <strong>₹50 crore</strong> for other breaches of the Act or Rules.</li>
+        </ul>
+
+        <h2>A 10-step starter checklist</h2>
+        <ol>
+          <li>List what personal data you collect, where it is stored and who can access it.</li>
+          <li>Publish a clear privacy notice.</li>
+          <li>Record consent, and add an easy way to withdraw it.</li>
+          <li>Name a contact for privacy requests and grievances.</li>
+          <li>Turn on multi-factor sign-in for email, cloud and admin accounts.</li>
+          <li>Encrypt data at rest and in transit, and restrict access to those who need it.</li>
+          <li>Keep access logs and tested backups.</li>
+          <li>Write a breach plan that covers both DPDP notices and CERT-In's 6-hour report.</li>
+          <li>Set retention periods and delete old data.</li>
+          <li>Check that your vendors have contracts covering security and deletion.</li>
+        </ol>
+        <p class="pg-note">BharatSec's Compliance checklist tracks these steps for your team, and a free <a href="/#scan">domain scan</a> shows the security gaps attackers see first. This guide is general information, not legal advice.</p>
+      </div>""",
 )
 
 PAGES["report"] = page(
