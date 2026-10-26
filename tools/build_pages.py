@@ -81,16 +81,19 @@ FOOTER = """<footer class="lp-footer">
 </footer>"""
 
 
-def page(slug, title, description, eyebrow, heading, lead, body, *, meta_line=""):
+def page(slug, title, description, eyebrow, heading, lead, body, *, meta_line="", robots="", css=(), js=()):
     url = f"{SITE}/{slug}"
     meta = f'\n      <p class="pg-meta">{meta_line}</p>' if meta_line else ""
+    robots_tag = f'\n  <meta name="robots" content="{robots}" />' if robots else ""
+    extra_css = "".join(f'\n  <link rel="stylesheet" href="assets/css/{name}" />' for name in css)
+    extra_js = "".join(f'\n<script src="assets/js/{name}"></script>' for name in js)
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
-  <meta name="description" content="{description}" />
+  <meta name="description" content="{description}" />{robots_tag}
   <link rel="canonical" href="{url}" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="BharatSec" />
@@ -103,7 +106,7 @@ def page(slug, title, description, eyebrow, heading, lead, body, *, meta_line=""
   <script src="assets/js/theme.js"></script>
   <link rel="stylesheet" href="assets/css/design-system.css" />
   <link rel="stylesheet" href="assets/css/landing.css" />
-  <link rel="stylesheet" href="assets/css/pages.css" />
+  <link rel="stylesheet" href="assets/css/pages.css" />{extra_css}
 </head>
 <body class="landing-page">
 <a class="lp-skip" href="#main">Skip to content</a>
@@ -123,7 +126,7 @@ def page(slug, title, description, eyebrow, heading, lead, body, *, meta_line=""
   </section>
 </main>
 {FOOTER}
-<script src="assets/js/pages.js"></script>
+<script src="assets/js/pages.js"></script>{extra_js}
 </body>
 </html>
 """
@@ -442,6 +445,19 @@ PAGES["terms"] = page(
         <p class="pg-meta">Last updated: {UPDATED}</p>
       </div>""",
     meta_line=f"Last updated {UPDATED}",
+)
+
+PAGES["report"] = page(
+    "report",
+    "Security report | BharatSec",
+    "A BharatSec passive security report: score, email security, SSL/TLS, headers, subdomains and a prioritised fix list.",
+    "Security report",
+    "Your domain's security report.",
+    "Passive checks only: we read public DNS, certificates, headers and subdomains. Nothing is attacked or changed.",
+    """      <div class="rp-wrap" id="report-root"><div class="rp-state"><h2>Loading report…</h2><p>One moment.</p></div></div>""",
+    robots="noindex, follow",
+    css=("report.css",),
+    js=("report.js",),
 )
 
 

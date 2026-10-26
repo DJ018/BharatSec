@@ -1,0 +1,304 @@
+{
+ "scan_id": "sample",
+ "domain": "example.com",
+ "status": "complete",
+ "progress": 100,
+ "started_at": "2026-10-26T17:53:13.058064+00:00",
+ "completed_at": "2026-10-26T17:53:28.445822+00:00",
+ "dns": {
+  "a_records": [
+   "172.66.147.243",
+   "104.20.23.154"
+  ],
+  "mx_records": [
+   "0 ."
+  ],
+  "txt_records": [
+   "\"_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9\"",
+   "\"v=spf1 -all\""
+  ],
+  "ns_records": [
+   "hera.ns.cloudflare.com.",
+   "elliott.ns.cloudflare.com."
+  ],
+  "cname_records": [],
+  "has_spf": true,
+  "has_dmarc": true,
+  "has_dkim": true,
+  "wildcard_dns": false
+ },
+ "ssl": {
+  "valid": true,
+  "issuer": "SSL Corporation",
+  "subject": "example.com",
+  "expires": "2026-12-25",
+  "days_remaining": 60,
+  "protocol": "TLSv1.3",
+  "grade": "C",
+  "vulnerabilities": [
+   "Server still accepts TLS 1.1 (deprecated TLS 1.0/1.1)"
+  ]
+ },
+ "web": {
+  "status_code": 200,
+  "server": "cloudflare",
+  "technologies": [
+   "Cloudflare"
+  ],
+  "cms": "",
+  "https_redirect": false,
+  "headers": {
+   "present": [],
+   "missing": [
+    "Strict-Transport-Security",
+    "Content-Security-Policy",
+    "X-Frame-Options",
+    "X-Content-Type-Options",
+    "Referrer-Policy",
+    "Permissions-Policy"
+   ],
+   "all_headers": {
+    "date": "Mon, 26 Oct 2026 17:53:27 GMT",
+    "content-type": "text/html; charset=utf-8",
+    "transfer-encoding": "chunked",
+    "connection": "keep-alive",
+    "server": "cloudflare",
+    "last-modified": "Sat, 24 Oct 2026 20:05:47 GMT",
+    "allow": "GET, HEAD",
+    "age": "14037",
+    "cf-cache-status": "HIT",
+    "content-encoding": "gzip",
+    "cf-ray": "a50b5212287a518d-DEL",
+    "alt-svc": "h3=\":443\"; ma=86400"
+   }
+  },
+  "response_time_ms": 141.0
+ },
+ "subdomains": [
+  {
+   "subdomain": "www.example.com",
+   "ip": "104.20.23.154",
+   "status_code": 200,
+   "alive": true,
+   "open_ports": []
+  }
+ ],
+ "whois": {
+  "registrar": "RESERVED-Internet Assigned Numbers Authority",
+  "creation_date": "1995-08-14",
+  "expiration_date": "2027-08-13",
+  "days_until_expiry": 290,
+  "name_servers": [
+   "elliott.ns.cloudflare.com",
+   "hera.ns.cloudflare.com"
+  ],
+  "privacy_protected": false
+ },
+ "findings": [
+  {
+   "id": "tls_old_dcf299d2",
+   "category": "SSL/TLS",
+   "title": "Outdated TLS Protocol in Use",
+   "description": "Server still accepts TLS 1.1 (deprecated TLS 1.0/1.1)",
+   "severity": "HIGH",
+   "evidence": "Protocol detected: TLSv1.3",
+   "ai_analysis": "An outdated TLS version is in use. TLS 1.0 and 1.1 are deprecated and have known vulnerabilities including BEAST and POODLE attacks. Using these old protocols means connections may be downgraded to an insecure state by attackers.",
+   "fix": "Disable TLS 1.0 and 1.1. Configure server to support TLS 1.2 and TLS 1.3 only.",
+   "effort": "Medium",
+   "impact": "High"
+  },
+  {
+   "id": "header_strict_transport_security_5e187cce",
+   "category": "Security Headers",
+   "title": "Missing Security Header: Strict-Transport-Security",
+   "description": "Forces browsers to use HTTPS, preventing protocol downgrade attacks.",
+   "severity": "HIGH",
+   "evidence": "Header 'Strict-Transport-Security' absent from HTTP response",
+   "ai_analysis": "HSTS is not configured on this domain. Without HSTS, browsers may attempt HTTP connections before being redirected to HTTPS, opening a window for SSL-stripping attacks where an attacker on the same network can intercept traffic in plaintext. This is especially dangerous on public Wi-Fi.",
+   "fix": "Add header: Strict-Transport-Security: max-age=31536000; includeSubDomains",
+   "effort": "Low",
+   "impact": "High"
+  },
+  {
+   "id": "header_content_security_policy_483610bd",
+   "category": "Security Headers",
+   "title": "Missing Security Header: Content-Security-Policy",
+   "description": "Prevents XSS and data injection attacks by defining approved content sources.",
+   "severity": "HIGH",
+   "evidence": "Header 'Content-Security-Policy' absent from HTTP response",
+   "ai_analysis": "No Content Security Policy (CSP) header is present. CSP is the primary defense against Cross-Site Scripting (XSS) attacks, one of the most common and dangerous web vulnerabilities. Without a CSP, an attacker who injects malicious scripts into the page has no browser-enforced restrictions on what they can do.",
+   "fix": "Implement a CSP policy. Start with: Content-Security-Policy: default-src 'self'",
+   "effort": "Low",
+   "impact": "High"
+  },
+  {
+   "id": "header_x_frame_options_e7b1c70a",
+   "category": "Security Headers",
+   "title": "Missing Security Header: X-Frame-Options",
+   "description": "Prevents clickjacking by controlling if the page can be embedded in iframes.",
+   "severity": "MEDIUM",
+   "evidence": "Header 'X-Frame-Options' absent from HTTP response",
+   "ai_analysis": "The X-Frame-Options header is absent. This means your site can be embedded in an iframe on a malicious website, a technique used in clickjacking attacks. An attacker could overlay invisible UI elements on top of your site to trick users into performing unintended actions (like clicking hidden buttons or submitting forms).",
+   "fix": "Add header: X-Frame-Options: DENY",
+   "effort": "Low",
+   "impact": "Medium"
+  },
+  {
+   "id": "header_x_content_type_options_8fcf332d",
+   "category": "Security Headers",
+   "title": "Missing Security Header: X-Content-Type-Options",
+   "description": "Prevents MIME-type sniffing attacks.",
+   "severity": "MEDIUM",
+   "evidence": "Header 'X-Content-Type-Options' absent from HTTP response",
+   "ai_analysis": "The X-Content-Type-Options header is missing. Without it, browsers may 'sniff' the content type of a response and treat a file differently than intended, for example, loading a text file as JavaScript. This can enable MIME-type confusion attacks.",
+   "fix": "Add header: X-Content-Type-Options: nosniff",
+   "effort": "Low",
+   "impact": "Medium"
+  },
+  {
+   "id": "no_redirect_80f12065",
+   "category": "Configuration",
+   "title": "HTTP Not Redirected to HTTPS",
+   "description": "Visiting the HTTP version of the site does not automatically redirect to HTTPS.",
+   "severity": "MEDIUM",
+   "evidence": "http://example.com did not respond with a redirect to https://",
+   "ai_analysis": "HTTP traffic is not being automatically redirected to HTTPS. Users who visit the HTTP version of your site (which many do by default) will not benefit from encryption. Search engines also prefer HTTPS, so this may affect SEO.",
+   "fix": "Configure a 301 redirect from http:// to https:// in your web server (Nginx/Apache) or hosting platform.",
+   "effort": "Low",
+   "impact": "Medium"
+  },
+  {
+   "id": "header_referrer_policy_e0aa183b",
+   "category": "Security Headers",
+   "title": "Missing Security Header: Referrer-Policy",
+   "description": "Controls how much referrer information is sent with requests.",
+   "severity": "LOW",
+   "evidence": "Header 'Referrer-Policy' absent from HTTP response",
+   "ai_analysis": "",
+   "fix": "Add header: Referrer-Policy: strict-origin-when-cross-origin",
+   "effort": "Low",
+   "impact": "Low"
+  },
+  {
+   "id": "header_permissions_policy_7bbd4025",
+   "category": "Security Headers",
+   "title": "Missing Security Header: Permissions-Policy",
+   "description": "Controls browser features and APIs available to the page.",
+   "severity": "LOW",
+   "evidence": "Header 'Permissions-Policy' absent from HTTP response",
+   "ai_analysis": "",
+   "fix": "Add header: Permissions-Policy: camera=(), microphone=(), geolocation=()",
+   "effort": "Low",
+   "impact": "Low"
+  }
+ ],
+ "score": {
+  "overall": 77,
+  "attack_surface": 100,
+  "web_security": 39,
+  "identity_exposure": 100,
+  "configuration": 60,
+  "credential_risk": 90,
+  "level": "LOW",
+  "critical_count": 0,
+  "high_count": 3,
+  "medium_count": 3,
+  "low_count": 2
+ },
+ "ai_summary": "example.com has a moderate security posture (score: 77/100) with several areas requiring attention. 3 high-severity issues were identified that significantly increase attack surface. 6 critical HTTP security headers are missing, leaving the web application vulnerable to common browser-based attacks.",
+ "top_priorities": [
+  {
+   "id": "header_strict_transport_security_5e187cce",
+   "category": "Security Headers",
+   "title": "Missing Security Header: Strict-Transport-Security",
+   "description": "Forces browsers to use HTTPS, preventing protocol downgrade attacks.",
+   "severity": "HIGH",
+   "evidence": "Header 'Strict-Transport-Security' absent from HTTP response",
+   "ai_analysis": "HSTS is not configured on this domain. Without HSTS, browsers may attempt HTTP connections before being redirected to HTTPS, opening a window for SSL-stripping attacks where an attacker on the same network can intercept traffic in plaintext. This is especially dangerous on public Wi-Fi.",
+   "fix": "Add header: Strict-Transport-Security: max-age=31536000; includeSubDomains",
+   "effort": "Low",
+   "impact": "High"
+  },
+  {
+   "id": "header_content_security_policy_483610bd",
+   "category": "Security Headers",
+   "title": "Missing Security Header: Content-Security-Policy",
+   "description": "Prevents XSS and data injection attacks by defining approved content sources.",
+   "severity": "HIGH",
+   "evidence": "Header 'Content-Security-Policy' absent from HTTP response",
+   "ai_analysis": "No Content Security Policy (CSP) header is present. CSP is the primary defense against Cross-Site Scripting (XSS) attacks, one of the most common and dangerous web vulnerabilities. Without a CSP, an attacker who injects malicious scripts into the page has no browser-enforced restrictions on what they can do.",
+   "fix": "Implement a CSP policy. Start with: Content-Security-Policy: default-src 'self'",
+   "effort": "Low",
+   "impact": "High"
+  },
+  {
+   "id": "tls_old_dcf299d2",
+   "category": "SSL/TLS",
+   "title": "Outdated TLS Protocol in Use",
+   "description": "Server still accepts TLS 1.1 (deprecated TLS 1.0/1.1)",
+   "severity": "HIGH",
+   "evidence": "Protocol detected: TLSv1.3",
+   "ai_analysis": "An outdated TLS version is in use. TLS 1.0 and 1.1 are deprecated and have known vulnerabilities including BEAST and POODLE attacks. Using these old protocols means connections may be downgraded to an insecure state by attackers.",
+   "fix": "Disable TLS 1.0 and 1.1. Configure server to support TLS 1.2 and TLS 1.3 only.",
+   "effort": "Medium",
+   "impact": "High"
+  },
+  {
+   "id": "header_x_frame_options_e7b1c70a",
+   "category": "Security Headers",
+   "title": "Missing Security Header: X-Frame-Options",
+   "description": "Prevents clickjacking by controlling if the page can be embedded in iframes.",
+   "severity": "MEDIUM",
+   "evidence": "Header 'X-Frame-Options' absent from HTTP response",
+   "ai_analysis": "The X-Frame-Options header is absent. This means your site can be embedded in an iframe on a malicious website, a technique used in clickjacking attacks. An attacker could overlay invisible UI elements on top of your site to trick users into performing unintended actions (like clicking hidden buttons or submitting forms).",
+   "fix": "Add header: X-Frame-Options: DENY",
+   "effort": "Low",
+   "impact": "Medium"
+  },
+  {
+   "id": "header_x_content_type_options_8fcf332d",
+   "category": "Security Headers",
+   "title": "Missing Security Header: X-Content-Type-Options",
+   "description": "Prevents MIME-type sniffing attacks.",
+   "severity": "MEDIUM",
+   "evidence": "Header 'X-Content-Type-Options' absent from HTTP response",
+   "ai_analysis": "The X-Content-Type-Options header is missing. Without it, browsers may 'sniff' the content type of a response and treat a file differently than intended, for example, loading a text file as JavaScript. This can enable MIME-type confusion attacks.",
+   "fix": "Add header: X-Content-Type-Options: nosniff",
+   "effort": "Low",
+   "impact": "Medium"
+  }
+ ],
+ "attack_paths": [
+  {
+   "name": "Web Exposure → XSS Attack",
+   "risk": "MEDIUM",
+   "steps": [
+    {
+     "node": "https://example.com",
+     "type": "entry",
+     "label": "Web Application"
+    },
+    {
+     "node": "Missing CSP/HSTS",
+     "type": "weakness",
+     "label": "No security headers"
+    },
+    {
+     "node": "Script Injection",
+     "type": "attack",
+     "label": "Attacker injects XSS payload"
+    },
+    {
+     "node": "User Session Hijack",
+     "type": "impact",
+     "label": "Cookie/credential theft"
+    },
+    {
+     "node": "Account Takeover",
+     "type": "impact",
+     "label": "Unauthorized access"
+    }
+   ]
+  }
+ ]
+}

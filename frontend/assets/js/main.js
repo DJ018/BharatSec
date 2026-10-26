@@ -183,7 +183,48 @@ async function handleScanSubmit() {
   window.location.href = dashboardPath + '?domain=' + encodeURIComponent(domain);
 }
 
-// startScan() is defined in index.html with auth-gating logic
+// ── Free scan (signed out) ────────────────────────────────────
+
+/** Validate the hero form like handleScanSubmit; returns the domain or null after showing an error. */
+function readScanForm() {
+  const input = document.getElementById('domain-input');
+  const authCheck = document.getElementById('auth-check');
+  if (!input) return null;
+  showScanError('');
+  const domain = normalizeDomain(input.value);
+  if (!input.value.trim()) { showScanError('Please enter a domain to scan.'); input.focus(); return null; }
+  if (!isValidDomain(domain)) { showScanError('Please enter a valid domain (e.g., example.com).'); input.focus(); return null; }
+  if (authCheck && !authCheck.checked) { showScanError('Please confirm you are authorized to scan this domain.'); return null; }
+  return domain;
+}
+
+/** One free scan without an account; the report page runs it and shows the result. */
+async function handleFreeScan() {
+  const domain = readScanForm();
+  if (!domain) return;
+  setScanLoading(true);
+  const backendBase = getBharatSecBackendBase();
+  try {
+    const response = await fetch(`${backendBase}/api/public/scan/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ domain, authorized: true }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setScanLoading(false);
+      showScanError(typeof data.detail === 'string' ? data.detail : 'Could not start the scan. Please try again.');
+      return;
+    }
+    window.location.href = `${backendBase}/report?scan=${encodeURIComponent(data.scan_id)}`;
+  } catch (error) {
+    setScanLoading(false);
+    showScanError('Could not reach BharatSec. Check your connection and try again.');
+  }
+}
+
+// startScan() is defined in index.html: signed-in users get the dashboard, others a free scan.
 
 
 // ── Domain input reference ────────────────────────────────────

@@ -36,6 +36,8 @@ PUBLIC_PAGES: List[Tuple[str, str, str]] = [
 
 # Company and trust pages served at /<name> and /<name>.html.
 INFO_PAGES = ["about", "pricing", "security", "contact", "privacy", "terms"]
+# Every static page served at /<name>; the report page is dynamic and noindex, so it stays out of the sitemap.
+SERVED_PAGES = INFO_PAGES + ["report"]
 
 PRIVATE_PATHS = ["/api/", "/dashboard", "/soc", "/threat-intel", "/risk", "/cloud", "/account"]
 

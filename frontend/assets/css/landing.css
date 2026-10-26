@@ -129,6 +129,8 @@ html:has(.landing-page) { scroll-behavior: smooth; scroll-padding-top: calc(var(
 .lp-scan-btn svg { transition: transform var(--ds-fast) var(--ds-ease); }
 .lp-scan-btn:hover:not(:disabled) svg { transform: translateX(2px); }
 .lp-scan-consent { padding-left: 2px; }
+.lp-scan-note { margin: 10px 0 0 2px; color: var(--ds-text-3); font-size: var(--ds-text-sm); }
+.lp-scan-note a { color: var(--ds-primary); font-weight: 600; text-underline-offset: 3px; }
 .scan-error {
   display: flex; align-items: center; gap: 8px;
   padding: 9px 12px; border: 1px solid var(--ds-critical-soft); border-radius: var(--ds-radius);

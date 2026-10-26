@@ -106,6 +106,7 @@ app.add_middleware(
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(auth_router.router)
 app.include_router(scan.router)
+app.include_router(scan.public_router)
 app.include_router(ai.router)
 app.include_router(soc.router)
 app.include_router(threat_intel.router)
@@ -120,8 +121,9 @@ async def enforce_authentication_and_security_headers(request, call_next):
         path in {"/", "/index.html", "/login", "/login.html", "/api/health", "/api/cron/tick",
                  "/robots.txt", "/sitemap.xml", f"/{seo.INDEXNOW_KEY}.txt", f"/{seo.GOOGLE_VERIFICATION_FILE}",
                  "/.well-known/security.txt", "/security.txt"}
-        or path.removesuffix(".html").lstrip("/") in seo.INFO_PAGES
+        or path.removesuffix(".html").lstrip("/") in seo.SERVED_PAGES
         or path.startswith("/assets/")
+        or path.startswith("/api/public/")
         or path.startswith("/favicon")
     )
     is_api_route = path.startswith("/api/")
@@ -197,7 +199,7 @@ if FRONTEND_DIR.exists():
             return FileResponse(str(FRONTEND_DIR / f"{name}.html"))
         return serve
 
-    for _name in seo.INFO_PAGES:
+    for _name in seo.SERVED_PAGES:
         app.get(f"/{_name}", include_in_schema=False)(_info_page(_name))
         app.get(f"/{_name}.html", include_in_schema=False)(_info_page(_name))
 

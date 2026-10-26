@@ -11,7 +11,9 @@ import re
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+
+import auth as auth_service
 
 from models.scan_models import ScanRequest, ScanResult, ScanStatus
 from engines.osint_engine import get_dns_records, get_whois, enumerate_subdomains, get_web_info
@@ -27,6 +29,12 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 router = APIRouter(prefix="/api/scan", tags=["scan"])
+# Free scans for signed-out visitors. Their IDs start with "pub_"; they are served only by these
+# endpoints and never appear in signed-in users' scan lists.
+public_router = APIRouter(prefix="/api/public/scan", tags=["public-scan"])
+PUBLIC_PREFIX = scan_store.PUBLIC_PREFIX
+PUBLIC_SCANS_PER_VISITOR = 3      # per hour
+PUBLIC_SCANS_TOTAL = 60           # per hour, across everyone, to protect the service
 
 
 # ── Domain validation ─────────────────────────────────────────────────────────
@@ -205,16 +213,14 @@ def _load(scan_id: str) -> ScanResult:
     return scan
 
 
-@router.post("/start")
-async def start_scan(request: ScanRequest):
-    """Create a scan. The client then calls /{scan_id}/run to execute it."""
+async def _create_scan(request: ScanRequest, prefix: str) -> dict:
     if not request.authorized:
         raise HTTPException(400, "You must confirm authorization to scan this target.")
 
     domain = _validate_domain(request.domain)
     await _reject_non_public_target(domain)
 
-    scan_id = f"scan_{uuid.uuid4().hex[:12]}"
+    scan_id = f"{prefix}{uuid.uuid4().hex[:12]}"
     scan = ScanResult(
         scan_id=scan_id,
         domain=domain,
@@ -224,14 +230,34 @@ async def start_scan(request: ScanRequest):
     return {"scan_id": scan_id, "domain": domain, "status": "started"}
 
 
-@router.post("/{scan_id}/run")
-async def execute_scan(scan_id: str):
-    """Run a created scan to completion inside this request (each scan runs at most once)."""
+async def _run_once(scan_id: str) -> dict:
     scan = _load(scan_id)
     if await asyncio.to_thread(scan_store.claim_for_run, scan_id):
         await run_scan(scan_id, scan.domain)
         scan = _load(scan_id)
     return {"scan_id": scan_id, "status": scan.status, "progress": scan.progress}
+
+
+def _status(scan: ScanResult) -> dict:
+    return {
+        "scan_id": scan.scan_id,
+        "status": scan.status,
+        "progress": scan.progress,
+        "domain": scan.domain,
+        "error": scan.ai_summary if scan.status == ScanStatus.ERROR else None,
+    }
+
+
+@router.post("/start")
+async def start_scan(request: ScanRequest):
+    """Create a scan. The client then calls /{scan_id}/run to execute it."""
+    return await _create_scan(request, "scan_")
+
+
+@router.post("/{scan_id}/run")
+async def execute_scan(scan_id: str):
+    """Run a created scan to completion inside this request (each scan runs at most once)."""
+    return await _run_once(scan_id)
 
 
 @router.get("/recent")
@@ -241,14 +267,7 @@ async def get_recent_scans():
 
 @router.get("/{scan_id}/status")
 async def get_scan_status(scan_id: str):
-    scan = _load(scan_id)
-    return {
-        "scan_id": scan_id,
-        "status": scan.status,
-        "progress": scan.progress,
-        "domain": scan.domain,
-        "error": scan.ai_summary if scan.status == ScanStatus.ERROR else None,
-    }
+    return _status(_load(scan_id))
 
 
 @router.get("/{scan_id}/results")
@@ -267,3 +286,45 @@ async def get_scan_score(scan_id: str):
 @router.get("/")
 async def list_scans():
     return await asyncio.to_thread(scan_store.list_summaries)
+
+
+# ── Free public scans ─────────────────────────────────────────────────────────
+
+def _load_public(scan_id: str) -> ScanResult:
+    if not scan_id.startswith(PUBLIC_PREFIX):
+        raise HTTPException(404, "Scan not found")
+    return _load(scan_id)
+
+
+@public_router.post("/start")
+async def start_public_scan(body: ScanRequest, request: Request):
+    """One free scan without an account; limited per visitor and overall."""
+    visitor = auth_service.client_ip(request)
+    try:
+        auth_service.check_rate_limit("public-scan", visitor, limit=PUBLIC_SCANS_PER_VISITOR, window_seconds=3600)
+        auth_service.check_rate_limit("public-scan-total", "all", limit=PUBLIC_SCANS_TOTAL, window_seconds=3600)
+    except HTTPException as exc:
+        raise HTTPException(429, "You've used the free scans for this hour. Sign in to keep scanning.") from exc
+    started = await _create_scan(body, PUBLIC_PREFIX)
+    auth_service.record_rate_limited_attempt("public-scan", visitor, window_seconds=3600)
+    auth_service.record_rate_limited_attempt("public-scan-total", "all", window_seconds=3600)
+    return started
+
+
+@public_router.post("/{scan_id}/run")
+async def run_public_scan(scan_id: str):
+    _load_public(scan_id)
+    return await _run_once(scan_id)
+
+
+@public_router.get("/{scan_id}/status")
+async def public_scan_status(scan_id: str):
+    return _status(_load_public(scan_id))
+
+
+@public_router.get("/{scan_id}/report")
+async def public_scan_report(scan_id: str):
+    scan = _load_public(scan_id)
+    if scan.status in (ScanStatus.RUNNING, ScanStatus.PENDING):
+        raise HTTPException(202, "Scan still in progress")
+    return scan

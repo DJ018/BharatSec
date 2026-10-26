@@ -40,6 +40,10 @@ def init_db() -> None:
         )
 
 
+PUBLIC_PREFIX = "pub_"  # free scans by signed-out visitors; kept out of team scan lists
+_NOT_PUBLIC = "substr(scan_id, 1, 4) != 'pub_'"
+
+
 def save(scan: ScanResult) -> None:
     with _db() as connection:
         connection.execute(
@@ -72,7 +76,7 @@ def claim_for_run(scan_id: str) -> bool:
 def recent_completed(limit: int = 20) -> List[ScanResult]:
     with _db() as connection:
         rows = connection.execute(
-            "SELECT payload FROM scans WHERE status = ? ORDER BY completed_at DESC LIMIT ?",
+            f"SELECT payload FROM scans WHERE status = ? AND {_NOT_PUBLIC} ORDER BY completed_at DESC LIMIT ?",
             (ScanStatus.COMPLETE.value, limit),
         ).fetchall()
     return [ScanResult.model_validate_json(row["payload"]) for row in rows]
@@ -81,7 +85,8 @@ def recent_completed(limit: int = 20) -> List[ScanResult]:
 def list_summaries(limit: int = 100) -> List[dict]:
     with _db() as connection:
         rows = connection.execute(
-            "SELECT scan_id, domain, status, payload FROM scans ORDER BY started_at DESC LIMIT ?", (limit,),
+            f"SELECT scan_id, domain, status, payload FROM scans WHERE {_NOT_PUBLIC} ORDER BY started_at DESC LIMIT ?",
+            (limit,),
         ).fetchall()
     summaries = []
     for row in rows:
