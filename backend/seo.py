@@ -39,7 +39,7 @@ INFO_PAGES = ["about", "pricing", "security", "contact", "privacy", "terms"]
 # Every static page served at /<name>; the report page is dynamic and noindex, so it stays out of the sitemap.
 SERVED_PAGES = INFO_PAGES + ["report"]
 
-PRIVATE_PATHS = ["/api/", "/dashboard", "/soc", "/threat-intel", "/risk", "/cloud", "/account"]
+PRIVATE_PATHS = ["/api/", "/dashboard", "/soc", "/threat-intel", "/risk", "/cloud", "/account", "/compliance"]
 
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 

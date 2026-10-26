@@ -21,8 +21,8 @@ import os
 import auth as auth_service
 import seo
 from config import AUTH_COOKIE_SECURE, BHARATSEC_HOST, CORS_ORIGINS, IS_LOOPBACK_HOST, IS_SERVERLESS
-from engines import cloud_engine, scan_store, soc_engine, threat_intel_engine, vector_knowledge
-from routers import auth as auth_router, cloud, scan, ai, soc, threat_intel
+from engines import cloud_engine, compliance_engine, scan_store, soc_engine, threat_intel_engine, vector_knowledge
+from routers import auth as auth_router, cloud, compliance, scan, ai, soc, threat_intel
 
 PROTECTED_PAGES = {
     "/dashboard", "/dashboard.html",
@@ -31,6 +31,7 @@ PROTECTED_PAGES = {
     "/risk", "/risk.html",
     "/cloud", "/cloud.html",
     "/account", "/account.html",
+    "/compliance", "/compliance.html",
 }
 
 
@@ -60,6 +61,7 @@ def init_databases() -> None:
     threat_intel_engine.init_db()
     cloud_engine.init_db()
     scan_store.init_db()
+    compliance_engine.init_db()
 
 
 if IS_SERVERLESS:
@@ -111,6 +113,7 @@ app.include_router(ai.router)
 app.include_router(soc.router)
 app.include_router(threat_intel.router)
 app.include_router(cloud.router)
+app.include_router(compliance.router)
 
 
 @app.middleware("http")
@@ -254,6 +257,11 @@ if FRONTEND_DIR.exists():
     @app.get("/cloud.html", include_in_schema=False)
     async def serve_cloud():
         return FileResponse(str(FRONTEND_DIR / "cloud.html"))
+
+    @app.get("/compliance", include_in_schema=False)
+    @app.get("/compliance.html", include_in_schema=False)
+    async def serve_compliance():
+        return FileResponse(str(FRONTEND_DIR / "compliance.html"))
 
     @app.get("/account", include_in_schema=False)
     @app.get("/account.html", include_in_schema=False)
